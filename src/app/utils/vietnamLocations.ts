@@ -1,0 +1,40 @@
+export const vietnamCities = [
+ { id: "an_giang", name: "An Giang" },
+  { id: "bac_ninh", name: "Bắc Ninh" },
+  { id: "ca_mau", name: "Cà Mau" },
+  { id: "cao_bang", name: "Cao Bằng" },
+  { id: "dak_lak", name: "Đắk Lắk" },
+  { id: "dien_bien", name: "Điện Biên" },
+  { id: "dong_nai", name: "Đồng Nai" },
+  { id: "dong_thap", name: "Đồng Tháp" },
+  { id: "gia_lai", name: "Gia Lai" },
+  { id: "ha_tinh", name: "Hà Tĩnh" },
+  { id: "hung_yen", name: "Hưng Yên" },
+  { id: "khanh_hoa", name: "Khánh Hòa" },
+  { id: "lai_chau", name: "Lai Châu" },
+  { id: "lam_dong", name: "Lâm Đồng" },
+  { id: "lang_son", name: "Lạng Sơn" },
+  { id: "lao_cai", name: "Lào Cai" },
+  { id: "nghe_an", name: "Nghệ An" },
+  { id: "ninh_binh", name: "Ninh Bình" },
+  { id: "phu_tho", name: "Phú Thọ" },
+  { id: "quang_ngai", name: "Quảng Ngãi" },
+  { id: "quang_ninh", name: "Quảng Ninh" },
+  { id: "quang_tri", name: "Quảng Trị" },
+  { id: "son_la", name: "Sơn La" },
+  { id: "tay_ninh", name: "Tây Ninh" },
+  { id: "thai_nguyen", name: "Thái Nguyên" },
+  { id: "thanh_hoa", name: "Thanh Hóa" },
+  { id: "can_tho", name: "TP. Cần Thơ" },
+  { id: "da_nang", name: "TP. Đà Nẵng" },
+  { id: "ha_noi", name: "TP. Hà Nội" },
+  { id: "hai_phong", name: "TP. Hải Phòng" },
+  { id: "ho_chi_minh", name: "TP. Hồ Chí Minh" },
+  { id: "hue", name: "TP. Huế" },
+  { id: "tuyen_quang", name: "Tuyên Quang" },
+  { id: "vinh_long", name: "Vĩnh Long" }
+];
+
+// Add an "All" option
+export const allOption = { id: 'all', name: 'Tất cả địa điểm' };
+export const locationsWithAll = [allOption, ...vietnamCities];

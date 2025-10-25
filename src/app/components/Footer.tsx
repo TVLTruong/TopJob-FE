@@ -4,7 +4,7 @@ import Link from 'next/link';
 export default function Footer() {
   return (
     // Dùng màu 'footer-bg' đã định nghĩa trong tailwind.config.ts
-    <footer className="w-full bg-footer-bg text-white pt-16 pb-8">
+    <footer className="w-full bg-jobcard-button text-white pt-16 pb-8">
       <div className="container mx-auto px-6">
         
         {/* Phần nội dung chính (chia 5 cột trên desktop) */}

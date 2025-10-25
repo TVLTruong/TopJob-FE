@@ -11,7 +11,11 @@ const config: Config = { // Áp dụng kiểu "Config"
   theme: {
     extend: {
       colors: {
-        'footer-bg': '#6d968a', 
+        'footer-bg': '#217d1c',
+        'jobcard-button': '#319158',
+        'jobcard-button-hover': '#2a7a4a',
+        'jobcard-tag-border': '#A0D4C3',
+        'jobcard-tag-text': '#4A7C6A',
     },
   },
   plugins: [],
