@@ -18,7 +18,7 @@ export default function Sidebar() {
     {
       href: '/company/candidates',
       icon: Users,
-      label: 'Tài các ứng viên'
+      label: 'Tất cả ứng viên'
     },
     {
       href: '/company/jobs',
