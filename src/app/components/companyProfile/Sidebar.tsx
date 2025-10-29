@@ -1,9 +1,47 @@
+'use client'
+
 import React from 'react'
 import Image from "next/image";
 import Link from "next/link";
-import { Building2, Users, Globe, LogOut, Settings, HelpCircle, Edit, Eye } from 'lucide-react'
+import { usePathname } from 'next/navigation';
+import { Building2, Users, Globe, LogOut, Settings, HelpCircle } from 'lucide-react'
 
 export default function Sidebar() {
+  const pathname = usePathname();
+
+  const navItems = [
+    {
+      href: '/companyProfilePage',
+      icon: Building2,
+      label: 'Hồ sơ công ty'
+    },
+    {
+      href: '/company/candidates',
+      icon: Users,
+      label: 'Tài các ứng viên'
+    },
+    {
+      href: '/company/jobs',
+      icon: Globe,
+      label: 'Danh sách công việc'
+    }
+  ];
+
+  const settingItems = [
+    {
+      href: '/company/settings',
+      icon: Settings,
+      label: 'Cài đặt'
+    },
+    {
+      href: '/company/support',
+      icon: HelpCircle,
+      label: 'Hỗ trợ'
+    }
+  ];
+
+  const isActive = (href: string) => pathname === href;
+
   return (
     <aside className="w-64 bg-white border-r h-screen overflow-y-auto flex flex-col sticky top-0">
       <div className="p-6 flex-1">
@@ -22,47 +60,50 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="space-y-2 mb-6">
-          <a 
-            href="#" 
-            className="flex items-center gap-3 px-4 py-2.5 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition"
-          >
-            <Building2 className="w-5 h-5" />
-            <span>Hồ sơ công ty</span>
-          </a>
-          <a 
-            href="#" 
-            className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition"
-          >
-            <Users className="w-5 h-5" />
-            <span>Tài cả ứng viên</span>
-          </a>
-          <a 
-            href="#" 
-            className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition"
-          >
-            <Globe className="w-5 h-5" />
-            <span>Danh sách công việc</span>
-          </a>
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.href);
+            
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition ${
+                  active
+                    ? 'text-white bg-blue-600 hover:bg-blue-700'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Settings */}
         <div className="pt-6 border-t mb-6">
           <h3 className="text-xs font-semibold text-gray-500 mb-4">SETTINGS</h3>
           <nav className="space-y-2">
-            <a 
-              href="#" 
-              className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition"
-            >
-              <Settings className="w-5 h-5" />
-              <span>Cài đặt</span>
-            </a>
-            <a 
-              href="#" 
-              className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition"
-            >
-              <HelpCircle className="w-5 h-5" />
-              <span>Hỗ trợ</span>
-            </a>
+            {settingItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition ${
+                    active
+                      ? 'text-white bg-blue-600 hover:bg-blue-700'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
           </nav>
         </div>
       </div>
