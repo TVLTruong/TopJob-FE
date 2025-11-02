@@ -13,7 +13,7 @@ export default function TechStack() {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-4">Công nghệ</h3>
+      <h3 className="text-xl font-bold mb-4">Công nghệ</h3>
       <div className="grid grid-cols-2 gap-3">
         {techStack.map((tech, index) => (
           <div key={index} className="flex items-center gap-3">

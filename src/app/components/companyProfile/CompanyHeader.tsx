@@ -23,7 +23,7 @@ export default function CompanyHeader() {
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-teal-600" />
                 <div>
-                  <div className="text-xs text-gray-500">Ngành nghề:</div>
+                  <div className="text-xs text-gray-500">Lĩnh vực</div>
                   <div className="font-semibold">Trò chơi, Điện toán đám mây</div>
                 </div>
               </div>

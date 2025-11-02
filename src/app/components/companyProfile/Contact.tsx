@@ -4,7 +4,7 @@ import React from 'react';
 export default function Contact() {
   return (
     <div className="bg-white rounded-xl p-8 shadow-sm">
-      <h2 className="text-xl font-bold mb-6">Contact</h2>
+      <h2 className="text-xl font-bold mb-6">Liên hệ</h2>
       <div className="space-y-3">
         <a
           href="https://twitter.com/vngcorporation"
