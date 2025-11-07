@@ -41,9 +41,10 @@ function UserDropdown({ onLogout }: { onLogout: () => void }) {
               <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
             </div>
           )}
-          <Link href="/quan-ly-cv" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Quản lý CV</Link>
-          <Link href="/viec-lam-da-luu" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Việc làm đã lưu</Link>
-          <Link href="/ho-so-cua-toi" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Hồ sơ của tôi</Link>
+          <Link href="/cv" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Quản lý CV</Link>
+          <Link href="/favoritesjob" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Việc làm yêu thích</Link>
+          <Link href="/listjobpage" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Công việc đã ứng tuyển</Link>
+          <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Hồ sơ của tôi</Link>
           <hr className="my-2" />
           <button
             onClick={() => { onLogout(); setIsOpen(false); }}
@@ -77,10 +78,10 @@ export default function Header() {
           </Link>
           <nav className="hidden md:flex">
              <ul className="flex space-x-6">
-               <li><Link href="/viec-lam" className="font-medium text-gray-600 hover:text-emerald-500">Việc làm</Link></li>
-               <li><Link href="/cong-ty-it" className="font-medium text-gray-600 hover:text-emerald-500">Công ty IT</Link></li>
-               <li><Link href="/doi-ngu" className="font-medium text-gray-600 hover:text-emerald-500">Đội ngũ</Link></li>
-               <li><Link href="/lien-he" className="font-medium text-gray-600 hover:text-emerald-500">Liên hệ</Link></li>
+               <li><Link href="/jobpage" className="font-medium text-gray-600 hover:text-emerald-500">Việc làm</Link></li>
+               <li><Link href="/companypage" className="font-medium text-gray-600 hover:text-emerald-500">Công ty IT</Link></li>
+               <li><Link href="/team" className="font-medium text-gray-600 hover:text-emerald-500">Đội ngũ</Link></li>
+               <li><Link href="/contact" className="font-medium text-gray-600 hover:text-emerald-500">Liên hệ</Link></li>
              </ul>
           </nav>
         </div>
