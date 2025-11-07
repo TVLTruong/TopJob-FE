@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, X, SlidersHorizontal, MapPin, Users, Layers } from "lucide-react";
+import { ChevronDown, X, SlidersHorizontal, MapPin, Layers } from "lucide-react";
 import HeroSearcher from "@/app/components/landing/searcher";
 import CompanyCard from "@/app/components/company/CompanyCard";
 import { Company } from "@/app/components/types/company.types";
@@ -125,7 +125,6 @@ const technologyOptions = [
   "MongoDB",
   "PostgreSQL"
 ];
-const companySizeOptions = ["1-50", "51-200", "201-500", "501-1000", "1000+"];
 
 // Horizontal Filter Dropdown Component
 interface HorizontalFilterProps {
@@ -133,11 +132,23 @@ interface HorizontalFilterProps {
   icon: React.ReactNode;
   options: string[];
   selected: string[];
-  onToggle: (option: string) => void;
+  tempSelected: string[];
+  onTempChange: (selected: string[]) => void;
 }
 
-function HorizontalFilter({ label, icon, options, selected, onToggle }: HorizontalFilterProps) {
+function HorizontalFilter({ label, icon, options, selected, tempSelected, onTempChange }: HorizontalFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleToggle = (option: string) => {
+    const newSelected = tempSelected.includes(option) 
+      ? tempSelected.filter(i => i !== option) 
+      : [...tempSelected, option];
+    onTempChange(newSelected);
+  };
+
+  const handleClearAll = () => {
+    onTempChange([]);
+  };
 
   return (
     <div className="relative">
@@ -162,16 +173,13 @@ function HorizontalFilter({ label, icon, options, selected, onToggle }: Horizont
       {isOpen && (
         <>
           <div className="fixed inset-0 z-20" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full left-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-xl z-30 max-h-96 overflow-y-auto">
-            <div className="p-4">
+          <div className="absolute top-full left-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-xl z-30">
+            <div className="p-4 max-h-80 overflow-y-auto">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-gray-900">{label}</h3>
-                {selected.length > 0 && (
+                {tempSelected.length > 0 && (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      selected.forEach(item => onToggle(item));
-                    }}
+                    onClick={handleClearAll}
                     className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
                   >
                     Xóa hết
@@ -186,8 +194,8 @@ function HorizontalFilter({ label, icon, options, selected, onToggle }: Horizont
                   >
                     <input
                       type="checkbox"
-                      checked={selected.includes(option)}
-                      onChange={() => onToggle(option)}
+                      checked={tempSelected.includes(option)}
+                      onChange={() => handleToggle(option)}
                       className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
                     />
                     <span className="text-sm text-gray-700">{option}</span>
@@ -204,21 +212,34 @@ function HorizontalFilter({ label, icon, options, selected, onToggle }: Horizont
 
 // Main Component
 export default function CompanyPage() {
+  // Applied filters
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [selectedTechnologies, setSelectedTechnologies] = useState<string[]>([]);
-  const [selectedCompanySizes, setSelectedCompanySizes] = useState<string[]>([]);
+  
+  // Temporary filters
+  const [tempLocations, setTempLocations] = useState<string[]>([]);
+  const [tempTechnologies, setTempTechnologies] = useState<string[]>([]);
 
-  const toggleSelection = (array: string[], setArray: (arr: string[]) => void, item: string) => {
-    setArray(array.includes(item) ? array.filter(i => i !== item) : [...array, item]);
+  const applyAllFilters = () => {
+    setSelectedLocations([...tempLocations]);
+    setSelectedTechnologies([...tempTechnologies]);
   };
 
   const clearAllFilters = () => {
+    // Clear applied filters
     setSelectedLocations([]);
     setSelectedTechnologies([]);
-    setSelectedCompanySizes([]);
+    // Clear temp filters
+    setTempLocations([]);
+    setTempTechnologies([]);
   };
 
-  const totalFiltersCount = selectedLocations.length + selectedTechnologies.length + selectedCompanySizes.length;
+  const totalFiltersCount = selectedLocations.length + selectedTechnologies.length;
+  const totalTempFiltersCount = tempLocations.length + tempTechnologies.length;
+
+  const hasUnappliedChanges = 
+    JSON.stringify(tempLocations) !== JSON.stringify(selectedLocations) ||
+    JSON.stringify(tempTechnologies) !== JSON.stringify(selectedTechnologies);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -244,7 +265,8 @@ export default function CompanyPage() {
               icon={<MapPin className="w-5 h-5 text-gray-600" />}
               options={locationOptions}
               selected={selectedLocations}
-              onToggle={(item) => toggleSelection(selectedLocations, setSelectedLocations, item)}
+              tempSelected={tempLocations}
+              onTempChange={setTempLocations}
             />
 
             <HorizontalFilter
@@ -252,26 +274,30 @@ export default function CompanyPage() {
               icon={<Layers className="w-5 h-5 text-gray-600" />}
               options={technologyOptions}
               selected={selectedTechnologies}
-              onToggle={(item) => toggleSelection(selectedTechnologies, setSelectedTechnologies, item)}
+              tempSelected={tempTechnologies}
+              onTempChange={setTempTechnologies}
             />
 
-            <HorizontalFilter
-              label="Quy mô"
-              icon={<Users className="w-5 h-5 text-gray-600" />}
-              options={companySizeOptions}
-              selected={selectedCompanySizes}
-              onToggle={(item) => toggleSelection(selectedCompanySizes, setSelectedCompanySizes, item)}
-            />
-
-            {totalFiltersCount > 0 && (
-              <button
-                onClick={clearAllFilters}
-                className="ml-auto flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium"
-              >
-                <X className="w-4 h-4" />
-                Xóa tất cả ({totalFiltersCount})
-              </button>
-            )}
+            <div className="ml-auto flex items-center gap-3">
+              {hasUnappliedChanges && (
+                <button
+                  onClick={applyAllFilters}
+                  className="flex items-center gap-2 px-6 py-2.5 text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors font-semibold shadow-sm"
+                >
+                  Áp dụng bộ lọc
+                </button>
+              )}
+              
+              {(totalFiltersCount > 0 || totalTempFiltersCount > 0) && (
+                <button
+                  onClick={clearAllFilters}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium"
+                >
+                  <X className="w-4 h-4" />
+                  Xóa tất cả ({Math.max(totalFiltersCount, totalTempFiltersCount)})
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

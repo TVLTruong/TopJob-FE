@@ -164,11 +164,23 @@ interface HorizontalFilterProps {
   icon: React.ReactNode;
   options: string[];
   selected: string[];
-  onToggle: (option: string) => void;
+  tempSelected: string[];
+  onTempChange: (selected: string[]) => void;
 }
 
-function HorizontalFilter({ label, icon, options, selected, onToggle }: HorizontalFilterProps) {
+function HorizontalFilter({ label, icon, options, selected, tempSelected, onTempChange }: HorizontalFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleToggle = (option: string) => {
+    const newSelected = tempSelected.includes(option) 
+      ? tempSelected.filter(i => i !== option) 
+      : [...tempSelected, option];
+    onTempChange(newSelected);
+  };
+
+  const handleClearAll = () => {
+    onTempChange([]);
+  };
 
   return (
     <div className="relative">
@@ -193,16 +205,13 @@ function HorizontalFilter({ label, icon, options, selected, onToggle }: Horizont
       {isOpen && (
         <>
           <div className="fixed inset-0 z-20" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full left-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-xl z-30 max-h-96 overflow-y-auto">
-            <div className="p-4">
+          <div className="absolute top-full left-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-xl z-30">
+            <div className="p-4 max-h-80 overflow-y-auto">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-gray-900">{label}</h3>
-                {selected.length > 0 && (
+                {tempSelected.length > 0 && (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      selected.forEach(item => onToggle(item));
-                    }}
+                    onClick={handleClearAll}
                     className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
                   >
                     Xóa hết
@@ -217,8 +226,8 @@ function HorizontalFilter({ label, icon, options, selected, onToggle }: Horizont
                   >
                     <input
                       type="checkbox"
-                      checked={selected.includes(option)}
-                      onChange={() => onToggle(option)}
+                      checked={tempSelected.includes(option)}
+                      onChange={() => handleToggle(option)}
                       className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
                     />
                     <span className="text-sm text-gray-700">{option}</span>
@@ -237,13 +246,18 @@ function HorizontalFilter({ label, icon, options, selected, onToggle }: Horizont
 interface SalaryFilterProps {
   minSalary: number;
   maxSalary: number;
-  onMinChange: (value: number) => void;
-  onMaxChange: (value: number) => void;
+  tempMin: number;
+  tempMax: number;
+  onTempChange: (min: number, max: number) => void;
 }
 
-function SalaryFilter({ minSalary, maxSalary, onMinChange, onMaxChange }: SalaryFilterProps) {
+function SalaryFilter({ minSalary, maxSalary, tempMin, tempMax, onTempChange }: SalaryFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const hasValue = minSalary > 0 || maxSalary < 100;
+
+  const handleReset = () => {
+    onTempChange(0, 100);
+  };
 
   return (
     <div className="relative">
@@ -268,47 +282,46 @@ function SalaryFilter({ minSalary, maxSalary, onMinChange, onMaxChange }: Salary
       {isOpen && (
         <>
           <div className="fixed inset-0 z-20" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-30 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900">Mức lương</h3>
-              {hasValue && (
-                <button
-                  onClick={() => {
-                    onMinChange(0);
-                    onMaxChange(100);
-                  }}
-                  className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
-                >
-                  Đặt lại
-                </button>
-              )}
-            </div>
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Tối thiểu: <span className="text-emerald-600">{minSalary} triệu</span>
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={minSalary}
-                  onChange={(e) => onMinChange(Number(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-                />
+          <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-30">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900">Mức lương</h3>
+                {(tempMin > 0 || tempMax < 100) && (
+                  <button
+                    onClick={handleReset}
+                    className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+                  >
+                    Đặt lại
+                  </button>
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Tối đa: <span className="text-emerald-600">{maxSalary} triệu</span>
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={maxSalary}
-                  onChange={(e) => onMaxChange(Number(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-                />
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Tối thiểu: <span className="text-emerald-600">{tempMin} triệu</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={tempMin}
+                    onChange={(e) => onTempChange(Number(e.target.value), tempMax)}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Tối đa: <span className="text-emerald-600">{tempMax} triệu</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={tempMax}
+                    onChange={(e) => onTempChange(tempMin, Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -320,17 +333,23 @@ function SalaryFilter({ minSalary, maxSalary, onMinChange, onMaxChange }: Salary
 
 // Main Component
 export default function JobSearchPage() {
+  // Applied filters (actual filters being used)
   const [selectedWorkTypes, setSelectedWorkTypes] = useState<string[]>([]);
   const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
   const [selectedExperience, setSelectedExperience] = useState<string[]>([]);
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
   const [minSalary, setMinSalary] = useState(0);
   const [maxSalary, setMaxSalary] = useState(100);
+  
+  // Temporary filters (being edited)
+  const [tempWorkTypes, setTempWorkTypes] = useState<string[]>([]);
+  const [tempDomains, setTempDomains] = useState<string[]>([]);
+  const [tempExperience, setTempExperience] = useState<string[]>([]);
+  const [tempLevels, setTempLevels] = useState<string[]>([]);
+  const [tempMinSalary, setTempMinSalary] = useState(0);
+  const [tempMaxSalary, setTempMaxSalary] = useState(100);
+  
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
-
-  const toggleSelection = (array: string[], setArray: (arr: string[]) => void, item: string) => {
-    setArray(array.includes(item) ? array.filter(i => i !== item) : [...array, item]);
-  };
 
   const handleSaveJob = (jobId: string) => {
     setSavedJobs(prev =>
@@ -342,18 +361,52 @@ export default function JobSearchPage() {
     console.log("Applying for job:", jobId);
   };
 
+  const handleTempSalaryChange = (min: number, max: number) => {
+    setTempMinSalary(min);
+    setTempMaxSalary(max);
+  };
+
+  const applyAllFilters = () => {
+    setSelectedWorkTypes([...tempWorkTypes]);
+    setSelectedDomains([...tempDomains]);
+    setSelectedExperience([...tempExperience]);
+    setSelectedLevels([...tempLevels]);
+    setMinSalary(tempMinSalary);
+    setMaxSalary(tempMaxSalary);
+  };
+
   const clearAllFilters = () => {
+    // Clear applied filters
     setSelectedWorkTypes([]);
     setSelectedDomains([]);
     setSelectedExperience([]);
     setSelectedLevels([]);
     setMinSalary(0);
     setMaxSalary(100);
+    // Clear temp filters
+    setTempWorkTypes([]);
+    setTempDomains([]);
+    setTempExperience([]);
+    setTempLevels([]);
+    setTempMinSalary(0);
+    setTempMaxSalary(100);
   };
 
   const totalFiltersCount = selectedWorkTypes.length + selectedDomains.length + 
     selectedExperience.length + selectedLevels.length + 
     (minSalary > 0 || maxSalary < 100 ? 1 : 0);
+
+  const totalTempFiltersCount = tempWorkTypes.length + tempDomains.length + 
+    tempExperience.length + tempLevels.length + 
+    (tempMinSalary > 0 || tempMaxSalary < 100 ? 1 : 0);
+
+  const hasUnappliedChanges = 
+    JSON.stringify(tempWorkTypes) !== JSON.stringify(selectedWorkTypes) ||
+    JSON.stringify(tempDomains) !== JSON.stringify(selectedDomains) ||
+    JSON.stringify(tempExperience) !== JSON.stringify(selectedExperience) ||
+    JSON.stringify(tempLevels) !== JSON.stringify(selectedLevels) ||
+    tempMinSalary !== minSalary ||
+    tempMaxSalary !== maxSalary;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -379,14 +432,16 @@ export default function JobSearchPage() {
               icon={<Briefcase className="w-5 h-5 text-gray-600" />}
               options={workTypeOptions}
               selected={selectedWorkTypes}
-              onToggle={(item) => toggleSelection(selectedWorkTypes, setSelectedWorkTypes, item)}
+              tempSelected={tempWorkTypes}
+              onTempChange={setTempWorkTypes}
             />
 
             <SalaryFilter
               minSalary={minSalary}
               maxSalary={maxSalary}
-              onMinChange={setMinSalary}
-              onMaxChange={setMaxSalary}
+              tempMin={tempMinSalary}
+              tempMax={tempMaxSalary}
+              onTempChange={handleTempSalaryChange}
             />
 
             <HorizontalFilter
@@ -394,7 +449,8 @@ export default function JobSearchPage() {
               icon={<Clock className="w-5 h-5 text-gray-600" />}
               options={experienceOptions}
               selected={selectedExperience}
-              onToggle={(item) => toggleSelection(selectedExperience, setSelectedExperience, item)}
+              tempSelected={tempExperience}
+              onTempChange={setTempExperience}
             />
 
             <HorizontalFilter
@@ -402,7 +458,8 @@ export default function JobSearchPage() {
               icon={<Award className="w-5 h-5 text-gray-600" />}
               options={levelOptions}
               selected={selectedLevels}
-              onToggle={(item) => toggleSelection(selectedLevels, setSelectedLevels, item)}
+              tempSelected={tempLevels}
+              onTempChange={setTempLevels}
             />
 
             <HorizontalFilter
@@ -410,18 +467,30 @@ export default function JobSearchPage() {
               icon={<Layers className="w-5 h-5 text-gray-600" />}
               options={jobDomainOptions}
               selected={selectedDomains}
-              onToggle={(item) => toggleSelection(selectedDomains, setSelectedDomains, item)}
+              tempSelected={tempDomains}
+              onTempChange={setTempDomains}
             />
 
-            {totalFiltersCount > 0 && (
-              <button
-                onClick={clearAllFilters}
-                className="ml-auto flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium"
-              >
-                <X className="w-4 h-4" />
-                Xóa tất cả ({totalFiltersCount})
-              </button>
-            )}
+            <div className="ml-auto flex items-center gap-3">
+              {hasUnappliedChanges && (
+                <button
+                  onClick={applyAllFilters}
+                  className="flex items-center gap-2 px-6 py-2.5 text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors font-semibold shadow-sm"
+                >
+                  Áp dụng bộ lọc
+                </button>
+              )}
+              
+              {(totalFiltersCount > 0 || totalTempFiltersCount > 0) && (
+                <button
+                  onClick={clearAllFilters}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors font-medium"
+                >
+                  <X className="w-4 h-4" />
+                  Xóa tất cả ({Math.max(totalFiltersCount, totalTempFiltersCount)})
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
