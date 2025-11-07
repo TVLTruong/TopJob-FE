@@ -12,9 +12,9 @@ export default function JobListings() {
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold">Các vị trí tuyển dụng</h2>
+        <h2 className="text-xl font-bold">Các vị trí đang tuyển</h2>
         <button className="text-teal-600 hover:bg-teal-50 px-3 py-1 rounded text-sm font-medium transition">
-          Xem tất cả →
+          Tất cả →
         </button>
       </div>
 

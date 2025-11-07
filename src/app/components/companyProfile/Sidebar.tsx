@@ -16,12 +16,12 @@ export default function Sidebar() {
       label: 'Hồ sơ công ty'
     },
     {
-      href: '/company/candidates',
+      href: '/AllApplicant',
       icon: Users,
       label: 'Tất cả ứng viên'
     },
     {
-      href: '/company/jobs',
+      href: '/JobList',
       icon: Globe,
       label: 'Danh sách công việc'
     }
@@ -40,10 +40,10 @@ export default function Sidebar() {
     }
   ];
 
-  const isActive = (href: string) => pathname === href;
+  const isActive = (href: string) => pathname.startsWith(href);
 
   return (
-    <aside className="w-64 bg-white border-r h-screen overflow-y-auto flex flex-col sticky top-0">
+    <aside className="w-72 bg-white border-r h-screen overflow-y-auto flex flex-col sticky top-0">
       <div className="p-6 flex-1">
         {/* Logo */}
         <div className="mb-8">
@@ -82,7 +82,7 @@ export default function Sidebar() {
         </nav>
 
         {/* Settings */}
-        <div className="pt-6 border-t mb-6">
+        <div className="pt-6 border-t mb-6 mt-auto">
           <h3 className="text-xs font-semibold text-gray-500 mb-4">SETTINGS</h3>
           <nav className="space-y-2">
             {settingItems.map((item) => {
@@ -109,11 +109,11 @@ export default function Sidebar() {
       </div>
 
       {/* User Profile */}
-      <div className="p-6 border-t bg-white mt-auto">
+      <div className="p-6 bg-white mt-auto mx-auto">
         <div className="flex items-center gap-3 px-4 mb-4">
           <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
           <div>
-            <p className="font-medium text-sm">Nguyễn Quang Huy</p>
+            <p className="font-semibold text-l">Nguyễn Quang Huy</p>
             <p className="text-xs text-gray-500">@huynqd.com</p>
           </div>
         </div>
