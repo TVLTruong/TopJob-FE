@@ -18,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
       <body className={`${inter.className} bg-gray-50`}>
         <AuthProvider> {/* <-- 2. BỌC Ở NGOÀI */}
           <Header />

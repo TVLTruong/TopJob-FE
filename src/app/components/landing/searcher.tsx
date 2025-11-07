@@ -53,7 +53,7 @@ export default function HeroSearcher() {
       <div className="relative container mx-auto max-w-5xl flex flex-col items-center space-y-5 rounded-lg p-4 md:p-6"> 
         {/* Tiêu đề */}
         <h3 className="text-2xl md:text-4xl font-bold text-center mt-0 mb-2">
-          Có được công việc mơ ước của bạn với Find Jobs
+          Có được công việc mơ ước của bạn với TopJob
         </h3>
 
         <h3 className="text-1xl md:text-1xl text-center">
