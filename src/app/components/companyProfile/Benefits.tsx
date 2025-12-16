@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Edit } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import ConfirmModal from './ConfirmModal';
 
 type BenefitsProps = {
@@ -11,6 +12,7 @@ type BenefitsProps = {
 };
 
 export default function Benefits({ benefitsText, canEddit, canEdit, onSave }: BenefitsProps) {
+  const { user } = useAuth();
   const defaultSample = 'Chế độ bảo hiểm sức khỏe mở rộng/nNghỉ phép linh hoạt 12 ngày/nLương tháng 13 và thưởng hiệu suất/nLàm việc hybrid, hỗ trợ thiết bị/nTrợ cấp ăn trưa và gửi xe/nTeam building hàng quý, du lịch năm/nNgân sách học tập và khóa học online/nKhám sức khỏe định kỳ/nGói hỗ trợ sức khỏe tinh thần/nPhụ cấp điện thoại và Internet';
 
   const initialText = benefitsText && benefitsText.trim().length > 0 ? benefitsText : defaultSample;
@@ -29,7 +31,8 @@ export default function Benefits({ benefitsText, canEddit, canEdit, onSave }: Be
       .filter((s) => s.length > 0);
   }, [text]);
 
-  const canShowEdit = Boolean(canEddit || canEdit);
+  const isRecruiter = user?.role === 'EMPLOYER';
+  const canShowEdit = isRecruiter && Boolean(canEddit || canEdit);
 
   return (
     <div className="bg-white rounded-xl p-8 mb-6 shadow-sm">

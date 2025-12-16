@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import ConfirmModal from './ConfirmModal'
 import { Users, Globe, Edit, X, Plus } from 'lucide-react'
-
+import { useAuth } from '@/contexts/AuthContext'
 import locationData from "@/app/assets/danh-sach-3321-xa-phuong.json";
 
 interface LocationItem {
@@ -16,6 +16,9 @@ const fieldOptions = ['Công nghệ thông tin', 'Trò chơi', 'Điện toán đ
 const techOptions = ['HTML 5', 'CSS 3', 'Javascript', 'React', 'Node.js', 'Python', 'Java', 'TypeScript', 'Vue.js', 'Angular']
 
 export default function CompanyHeader() {
+  const { user } = useAuth()
+  const isRecruiter = user?.role === 'RECRUITER'
+  const canEdit = isRecruiter
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [formData, setFormData] = useState({
     companyName: 'VNG',
@@ -246,6 +249,7 @@ export default function CompanyHeader() {
               </div>
             </div>
           </div>
+          {canEdit && (
           <div className="flex gap-2">
             <button 
               onClick={() => setIsPopupOpen(true)}
@@ -255,6 +259,7 @@ export default function CompanyHeader() {
               Chỉnh sửa
             </button>
           </div>
+          )}
         </div>
       </div>
 
