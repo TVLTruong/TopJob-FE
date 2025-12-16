@@ -24,6 +24,7 @@ export default function EmployerSignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFormValid, setIsFormValid] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   
   const [provinces, setProvinces] = useState<string[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
@@ -86,8 +87,10 @@ export default function EmployerSignUpPage() {
 
     setLoading(true);
 
-    try {
-      const registerData = {
+    // Fake API call với setTimeout (thay bằng fetch thật khi có database)
+    setTimeout(() => {
+      console.log('Đăng ký thành công!');
+      console.log({
         fullName,
         workTitle,
         workEmail,
@@ -97,24 +100,12 @@ export default function EmployerSignUpPage() {
         district,
         streetAddress,
         websiteUrl,
-      };
-
-      const response = await fetch('http://localhost:3001/employer/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(registerData),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Đăng ký thất bại, vui lòng thử lại.');
-      }
-
-      console.log('Đăng ký thành công!');
-      alert('Đăng ký thành công! Chúng tôi sẽ liên hệ với bạn sớm.');
       
+      // Hiển thị popup thành công
+      setShowSuccessPopup(true);
+      
+      // Reset form
       setFullName("");
       setWorkTitle("");
       setWorkEmail("");
@@ -124,13 +115,9 @@ export default function EmployerSignUpPage() {
       setDistrict("");
       setStreetAddress("");
       setWebsiteUrl("");
-
-    } catch (error: any) {
-      setError(error.message);
-      console.error('Lỗi khi đăng ký:', error);
-    } finally {
+      
       setLoading(false);
-    }
+    }, 1500);
   };
 
   return (
@@ -340,6 +327,37 @@ export default function EmployerSignUpPage() {
           </div>
         </div>
       </main>
+
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-8 text-center">
+            {/* Success Icon */}
+            <div className="mb-4 flex justify-center">
+              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
+                <svg className="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+            
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Đăng ký thành công!
+            </h2>
+            
+            <p className="text-gray-600 mb-6">
+              Vui lòng chờ phê duyệt từ quản trị viên (24-48 giờ)
+            </p>
+            
+            <button
+              onClick={() => setShowSuccessPopup(false)}
+              className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
