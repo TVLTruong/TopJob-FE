@@ -17,7 +17,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     return <div>Loading...</div>;
   }
 
-  const isRecruiter = user?.role === 'RECRUITER';
+  const isRecruiter = user?.role === 'EMPLOYER';
   const isCandidate = user?.role === 'CANDIDATE';
 
   // Layout cho CANDIDATE: Header + Content + Footer
