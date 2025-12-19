@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Images from "next/image";
 import { useRouter } from "next/navigation";
 import Jobcard from "@/app/components/job/Jobcard"; // Import Jobcard
 import { Job } from "@/app/components/types/job.types"; // Import kiểu Job
@@ -37,7 +36,7 @@ export default function FeaturedJobs() {
   const [isLoading, setIsLoading] = useState(true);
 
   const handleJobClick = (jobId: string) => {
-    router.push("/JobList/JobDetail");
+    router.push(`/JobList/JobDetail?id=${jobId}`);
   };
 
   useEffect(() => {

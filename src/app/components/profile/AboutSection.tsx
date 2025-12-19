@@ -7,7 +7,7 @@ interface Props {
   profile: Profile;
   editingAbout: boolean;
   // accept flexible section identifier (keeps compatibility with page.tsx's narrower literal type)
-  toggleEdit: (section: any) => void;
+  toggleEdit: (section: string) => void;
   updateProfile: (field: string, value: string) => void;
   saveAbout: () => void;
 }

@@ -64,9 +64,9 @@ export default function SignUpPage() {
       // Tùy chọn: Tự động chuyển hướng họ sang trang đăng nhập
       // window.location.href = '/login'; 
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Bắt lỗi (từ server hoặc lỗi mạng)
-      setError(error.message);
+      setError(error instanceof Error ? error.message : 'An error occurred');
       console.error('Lỗi khi đăng ký:', error);
     } finally {
       // 5. Dù thành công hay thất bại, dừng loading

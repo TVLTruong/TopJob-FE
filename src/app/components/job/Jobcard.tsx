@@ -1,7 +1,6 @@
 import { Job } from "@/app/components/types/job.types";
 import Image from "next/image";
 import { Heart } from "lucide-react";
-import Link from "next/link";
 
 interface JobcardProps {
   job: Job;

@@ -1,7 +1,6 @@
 'use client';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import JobDetailContent, { JobDetailData } from '@/app/components/job/JobDetailContents';
-import ConfirmModal from '@/app/components/companyProfile/ConfirmModal';
 import ApplicantsTab from '@/app/components/job/Applicant';
 import JobFormModal from '@/app/components/job/JobFormModal';
 import { ChevronDown, Power, Edit, Eye, EyeOff, Trash2, X } from 'lucide-react';

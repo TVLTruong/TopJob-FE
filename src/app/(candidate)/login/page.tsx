@@ -45,8 +45,8 @@ export default function LoginPage() {
       // 4. Đăng nhập thành công, chuyển hướng về trang chủ
       router.push('/'); 
 
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'An error occurred');
       console.error(error);
     } finally {
       setLoading(false);

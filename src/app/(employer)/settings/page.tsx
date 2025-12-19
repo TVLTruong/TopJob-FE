@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { User, Lock, Phone, Briefcase, Save, Eye, EyeOff, Mail } from 'lucide-react'
+import { Lock, Phone, Briefcase, Save, Eye, EyeOff, Mail } from 'lucide-react'
 import ConfirmModal from '@/app/components/companyProfile/ConfirmModal'
 
 type TabType = 'account' | 'password'
@@ -93,11 +93,6 @@ export default function SettingsPage() {
     setShowConfirmModal(false)
     setPendingAction(null)
   }
-
-  const tabs = [
-    { id: 'account' as TabType, label: 'Thông tin tài khoản' },
-    { id: 'password' as TabType, label: 'Liên kết xã hội' },
-  ]
 
   return (
     <div className="min-h-screen bg-gray-50">

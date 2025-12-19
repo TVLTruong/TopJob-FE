@@ -295,7 +295,7 @@ export default function EmployerSignUpPage() {
                   className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  URL bao gồm giao thức "https", e.g: https://topjob.com
+                  URL bao gồm giao thức &quot;https&quot;, e.g: https://topjob.com
                 </p>
               </div>
 

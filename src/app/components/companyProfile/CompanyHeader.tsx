@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
 import ConfirmModal from './ConfirmModal'
 import { Users, Globe, Edit, X, Plus } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -11,13 +12,12 @@ interface LocationItem {
   "Tỉnh / Thành Phố": string;
 }
 
-const locationOptions = ['Hà Nội', 'Hồ Chí Minh', 'Đà Nẵng', 'Hải Phòng', 'Cần Thơ', 'Bình Dương', 'Đồng Nai']
 const fieldOptions = ['Công nghệ thông tin', 'Trò chơi', 'Điện toán đám mây', 'Thương mại điện tử', 'Fintech', 'AI/Machine Learning']
 const techOptions = ['HTML 5', 'CSS 3', 'Javascript', 'React', 'Node.js', 'Python', 'Java', 'TypeScript', 'Vue.js', 'Angular']
 
 export default function CompanyHeader() {
   const { user } = useAuth()
-  const isRecruiter = user?.role === 'RECRUITER'
+  const isRecruiter = user?.role === 'EMPLOYER'
   const canEdit = isRecruiter
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [formData, setFormData] = useState({
@@ -37,7 +37,6 @@ export default function CompanyHeader() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   
   const [provinces, setProvinces] = useState<string[]>([])
-  const [districts, setDistricts] = useState<string[]>([])
   
   const [showFieldDropdown, setShowFieldDropdown] = useState(false)
   const [showTechDropdown, setShowTechDropdown] = useState(false)
@@ -72,22 +71,6 @@ export default function CompanyHeader() {
     
     setProvinces(Array.from(provinceSet).sort())
   }, [])
-
-  // Load danh sách phường/xã khi chọn tỉnh/thành
-  useEffect(() => {
-    if (!formData.province) {
-      setDistricts([])
-      return
-    }
-
-    const data = locationData as LocationItem[]
-    const districtList = data
-      .filter((item) => item["Tỉnh / Thành Phố"] === formData.province)
-      .map((item) => item["Tên"])
-      .sort()
-    
-    setDistricts(districtList)
-  }, [formData.province])
 
   // Load danh sách phường/xã cho temp address
   useEffect(() => {
@@ -300,7 +283,7 @@ export default function CompanyHeader() {
                   />
                   <label htmlFor="logo-upload" className="cursor-pointer">
                     {logoPreview ? (
-                      <img src={logoPreview} alt="Logo preview" className="mx-auto max-h-32 mb-2" />
+                      <Image src={logoPreview} alt="Logo preview" width={128} height={128} className="mx-auto max-h-32 mb-2" />
                     ) : (
                       <div className="w-12 h-12 bg-gray-100 rounded mx-auto mb-2 flex items-center justify-center">
                         <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

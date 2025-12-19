@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Edit } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import ConfirmModal from './ConfirmModal';
