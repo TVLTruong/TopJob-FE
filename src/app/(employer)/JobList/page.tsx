@@ -1,11 +1,11 @@
 'use client';
-import React, { useState } from 'react';
-import { Search, MoreVertical, Trash2, Edit3, ChevronLeft, ChevronRight, Eye, EyeOff, X } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Search, MoreVertical, Trash2, Edit3, ChevronLeft, ChevronRight, Eye, EyeOff, X, Filter } from 'lucide-react';
 
 interface Job {
   id: number;
   title: string;
-  status: 'active' | 'full' | 'closed';
+  status: 'pending' | 'active' | 'full' | 'closed';
   postedDate: string;
   deadline: string;
   type: 'fulltime' | 'freelance';
@@ -16,25 +16,28 @@ interface Job {
 
 export default function JobListingsTab() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'hide' | 'unhide' | 'delete' | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [jobs, setJobs] = useState<Job[]>([
-    { id: 1, title: 'Social Media Assistant', status: 'active', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 4, totalQuantity: 20 },
+    { id: 1, title: 'Social Media Assistant', status: 'pending', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 4, totalQuantity: 20 },
     { id: 2, title: 'Senior Designer', status: 'full', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 24, totalQuantity: 24 },
-    { id: 3, title: 'Visual Designer', status: 'active', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'freelance', applicants: 1, totalQuantity: 20 },
+    { id: 3, title: 'Visual Designer', status: 'pending', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'freelance', applicants: 1, totalQuantity: 20 },
     { id: 4, title: 'Data Science', status: 'closed', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'freelance', applicants: 10, totalQuantity: 26 },
     { id: 5, title: 'Kotlin Developer', status: 'full', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 30, totalQuantity: 30 },
     { id: 6, title: 'React Developer', status: 'closed', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 10, totalQuantity: 14 },
     { id: 7, title: 'C++ Developer', status: 'closed', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 20, totalQuantity: 30 },
     { id: 8, title: 'Python Developer', status: 'closed', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 20, totalQuantity: 30 },
     { id: 9, title: 'Java Developer', status: 'full', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 30, totalQuantity: 30 },
-    { id: 10, title: 'Rust Developer', status: 'closed', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 20, totalQuantity: 30 },
+    { id: 10, title: 'Rust Developer', status: 'pending', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 5, totalQuantity: 30 },
   ]);
 
   const statusConfig = {
+    pending: { label: 'Chờ duyệt', color: 'bg-orange-100 text-orange-600 border-orange-300' },
     active: { label: 'Đã đăng', color: 'bg-green-100 text-green-600 border-green-300' },
     full: { label: 'Đã đủ', color: 'bg-blue-100 text-blue-600 border-blue-300' },
     closed: { label: 'Đã đóng', color: 'bg-red-100 text-red-600 border-red-300' },
@@ -119,26 +122,167 @@ export default function JobListingsTab() {
 
   const modalContent = getModalContent();
 
-  const filteredJobs = jobs.filter(job =>
-    job.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filterOptions = [
+    { value: 'all', label: 'Tất cả', count: jobs.length },
+    { value: 'pending', label: 'Chờ duyệt', count: jobs.filter(j => j.status === 'pending').length },
+    { value: 'active', label: 'Đã đăng', count: jobs.filter(j => j.status === 'active').length },
+    { value: 'full', label: 'Đã đủ', count: jobs.filter(j => j.status === 'full').length },
+    { value: 'closed', label: 'Đã đóng', count: jobs.filter(j => j.status === 'closed').length },
+  ];
+
+  const getStatusLabel = (value: string) => filterOptions.find(opt => opt.value === value)?.label || 'Tất cả';
+
+  const filteredJobs = useMemo(() => {
+    let data = jobs;
+    if (statusFilter !== 'all') {
+      data = data.filter(job => job.status === statusFilter);
+    }
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      data = data.filter(job => job.title.toLowerCase().includes(query));
+    }
+    return data;
+  }, [jobs, statusFilter, searchQuery]);
 
   return (
     <div className="bg-white rounded-xl shadow-sm">
       {/* Header */}
       <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Tổng số công việc: {jobs.length}</h2>
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <h2 className="text-2xl font-bold">
+            Tổng số công việc: {filteredJobs.length}
+            {(searchQuery || statusFilter !== 'all') && (
+              <span className="ml-2 text-sm font-normal text-gray-500">
+                / {jobs.length} tổng
+              </span>
+            )}
+          </h2>
+          <div className="flex items-center gap-3">
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <button
+                onClick={() => setShowFilterDropdown(prev => !prev)}
+                className={`flex items-center justify-between gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors w-48 ${
+                  statusFilter !== 'all'
+                    ? 'border-blue-600 text-blue-600 bg-blue-50'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Filter className="w-4 h-4 shrink-0" />
+                  <span className="truncate">{getStatusLabel(statusFilter)}</span>
+                </div>
+                <span
+                  className={`ml-1 px-2 py-0.5 rounded-full text-xs min-w-[28px] text-center ${
+                    statusFilter !== 'all'
+                      ? 'bg-blue-600 text-white'
+                      : 'invisible bg-blue-600 text-white'
+                  }`}
+                >
+                  {filteredJobs.length}
+                </span>
+              </button>
+              {showFilterDropdown && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowFilterDropdown(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+                    <div className="p-2">
+                      <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">
+                        Lọc theo tình trạng
+                      </div>
+                      {filterOptions.map(option => (
+                        <button
+                          key={option.value}
+                          onClick={() => {
+                            setStatusFilter(option.value);
+                            setShowFilterDropdown(false);
+                          }}
+                          className={`w-full px-3 py-2 text-left text-sm rounded-md transition-colors flex items-center justify-between ${
+                            statusFilter === option.value
+                              ? 'bg-blue-50 text-blue-600 font-medium'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span>{option.label}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            statusFilter === option.value
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {option.count}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    {statusFilter !== 'all' && (
+                      <div className="border-t p-2">
+                        <button
+                          onClick={() => {
+                            setStatusFilter('all');
+                            setShowFilterDropdown(false);
+                          }}
+                          className="w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md text-center"
+                        >
+                          Xóa bộ lọc
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
+        </div>
+
+        {/* Active filters */}
+        <div className="mb-6 min-h-[40px]">
+          {(searchQuery || statusFilter !== 'all') ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-gray-600">Đang lọc:</span>
+              {searchQuery && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                  Từ khóa: "{searchQuery}"
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="hover:text-gray-900"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+              {statusFilter !== 'all' && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                  {getStatusLabel(statusFilter)}
+                  <button
+                    onClick={() => setStatusFilter('all')}
+                    className="hover:text-blue-900"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+            </div>
+          ) : null}
         </div>
 
         {/* Table Header */}

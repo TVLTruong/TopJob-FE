@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { User, Lock, Phone, Briefcase, Save, Eye, EyeOff, Mail } from 'lucide-react'
-import ConfirmModal from '@/app/components/companyProfile/ConfirmModal'
+import OtpModal from '@/app/components/companyProfile/OtpModal'
 
 type TabType = 'account' | 'password'
 
@@ -12,7 +12,7 @@ export default function SettingsPage() {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showOtpModal, setShowOtpModal] = useState(false)
   const [pendingAction, setPendingAction] = useState<'account' | 'password' | null>(null)
 
   // Form states
@@ -29,69 +29,104 @@ export default function SettingsPage() {
     confirmPassword: ''
   })
 
+  // Validation error states
+  const [accountErrors, setAccountErrors] = useState<Record<string, string>>({});
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
+
+  // Helpers
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase());
+  };
+
+  const validatePhone = (phone: string) => {
+    // simple: only digits, 9-11 characters (adjust if needed)
+    const re = /^[0-9]{9,11}$/;
+    return re.test(String(phone));
+  };
+
   const handleAccountInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setAccountInfo({
       ...accountInfo,
-      [e.target.name]: e.target.value
-    })
+      [name]: value
+    });
+    // clear field error when user types
+    setAccountErrors(prev => {
+      if (!prev[name]) return prev;
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
   }
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setPasswordInfo({
       ...passwordInfo,
-      [e.target.name]: e.target.value
-    })
+      [name]: value
+    });
+    setPasswordErrors(prev => {
+      if (!prev[name]) return prev;
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
   }
 
   const handleSaveAccountClick = () => {
-    setPendingAction('account')
-    setShowConfirmModal(true)
+    const errs: Record<string,string> = {};
+    if (!accountInfo.fullName.trim()) errs.fullName = 'Vui lòng nhập tên';
+    if (!accountInfo.email.trim()) errs.email = 'Vui lòng nhập email';
+    else if (!validateEmail(accountInfo.email)) errs.email = 'Email không hợp lệ';
+    if (!accountInfo.position.trim()) errs.position = 'Vui lòng nhập chức vụ';
+    if (!accountInfo.phone.trim()) errs.phone = 'Vui lòng nhập số điện thoại';
+    else if (!validatePhone(accountInfo.phone)) errs.phone = 'Số điện thoại không hợp lệ (chỉ chữ số, 9-11 số)';
+
+    setAccountErrors(errs);
+    if (Object.keys(errs).length === 0) {
+      setPendingAction('account');
+      setShowOtpModal(true);
+    }
   }
 
   const handleChangePasswordClick = () => {
-    if (passwordInfo.newPassword !== passwordInfo.confirmPassword) {
-      alert('Mật khẩu mới và xác nhận mật khẩu không khớp!')
-      return
+    const errs: Record<string,string> = {};
+    if (!passwordInfo.currentPassword) errs.currentPassword = 'Vui lòng nhập mật khẩu hiện tại';
+    if (!passwordInfo.newPassword) errs.newPassword = 'Vui lòng nhập mật khẩu mới';
+    else if (passwordInfo.newPassword.length < 6) errs.newPassword = 'Mật khẩu phải có ít nhất 6 ký tự';
+    if (!passwordInfo.confirmPassword) errs.confirmPassword = 'Vui lòng xác nhận mật khẩu mới';
+    if (passwordInfo.newPassword && passwordInfo.confirmPassword && passwordInfo.newPassword !== passwordInfo.confirmPassword) {
+      errs.confirmPassword = 'Mật khẩu xác nhận không khớp';
     }
 
-    if (passwordInfo.newPassword.length < 6) {
-      alert('Mật khẩu phải có ít nhất 6 ký tự!')
-      return
+    setPasswordErrors(errs);
+    if (Object.keys(errs).length === 0) {
+      setPendingAction('password');
+      setShowOtpModal(true);
     }
-
-    if (!passwordInfo.currentPassword) {
-      alert('Vui lòng nhập mật khẩu hiện tại!')
-      return
-    }
-
-    setPendingAction('password')
-    setShowConfirmModal(true)
   }
 
-  const handleConfirm = () => {
-    setShowConfirmModal(false)
-    
-    if (pendingAction === 'account') {
-      // Xử lý lưu thông tin tài khoản
-      setSuccessMessage('Cập nhật thông tin tài khoản thành công!')
-      setTimeout(() => setSuccessMessage(''), 3000)
-    } else if (pendingAction === 'password') {
-      // Xử lý đổi mật khẩu
-      setSuccessMessage('Đổi mật khẩu thành công!')
-      setPasswordInfo({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      })
-      setTimeout(() => setSuccessMessage(''), 3000)
+  const verifyOtp = async (code: string) => {
+    // Mock verify: accept 123456
+    const ok = code === '123456'
+    if (ok) {
+      if (pendingAction === 'account') {
+        setSuccessMessage('Cập nhật thông tin tài khoản thành công!')
+        setTimeout(() => setSuccessMessage(''), 3000)
+      } else if (pendingAction === 'password') {
+        setSuccessMessage('Đổi mật khẩu thành công!')
+        setPasswordInfo({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        })
+        setTimeout(() => setSuccessMessage(''), 3000)
+      }
+      setPendingAction(null)
+      return true
     }
-    
-    setPendingAction(null)
-  }
-
-  const handleCancel = () => {
-    setShowConfirmModal(false)
-    setPendingAction(null)
+    return false
   }
 
   const tabs = [
@@ -157,9 +192,15 @@ export default function SettingsPage() {
                   name="fullName"
                   value={accountInfo.fullName}
                   onChange={handleAccountInfoChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${accountErrors.fullName ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                   placeholder="Nhập tên của bạn"
                 />
+                <p
+                  className={`text-red-500 text-xs mt-1 transition-all`}
+                  style={{ minHeight: '20px' }}
+                >
+                  {accountErrors.fullName || ''}
+                </p>
               </div>
 
               <div>
@@ -172,9 +213,15 @@ export default function SettingsPage() {
                   name="email"
                   value={accountInfo.email}
                   onChange={handleAccountInfoChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${accountErrors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                   placeholder="Nhập email công việc"
                 />
+                <p
+                  className={`text-red-500 text-xs mt-1 transition-all`}
+                  style={{ minHeight: '20px' }}
+                >
+                  {accountErrors.email || ''}
+                </p>
               </div>
 
               <div>
@@ -187,9 +234,15 @@ export default function SettingsPage() {
                   name="position"
                   value={accountInfo.position}
                   onChange={handleAccountInfoChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${accountErrors.position ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                   placeholder="Nhập chức vụ của bạn"
                 />
+                <p
+                  className={`text-red-500 text-xs mt-1 transition-all`}
+                  style={{ minHeight: '20px' }}
+                >
+                  {accountErrors.position || ''}
+                </p>
               </div>
 
               <div>
@@ -202,9 +255,15 @@ export default function SettingsPage() {
                   name="phone"
                   value={accountInfo.phone}
                   onChange={handleAccountInfoChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${accountErrors.phone ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                   placeholder="Nhập số điện thoại"
                 />
+                <p
+                  className={`text-red-500 text-xs mt-1 transition-all`}
+                  style={{ minHeight: '20px' }}
+                >
+                  {accountErrors.phone || ''}
+                </p>
               </div>
 
               <button
@@ -239,7 +298,7 @@ export default function SettingsPage() {
                     name="currentPassword"
                     value={passwordInfo.currentPassword}
                     onChange={handlePasswordChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12 ${passwordErrors.currentPassword ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="Nhập mật khẩu hiện tại"
                   />
                   <button
@@ -250,6 +309,12 @@ export default function SettingsPage() {
                     {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
+                <p
+                  className={`text-red-500 text-xs mt-1 transition-all`}
+                  style={{ minHeight: '20px' }}
+                >
+                  {passwordErrors.currentPassword || ''}
+                </p>
               </div>
 
               <div>
@@ -262,7 +327,7 @@ export default function SettingsPage() {
                     name="newPassword"
                     value={passwordInfo.newPassword}
                     onChange={handlePasswordChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12 ${passwordErrors.newPassword ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
                   />
                   <button
@@ -273,6 +338,12 @@ export default function SettingsPage() {
                     {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
+                <p
+                  className={`text-red-500 text-xs mt-1 transition-all`}
+                  style={{ minHeight: '20px' }}
+                >
+                  {passwordErrors.newPassword || ''}
+                </p>
               </div>
 
               <div>
@@ -285,7 +356,7 @@ export default function SettingsPage() {
                     name="confirmPassword"
                     value={passwordInfo.confirmPassword}
                     onChange={handlePasswordChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12 ${passwordErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="Nhập lại mật khẩu mới"
                   />
                   <button
@@ -296,6 +367,12 @@ export default function SettingsPage() {
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
+                <p
+                  className={`text-red-500 text-xs mt-1 transition-all`}
+                  style={{ minHeight: '20px' }}
+                >
+                  {passwordErrors.confirmPassword || ''}
+                </p>
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -316,19 +393,24 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* Confirm Modal */}
-      <ConfirmModal
-        open={showConfirmModal}
-        title="Xác nhận thay đổi"
+      {/* OTP Modal */}
+      <OtpModal
+        open={showOtpModal}
+        title="Xác thực thay đổi"
         message={
           pendingAction === 'account'
-            ? 'Bạn có chắc chắn muốn lưu thay đổi thông tin tài khoản?'
-            : 'Bạn có chắc chắn muốn đổi mật khẩu? Sau khi đổi, bạn sẽ cần đăng nhập lại.'
+            ? 'Nhập mã OTP để xác nhận lưu thay đổi thông tin tài khoản.'
+            : 'Nhập mã OTP để xác nhận đổi mật khẩu.'
         }
-        confirmText="Xác nhận"
-        cancelText="Hủy"
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
+        onClose={() => {
+          setShowOtpModal(false)
+          setPendingAction(null)
+        }}
+        onVerify={async (code) => {
+          const ok = await verifyOtp(code)
+          if (ok) setShowOtpModal(false)
+          return ok
+        }}
       />
     </div>
   )

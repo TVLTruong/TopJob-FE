@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
@@ -22,97 +22,106 @@ export default function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
+  const modalRef = useRef<HTMLDivElement | null>(null);
+  const confirmRef = useRef<HTMLButtonElement | null>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
-    if (open) {
-      // Lấy width của scrollbar để bù vào padding-right
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    if (!open) return;
 
-      // Lưu scroll position hiện tại
-      const scrollY = window.scrollY;
+    previouslyFocused.current = document.activeElement as HTMLElement | null;
 
-      // Thêm padding-right để tránh layout shift
+    // Prevent layout shift: measure scrollbar and add padding-right
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevBodyPaddingRight = document.body.style.paddingRight;
+
+    document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
       document.body.style.paddingRight = `${scrollbarWidth}px`;
-      // Khóa scroll nhưng giữ nguyên position
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
-      document.body.style.overflow = "hidden";
-
-      return () => {
-        // Restore scroll khi đóng modal
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.paddingRight = "";
-        document.body.style.width = "";
-        document.body.style.overflow = "";
-        window.scrollTo(0, scrollY);
-      };
     }
-  }, [open]);
+
+    // Focus the primary action when modal opens
+    setTimeout(() => {
+      confirmRef.current?.focus();
+    }, 0);
+
+    // Key handlers: Escape to cancel; trap Tab inside modal
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onCancel();
+        return;
+      }
+      if (e.key === "Tab" && modalRef.current) {
+        const focusable = Array.from(
+          modalRef.current.querySelectorAll<HTMLElement>(
+            "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"
+          )
+        ).filter(Boolean);
+
+        if (focusable.length === 0) {
+          e.preventDefault();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        } else if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = prevBodyOverflow;
+      document.body.style.paddingRight = prevBodyPaddingRight;
+      // restore focus
+      previouslyFocused.current?.focus?.();
+    };
+  }, [open, onCancel]);
 
   if (!open) return null;
 
-  // Use React Portal to render modal outside the current DOM hierarchy
-  const modalContent = (
-    <div className="fixed inset-0 z-[999999]" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-      {/* Backdrop */}
+  // Render modal in portal to body so it doesn't change page layout
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center" role="dialog" aria-modal="true" aria-label={title}>
+      {/* Backdrop captures all clicks */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50"
         onClick={onCancel}
-        aria-hidden="true"
-        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
       />
-
-      {/* Modal container */}
-      <div 
-        className="fixed inset-0 flex items-center justify-center p-4"
-        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+      <div
+        ref={modalRef}
+        className="relative z-[10000] bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal content */}
-        <div 
-          className="relative bg-white rounded-lg shadow-2xl w-full max-w-md mx-auto animate-in fade-in zoom-in duration-200"
-          onClick={(e) => e.stopPropagation()}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-title"
-        >
-          {/* Close button (X) */}
-          <button
-            onClick={onCancel}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
-            aria-label="Đóng"
-            type="button"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          <div className="p-6">
-            <h2 id="modal-title" className="text-lg font-semibold mb-2 pr-8">{title}</h2>
-            {message && <p className="text-gray-600 mb-6">{message}</p>}
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={onCancel}
-                type="button"
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-              >
-                {cancelText}
-              </button>
-              <button
-                onClick={onConfirm}
-                type="button"
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-              >
-                {confirmText}
-              </button>
-            </div>
+        <div className="p-6">
+          <h3 className="text-lg font-semibold mb-2">{title}</h3>
+          {message && <p className="text-sm text-gray-600 mb-4">{message}</p>}
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              {cancelText}
+            </button>
+            <button
+              ref={confirmRef}
+              onClick={onConfirm}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              {confirmText}
+            </button>
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
-
-  // Render modal using React Portal directly to document.body
-  return typeof document !== 'undefined' 
-    ? createPortal(modalContent, document.body)
-    : null;
 }

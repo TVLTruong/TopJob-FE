@@ -1,16 +1,19 @@
 'use client';
 import React, { useState, useMemo } from 'react';
-import { Search, MoreVertical, Trash2, Edit3, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, MoreVertical, Trash2, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 
 interface Applicant {
   id: number;
   name: string;
   avatar: string;
+  position: string;
   status: 'pending' | 'approved' | 'passed' | 'rejected';
   appliedDate: string;
 }
 
 export default function ApplicantsTab() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedApplicants, setSelectedApplicants] = useState<number[]>([]);
@@ -18,16 +21,16 @@ export default function ApplicantsTab() {
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [applicants, setApplicants] = useState<Applicant[]>([
-    { id: 1, name: 'Jake Gyll', avatar: '👨', status: 'pending', appliedDate: '24/05/2025' },
-    { id: 2, name: 'Guy Hawkins', avatar: '👨‍🦰', status: 'pending', appliedDate: '24/05/2025' },
-    { id: 3, name: 'Cyndy Lillibridge', avatar: '👩', status: 'passed', appliedDate: '24/05/2025' },
-    { id: 4, name: 'Rodolfo Goode', avatar: '👨‍🦱', status: 'rejected', appliedDate: '24/05/2025' },
-    { id: 5, name: 'Leif Floyd', avatar: '👨‍💼', status: 'approved', appliedDate: '24/05/2025' },
-    { id: 6, name: 'Jenny Wilson', avatar: '👩‍🦰', status: 'approved', appliedDate: '24/05/2025' },
-    { id: 7, name: 'Jerome Bell', avatar: '👨‍🦲', status: 'pending', appliedDate: '24/05/2025' },
-    { id: 8, name: 'Eleanor Pena', avatar: '👩‍🦱', status: 'rejected', appliedDate: '24/05/2025' },
-    { id: 9, name: 'Darrell Steward', avatar: '👨‍🦳', status: 'passed', appliedDate: '24/05/2025' },
-    { id: 10, name: 'Floyd Miles', avatar: '👨‍💻', status: 'pending', appliedDate: '24/05/2025' },
+    { id: 1, name: 'Jake Gyll', avatar: '👨', position: 'Senior Product Designer', status: 'pending', appliedDate: '24/05/2025' },
+    { id: 2, name: 'Guy Hawkins', avatar: '👨‍🦰', position: 'UI/UX Researcher', status: 'pending', appliedDate: '24/05/2025' },
+    { id: 3, name: 'Cyndy Lillibridge', avatar: '👩', position: 'Frontend Developer', status: 'passed', appliedDate: '24/05/2025' },
+    { id: 4, name: 'Rodolfo Goode', avatar: '👨‍🦱', position: 'QA Automation Engineer', status: 'rejected', appliedDate: '24/05/2025' },
+    { id: 5, name: 'Leif Floyd', avatar: '👨‍💼', position: 'Product Manager', status: 'approved', appliedDate: '24/05/2025' },
+    { id: 6, name: 'Jenny Wilson', avatar: '👩‍🦰', position: 'Senior Backend Engineer', status: 'approved', appliedDate: '24/05/2025' },
+    { id: 7, name: 'Jerome Bell', avatar: '👨‍🦲', position: 'Mobile Developer', status: 'pending', appliedDate: '24/05/2025' },
+    { id: 8, name: 'Eleanor Pena', avatar: '👩‍🦱', position: 'Data Analyst', status: 'rejected', appliedDate: '24/05/2025' },
+    { id: 9, name: 'Darrell Steward', avatar: '👨‍🦳', position: 'DevOps Engineer', status: 'passed', appliedDate: '24/05/2025' },
+    { id: 10, name: 'Floyd Miles', avatar: '👨‍💻', position: 'Growth Marketer', status: 'pending', appliedDate: '24/05/2025' },
   ]);
 
   const statusConfig = {
@@ -38,7 +41,7 @@ export default function ApplicantsTab() {
   };
 
   const filterOptions = [
-    { value: 'all', label: 'Tất cả trạng thái', count: applicants.length },
+    { value: 'all', label: 'Tất cả', count: applicants.length },
     { value: 'pending', label: 'Chờ duyệt', count: applicants.filter(a => a.status === 'pending').length },
     { value: 'approved', label: 'Đã duyệt', count: applicants.filter(a => a.status === 'approved').length },
     { value: 'passed', label: 'Đã đậu', count: applicants.filter(a => a.status === 'passed').length },
@@ -92,147 +95,165 @@ export default function ApplicantsTab() {
 
   const getActiveFilterLabel = () => {
     const option = filterOptions.find(opt => opt.value === statusFilter);
-    return option?.label || 'Tất cả trạng thái';
+    return option?.label || 'Tất cả';
+  };
+
+  const handleOpenProfile = () => {
+    router.push('/profile');
+  };
+
+  const handleOpenJobDetail = () => {
+    router.push('/JobList/JobDetail');
   };
 
   return (
     <div className="bg-white rounded-xl shadow-sm">
       {/* Header */}
       <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6">
           <h2 className="text-2xl font-bold">
             Tổng số ứng viên: {filteredApplicants.length}
             {searchQuery && ` (tìm thấy từ ${applicants.length})`}
           </h2>
-          <div className="flex items-center gap-3">
-            {/* Search Input */}
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm theo tên, ngày..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+        </div>
+
+        {/* Active Filters Display (reserve space to avoid layout jump) */}
+        <div className="mb-4 min-h-[40px]">
+          {(searchQuery || statusFilter !== 'all') ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-gray-600">Đang lọc:</span>
               {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  ×
-                </button>
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                  Tìm kiếm: "{searchQuery}"
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="hover:text-gray-900"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+              {statusFilter !== 'all' && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                  {getActiveFilterLabel()}
+                  <button
+                    onClick={() => setStatusFilter('all')}
+                    className="hover:text-blue-900"
+                  >
+                    ×
+                  </button>
+                </span>
               )}
             </div>
+          ) : null}
+        </div>
 
-            {/* Filter Dropdown */}
-            <div className="relative">
+        {/* Search & Filter controls near table */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          {/* Search Input */}
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tên, ngày..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {searchQuery && (
               <button
-                onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          {/* Filter Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+              className={`flex items-center justify-between gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors w-56 ${
+                statusFilter !== 'all'
+                  ? 'border-blue-600 text-blue-600 bg-blue-50'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Filter className="w-4 h-4 shrink-0" />
+                <span className="truncate">{getActiveFilterLabel()}</span>
+              </div>
+              <span
+                className={`ml-1 px-2 py-0.5 rounded-full text-xs min-w-[28px] text-center ${
                   statusFilter !== 'all'
-                    ? 'border-blue-600 text-blue-600 bg-blue-50'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    ? 'bg-blue-600 text-white'
+                    : 'invisible bg-blue-600 text-white'
                 }`}
               >
-                <Filter className="w-4 h-4" />
-                <span>{getActiveFilterLabel()}</span>
-                {statusFilter !== 'all' && (
-                  <span className="ml-1 px-2 py-0.5 bg-blue-600 text-white rounded-full text-xs">
-                    {filteredApplicants.length}
-                  </span>
-                )}
-              </button>
+                {filteredApplicants.length}
+              </span>
+            </button>
 
-              {showFilterDropdown && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-10" 
-                    onClick={() => setShowFilterDropdown(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
-                    <div className="p-2">
-                      <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">
-                        Lọc theo trạng thái
-                      </div>
-                      {filterOptions.map((option) => (
-                        <button
-                          key={option.value}
-                          onClick={() => {
-                            setStatusFilter(option.value);
-                            setShowFilterDropdown(false);
-                            setCurrentPage(1);
-                          }}
-                          className={`w-full px-3 py-2 text-left text-sm rounded-md transition-colors flex items-center justify-between ${
-                            statusFilter === option.value
-                              ? 'bg-blue-50 text-blue-600 font-medium'
-                              : 'text-gray-700 hover:bg-gray-50'
-                          }`}
-                        >
-                          <span>{option.label}</span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            statusFilter === option.value
-                              ? 'bg-blue-100'
-                              : 'bg-gray-100'
-                          }`}>
-                            {option.count}
-                          </span>
-                        </button>
-                      ))}
+            {showFilterDropdown && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setShowFilterDropdown(false)}
+                />
+                <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+                  <div className="p-2">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">
+                      Lọc theo trạng thái
                     </div>
-                    {statusFilter !== 'all' && (
-                      <div className="border-t p-2">
-                        <button
-                          onClick={() => {
-                            setStatusFilter('all');
-                            setShowFilterDropdown(false);
-                          }}
-                          className="w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md text-center"
-                        >
-                          Xóa bộ lọc
-                        </button>
-                      </div>
-                    )}
+                    {filterOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setStatusFilter(option.value);
+                          setShowFilterDropdown(false);
+                          setCurrentPage(1);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-sm rounded-md transition-colors flex items-center justify-between ${
+                          statusFilter === option.value
+                            ? 'bg-blue-50 text-blue-600 font-medium'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span>{option.label}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          statusFilter === option.value
+                            ? 'bg-blue-100'
+                            : 'bg-gray-100'
+                        }`}>
+                          {option.count}
+                        </span>
+                      </button>
+                    ))}
                   </div>
-                </>
-              )}
-            </div>
+                  {statusFilter !== 'all' && (
+                    <div className="border-t p-2">
+                      <button
+                        onClick={() => {
+                          setStatusFilter('all');
+                          setShowFilterDropdown(false);
+                        }}
+                        className="w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md text-center"
+                      >
+                        Xóa bộ lọc
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Active Filters Display */}
-        {(searchQuery || statusFilter !== 'all') && (
-          <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <span className="text-sm text-gray-600">Đang lọc:</span>
-            {searchQuery && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                Tìm kiếm: "{searchQuery}"
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="hover:text-gray-900"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-            {statusFilter !== 'all' && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                {getActiveFilterLabel()}
-                <button
-                  onClick={() => setStatusFilter('all')}
-                  className="hover:text-blue-900"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-          </div>
-        )}
-
         {/* Table Header */}
         <div className="border border-gray-200 rounded-lg bg-gray-50">
-          <div className="grid grid-cols-12 gap-4 py-4 px-4 text-sm font-medium text-gray-600">
-            <div className="col-span-1 flex items-center">
+          <div className="grid grid-cols-[48px_2fr_2fr_1.5fr_1.5fr_1fr] gap-4 py-4 px-4 text-sm font-medium text-gray-600">
+            <div className="flex items-center">
               <input
                 type="checkbox"
                 checked={filteredApplicants.length > 0 && selectedApplicants.length === filteredApplicants.length}
@@ -240,19 +261,23 @@ export default function ApplicantsTab() {
                 className="w-4 h-4 rounded border-gray-300"
               />
             </div>
-            <div className="col-span-3 flex items-center gap-1">
+            <div className="flex items-center gap-1">
               Họ tên
               <span className="text-gray-400">⇅</span>
             </div>
-            <div className="col-span-3 flex items-center gap-1">
+            <div className="flex items-center gap-1">
+              Vị trí ứng
+              <span className="text-gray-400">⇅</span>
+            </div>
+            <div className="flex items-center gap-1">
               Trạng thái
               <span className="text-gray-400">⇅</span>
             </div>
-            <div className="col-span-3 flex items-center gap-1">
+            <div className="flex items-center gap-1">
               Ngày ứng tuyển
               <span className="text-gray-400">⇅</span>
             </div>
-            <div className="col-span-2 flex items-center gap-1">
+            <div className="flex items-center gap-1">
               Tùy chọn
               <span className="text-gray-400">⇅</span>
             </div>
@@ -274,8 +299,8 @@ export default function ApplicantsTab() {
           </div>
         ) : (
           filteredApplicants.map((applicant) => (
-            <div key={applicant.id} className="grid grid-cols-12 gap-4 py-4 hover:bg-gray-50 items-center">
-              <div className="col-span-1">
+            <div key={applicant.id} className="grid grid-cols-[48px_2fr_2fr_1.5fr_1.5fr_1fr] gap-4 py-4 hover:bg-gray-50 items-center">
+              <div>
                 <input
                   type="checkbox"
                   checked={selectedApplicants.includes(applicant.id)}
@@ -283,23 +308,41 @@ export default function ApplicantsTab() {
                   className="w-4 h-4 rounded border-gray-300"
                 />
               </div>
-              <div className="col-span-3 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-2xl">
-                  {applicant.avatar}
-                </div>
-                <span className="font-medium text-gray-900">{applicant.name}</span>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleOpenProfile}
+                  className="flex items-center gap-3 text-left"
+                >
+                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-2xl">
+                    {applicant.avatar}
+                  </div>
+                  <span className="font-medium text-gray-900 hover:text-blue-600 underline-offset-2">
+                    {applicant.name}
+                  </span>
+                </button>
               </div>
-              <div className="col-span-3">
+              <div className="text-sm text-gray-700">
+                <button
+                  type="button"
+                  onClick={handleOpenJobDetail}
+                  className="text-left w-full hover:text-blue-600"
+                  title={applicant.position}
+                >
+                  <span className="truncate block">{applicant.position}</span>
+                </button>
+              </div>
+              <div>
                 <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${statusConfig[applicant.status].color}`}>
                   {statusConfig[applicant.status].label}
                 </span>
               </div>
-              <div className="col-span-3 text-gray-600 text-sm">
+              <div className="text-gray-600 text-sm">
                 {applicant.appliedDate}
               </div>
-              <div className="col-span-2 flex items-center gap-2">
-                <button className="min-w-[100px] px-4 py-1.5 border border-blue-600 text-blue-600 rounded-lg text-sm hover:bg-blue-50 whitespace-nowrap">
-                  Xem hồ sơ
+              <div className="flex items-center gap-2">
+                <button className="min-w-[120px] px-4 py-1.5 border border-blue-600 text-blue-600 rounded-lg text-sm hover:bg-blue-50 whitespace-nowrap">
+                  Đổi trạng thái
                 </button>
                 <div className="relative">
                   <button
@@ -315,10 +358,6 @@ export default function ApplicantsTab() {
                         onClick={() => setOpenDropdownId(null)}
                       />
                       <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
-                        <button className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
-                          <Edit3 className="w-4 h-4" />
-                          <span>Sửa trạng thái</span>
-                        </button>
                         <button
                           onClick={() => handleDelete(applicant.id)}
                           className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-red-600"
