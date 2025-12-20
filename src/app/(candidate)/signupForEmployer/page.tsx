@@ -215,341 +215,258 @@ export default function EmployerSignUpPage() {
                     </div>
                   ))}
                 </div>
-<<<<<<< HEAD
-=======
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phường / Xã <span className="text-red-600">*</span>
-                  </label>
-                  <select
-                    value={district}
-                    onChange={(e) => setDistrict(e.target.value)}
-                    disabled={!province}
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    style={{
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%23666' d='M8 11L3 6h10z'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'right 1rem center',
-                      color: district === "" ? '#9CA3AF' : '#111827'
+              {/* Steps wrapper with horizontal slide animation */}
+              <div
+                className="relative overflow-hidden bg-white rounded-xl shadow-sm border border-gray-100 transition-[height] duration-500 ease-in-out"
+                style={{ height: stepContainerHeight ? `${stepContainerHeight}px` : undefined }}
+              >
+                <div
+                  className="flex items-start transition-transform duration-500 ease-in-out"
+                  style={{ transform: `translateX(-${(step - 1) * 100}%)` }}
+                >
+                  {/* Step 1 */}
+                  <div 
+                    className="w-full flex-shrink-0"
+                    ref={(el) => {
+                      stepRefs.current[0] = el
                     }}
                   >
-                    <option value="" disabled></option>
-                    {districts.map((dist) => (
-                      <option key={dist} value={dist}>
-                        {dist}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+                    <div className="p-6 space-y-5">
+                      <p className="text-sm text-gray-500">
+                        Vui lòng nhập thông tin tài khoản để bắt đầu sử dụng hệ thống dành cho nhà tuyển dụng.
+                      </p>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Số nhà, tên đường <span className="text-red-600">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={streetAddress}
-                  onChange={(e) => setStreetAddress(e.target.value)}
-                  placeholder="123 Nguyễn Huệ"
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Họ tên <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            placeholder="Nguyễn Văn A"
+                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          />
+                        </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Website URL <span className="text-red-600">*</span>
-                </label>
-                <input
-                  type="url"
-                  value={websiteUrl}
-                  onChange={(e) => setWebsiteUrl(e.target.value)}
-                  placeholder="https://example.com"
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  URL bao gồm giao thức &quot;https&quot;, e.g: https://topjob.com
-                </p>
-              </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Email <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="nguyen.vana@company.com"
+                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          />
+                        </div>
 
-              {error && (
-                <p className="text-sm text-center text-red-600">{error}</p>
-              )}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Số điện thoại <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            type="tel"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            placeholder="0901234567"
+                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          />
+                        </div>
 
-              <div className="text-sm text-center text-gray-600 pt-4">
-                Bạn đã có tài khoản nhà tuyển dụng?{" "}
-                <a href="/login" className="text-emerald-600 hover:underline font-semibold">
-                  Đăng nhập
-                </a>
-              </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Tài khoản <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            placeholder="ten_tai_khoan"
+                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          />
+                        </div>
 
-              <div className="flex justify-center">
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading || !isFormValid}
-                  className={`w-full py-3 font-semibold text-white rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    isFormValid && !loading
-                      ? 'bg-emerald-500 hover:bg-emerald-600 focus:ring-emerald-500'
-                      : 'bg-gray-300 cursor-not-allowed'
-                  }`}
-                >
-                  {loading ? 'Đang xử lý...' : 'Liên hệ chúng tôi'}
-                </button>
->>>>>>> e1002d62472b6e1f854221279bd9b2304bbbffe0
-              </div>
-            </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Mật khẩu <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Tối thiểu 6 ký tự"
+                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          />
+                        </div>
 
-            {/* Steps wrapper with horizontal slide animation */}
-            <div
-              className="relative overflow-hidden bg-white rounded-xl shadow-sm border border-gray-100 transition-[height] duration-500 ease-in-out"
-              style={{ height: stepContainerHeight ? `${stepContainerHeight}px` : undefined }}
-            >
-              <div
-                className="flex items-start transition-transform duration-500 ease-in-out"
-                style={{ transform: `translateX(-${(step - 1) * 100}%)` }}
-              >
-                {/* Step 1 */}
-                <div 
-                  className="w-full flex-shrink-0"
-                  ref={(el) => {
-                    stepRefs.current[0] = el
-                  }}
-                >
-                  <div className="p-6 space-y-5">
-                    <p className="text-sm text-gray-500">
-                      Vui lòng nhập thông tin tài khoản để bắt đầu sử dụng hệ thống dành cho nhà tuyển dụng.
-                    </p>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Xác nhận mật khẩu <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Nhập lại mật khẩu"
+                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          />
+                        </div>
 
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Họ tên <span className="text-red-600">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          placeholder="Nguyễn Văn A"
-                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        />
+                        {step1Error && (
+                          <p className="text-sm text-red-600">{step1Error}</p>
+                        )}
                       </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Email <span className="text-red-600">*</span>
-                        </label>
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="nguyen.vana@company.com"
-                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Số điện thoại <span className="text-red-600">*</span>
-                        </label>
-                        <input
-                          type="tel"
-                          value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value)}
-                          placeholder="0901234567"
-                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Tài khoản <span className="text-red-600">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value)}
-                          placeholder="ten_tai_khoan"
-                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Mật khẩu <span className="text-red-600">*</span>
-                        </label>
-                        <input
-                          type="password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="Tối thiểu 6 ký tự"
-                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Xác nhận mật khẩu <span className="text-red-600">*</span>
-                        </label>
-                        <input
-                          type="password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          placeholder="Nhập lại mật khẩu"
-                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        />
-                      </div>
-
-                      {step1Error && (
-                        <p className="text-sm text-red-600">{step1Error}</p>
-                      )}
                     </div>
-                  </div>
-                  <div className="px-6 pb-6 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (canGoNextFromStep1()) setStep(2);
-                      }}
-                      className="px-5 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600"
-                    >
-                      Tiếp tục
-                    </button>
-                  </div>
-                </div>
-
-                {/* Step 2: OTP */}
-                <div 
-                  className="w-full flex-shrink-0"
-                  ref={(el) => {
-                    stepRefs.current[1] = el
-                  }}
-                >
-                  <div className="p-6 space-y-5">
-                    <p className="text-sm text-gray-500">
-                      Chúng tôi đã gửi mã OTP đến email hoặc số điện thoại của bạn. Vui lòng nhập mã để xác thực tài khoản.
-                    </p>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Mã OTP (6 ký tự)
-                      </label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={6}
-                        value={otp}
-                        onChange={(e) => {
-                          const next = e.target.value.replace(/\D/g, "").slice(0, 6);
-                          setOtp(next);
-                          setOtpError(null);
+                    <div className="px-6 pb-6 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (canGoNextFromStep1()) setStep(2);
                         }}
-                        placeholder="Nhập mã OTP"
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      />
-                      {otpError && (
-                        <p className="text-sm text-red-600 mt-1">{otpError}</p>
+                        className="px-5 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600"
+                      >
+                        Tiếp tục
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Step 2: OTP */}
+                  <div 
+                    className="w-full flex-shrink-0"
+                    ref={(el) => {
+                      stepRefs.current[1] = el
+                    }}
+                  >
+                    <div className="p-6 space-y-5">
+                      <p className="text-sm text-gray-500">
+                        Chúng tôi đã gửi mã OTP đến email hoặc số điện thoại của bạn. Vui lòng nhập mã để xác thực tài khoản.
+                      </p>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Mã OTP (6 ký tự)
+                        </label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          value={otp}
+                          onChange={(e) => {
+                            const next = e.target.value.replace(/\D/g, "").slice(0, 6);
+                            setOtp(next);
+                            setOtpError(null);
+                          }}
+                          placeholder="Nhập mã OTP"
+                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                        {otpError && (
+                          <p className="text-sm text-red-600 mt-1">{otpError}</p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <button
+                          type="button"
+                          onClick={() => setStep(1)}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          ← Quay lại
+                        </button>
+                        <button
+                          type="button"
+                          className="text-emerald-600 hover:underline"
+                        >
+                          Gửi lại mã
+                        </button>
+                      </div>
+                    </div>
+                    <div className="px-6 pb-6 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleVerifyOtp}
+                        className="px-5 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600"
+                      >
+                        Xác nhận
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Step 3: Thông tin công ty */}
+                  <div 
+                    className="w-full flex-shrink-0"
+                    ref={(el) => {
+                      stepRefs.current[2] = el
+                    }}
+                  >
+                    <div className="p-6 space-y-4">
+                      <p className="text-sm text-gray-500">
+                        Cung cấp chi tiết về công ty để ứng viên hiểu rõ hơn về môi trường làm việc của bạn.
+                      </p>
+
+                      <CompanyBasicInfoForm value={companyInfo} onChange={setCompanyInfo} />
+
+                      {step3Error && (
+                        <p className="text-sm text-red-600">{step3Error}</p>
                       )}
                     </div>
-
-                    <div className="flex items-center justify-between text-sm text-gray-500">
+                    <div className="px-6 pb-6 flex items-center justify-end">
                       <button
                         type="button"
-                        onClick={() => setStep(1)}
-                        className="text-gray-500 hover:text-gray-700"
+                        onClick={handleSubmitAll}
+                        disabled={submitting}
+                        className="px-5 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        ← Quay lại
-                      </button>
-                      <button
-                        type="button"
-                        className="text-emerald-600 hover:underline"
-                      >
-                        Gửi lại mã
+                        {submitting ? "Đang gửi..." : "Hoàn tất đăng ký"}
                       </button>
                     </div>
                   </div>
-                  <div className="px-6 pb-6 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleVerifyOtp}
-                      className="px-5 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600"
-                    >
-                      Xác nhận
-                    </button>
-                  </div>
-                </div>
 
-                {/* Step 3: Thông tin công ty */}
-                <div 
-                  className="w-full flex-shrink-0"
-                  ref={(el) => {
-                    stepRefs.current[2] = el
-                  }}
-                >
-                  <div className="p-6 space-y-4">
-                    <p className="text-sm text-gray-500">
-                      Cung cấp chi tiết về công ty để ứng viên hiểu rõ hơn về môi trường làm việc của bạn.
-                    </p>
-
-                    <CompanyBasicInfoForm value={companyInfo} onChange={setCompanyInfo} />
-
-                    {step3Error && (
-                      <p className="text-sm text-red-600">{step3Error}</p>
-                    )}
-                  </div>
-                  <div className="px-6 pb-6 flex items-center justify-end">
-                    <button
-                      type="button"
-                      onClick={handleSubmitAll}
-                      disabled={submitting}
-                      className="px-5 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      {submitting ? "Đang gửi..." : "Hoàn tất đăng ký"}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Step 4: Chờ duyệt */}
-                <div 
-                  className="w-full flex-shrink-0"
-                  ref={(el) => {
-                    stepRefs.current[3] = el
-                  }}
-                >
-                  <div className="p-6 flex flex-col items-center justify-center text-center space-y-4">
-                  <div className="mb-2 flex justify-center">
-                    <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
-                      <svg
-                        className="w-10 h-10 text-emerald-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-900">
-                    Đăng ký thành công!
-                  </h2>
-                  <p className="text-gray-600 text-sm max-w-sm">
-                    Tài khoản của bạn đang được quản trị viên kiểm duyệt. Vui lòng chờ phê duyệt trong vòng 24-48 giờ. 
-                    Chúng tôi sẽ gửi thông báo qua email sau khi tài khoản được kích hoạt.
-                  </p>
-                  <a
-                    href="/"
-                    className="mt-2 inline-flex px-5 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600"
+                  {/* Step 4: Chờ duyệt */}
+                  <div 
+                    className="w-full flex-shrink-0"
+                    ref={(el) => {
+                      stepRefs.current[3] = el
+                    }}
                   >
-                    Về trang chủ
-                  </a>
+                    <div className="p-6 flex flex-col items-center justify-center text-center space-y-4">
+                    <div className="mb-2 flex justify-center">
+                      <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
+                        <svg
+                          className="w-10 h-10 text-emerald-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      Đăng ký thành công!
+                    </h2>
+                    <p className="text-gray-600 text-sm max-w-sm">
+                      Tài khoản của bạn đang được quản trị viên kiểm duyệt. Vui lòng chờ phê duyệt trong vòng 24-48 giờ. 
+                      Chúng tôi sẽ gửi thông báo qua email sau khi tài khoản được kích hoạt.
+                    </p>
+                    <a
+                      href="/"
+                      className="mt-2 inline-flex px-5 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600"
+                    >
+                      Về trang chủ
+                    </a>
+                    </div>
                   </div>
                 </div>
-              </div>
             </div>
 
             <div className="mt-4 text-sm text-center text-gray-600">
@@ -562,6 +479,7 @@ export default function EmployerSignUpPage() {
               </a>
             </div>
           </div>
+        </div>
       </main>
     </div>
   );

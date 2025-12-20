@@ -1,13 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-<<<<<<< HEAD
-import { User, Lock, Phone, Briefcase, Save, Eye, EyeOff, Mail } from 'lucide-react'
-import OtpModal from '@/app/components/companyProfile/OtpModal'
-=======
 import { Lock, Phone, Briefcase, Save, Eye, EyeOff, Mail } from 'lucide-react'
-import ConfirmModal from '@/app/components/companyProfile/ConfirmModal'
->>>>>>> e1002d62472b6e1f854221279bd9b2304bbbffe0
+import OtpModal from '@/app/components/companyProfile/OtpModal'
 
 type TabType = 'account' | 'password'
 
