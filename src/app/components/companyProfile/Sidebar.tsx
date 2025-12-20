@@ -1,16 +1,13 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Building2, Users, Globe, LogOut, Settings, HelpCircle } from 'lucide-react'
-import ConfirmModal from '@/app/components/companyProfile/ConfirmModal';
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const navItems = [
     {
@@ -32,7 +29,7 @@ export default function Sidebar() {
 
   const settingItems = [
     {
-      href: '/settings',
+      href: '/company/settings',
       icon: Settings,
       label: 'Cài đặt'
     },
@@ -120,29 +117,11 @@ export default function Sidebar() {
             <p className="text-xs text-gray-500">@huynqd.com</p>
           </div>
         </div>
-        <button
-          onClick={() => setShowLogoutConfirm(true)}
-          className="flex items-center justify-center gap-3 px-4 py-2.5 text-red-600 bg-white hover:bg-red-50 rounded-lg w-full transition shadow-md border border-red-200"
-        >
+        <button className="flex items-center justify-center gap-3 px-4 py-2.5 text-red-600 bg-white hover:bg-red-50 rounded-lg w-full transition shadow-md border border-red-200">
           <LogOut className="w-5 h-5" />
           <span>Đăng xuất</span>
         </button>
       </div>
-
-      {/* Confirm logout modal */}
-      <ConfirmModal
-        open={showLogoutConfirm}
-        title="Xác nhận đăng xuất"
-        message="Bạn có chắc muốn đăng xuất khỏi hệ thống?"
-        confirmText="Đăng xuất"
-        cancelText="Hủy"
-        onCancel={() => setShowLogoutConfirm(false)}
-        onConfirm={() => {
-          setShowLogoutConfirm(false);
-          // TODO: replace with real logout logic (clear tokens, call API, etc.)
-          router.push('/');
-        }}
-      />
     </aside>
   );
 }

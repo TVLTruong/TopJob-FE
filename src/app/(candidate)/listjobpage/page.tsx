@@ -102,7 +102,7 @@ export default function JobApplicationHistory() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleSelectAll = (e: { target: { checked: any; }; }) => {
+  const handleSelectAll = (e: { target: { checked: boolean; }; }) => {
     if (e.target.checked) {
       setSelectedJobs(applications.map(app => app.id));
     } else {

@@ -1,9 +1,11 @@
 'use client';
 import React, { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import JobFormModal from '@/app/components/job/JobFormModal';
 import type { JobDetailData } from '@/app/components/job/JobDetailContents';
 
 export default function Header() {
+  const { user } = useAuth();
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
 
   const handleCreateJob = (jobData: JobDetailData) => {
@@ -18,6 +20,8 @@ export default function Header() {
     // Example: router.push(`/jobs/${jobId}`);
   };
 
+  const isRecruiter = user?.role === 'EMPLOYER';
+
   return (
     <>
       <header className="bg-white border-b">
@@ -29,22 +33,28 @@ export default function Header() {
               <div className="text-sm font-semibold text-gray-600">VNG</div>
             </div>
           </div>
-          <button 
-            onClick={() => setIsCreateJobOpen(true)}
-            className="bg-teal-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-teal-700 transition"
-          >
-            + Đăng việc làm
-          </button>
+          
+          {/* Chỉ hiện nút "Đăng việc làm" cho RECRUITER */}
+          {isRecruiter && (
+            <button 
+              onClick={() => setIsCreateJobOpen(true)}
+              className="bg-teal-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-teal-700 transition"
+            >
+              + Đăng việc làm
+            </button>
+          )}
         </div>
       </header>
 
-      <JobFormModal
-        isOpen={isCreateJobOpen}
-        onClose={() => setIsCreateJobOpen(false)}
-        onSave={handleCreateJob}
-        onSuccess={handleViewJob}
-        mode="create"
-      />
+      {isRecruiter && (
+        <JobFormModal
+          isOpen={isCreateJobOpen}
+          onClose={() => setIsCreateJobOpen(false)}
+          onSave={handleCreateJob}
+          onSuccess={handleViewJob}
+          mode="create"
+        />
+      )}
     </>
   );
 }

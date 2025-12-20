@@ -45,6 +45,7 @@ function UserDropdown({ onLogout }: { onLogout: () => void }) {
           <Link href="/favoritesjob" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Việc làm yêu thích</Link>
           <Link href="/listjobpage" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Công việc đã ứng tuyển</Link>
           <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Hồ sơ của tôi</Link>
+          <Link href="/setting" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Cài đặt</Link>
           <hr className="my-2" />
           <button
             onClick={() => { onLogout(); setIsOpen(false); }}

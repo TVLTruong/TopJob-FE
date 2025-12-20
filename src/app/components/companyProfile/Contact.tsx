@@ -1,7 +1,9 @@
 'use client';
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Edit, X } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 type ContactLink = {
   url: string;
@@ -21,6 +23,7 @@ type ContactProps = {
 };
 
 export default function Contact({ canEdit = false, onSave }: ContactProps) {
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -83,15 +86,18 @@ export default function Contact({ canEdit = false, onSave }: ContactProps) {
   };
 
   const visibleLinks = Object.entries(contactData).filter(
-    ([_, link]) => link.url && link.url.trim().length > 0
+    ([, link]) => link.url && link.url.trim().length > 0
   ) as Array<[keyof ContactData, ContactLink]>;
+  
+  const isRecruiter = user?.role === 'EMPLOYER';
+  const canShowEdit = isRecruiter && canEdit;
 
   return (
     <>
       <div className="bg-white rounded-xl p-8 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold">Liên hệ</h2>
-          {canEdit && (
+          {canShowEdit  && (
             <button
               onClick={() => {
                 setEditingData(contactData);
@@ -114,7 +120,7 @@ export default function Contact({ canEdit = false, onSave }: ContactProps) {
               >
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   {link.logoUrl ? (
-                    <img src={link.logoUrl} alt={getDisplayName(key)} className="w-8 h-8 object-contain" />
+                    <Image src={link.logoUrl} alt={getDisplayName(key)} width={32} height={32} className="w-8 h-8 object-contain" />
                   ) : (
                     <span className="text-blue-600 font-bold">{getIcon(key)}</span>
                   )}

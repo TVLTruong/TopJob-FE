@@ -250,6 +250,38 @@ export default function ApplicantsTab() {
           </div>
         </div>
 
+<<<<<<< HEAD
+=======
+        {/* Active Filters Display */}
+        {(searchQuery || statusFilter !== 'all') && (
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <span className="text-sm text-gray-600">Đang lọc:</span>
+            {searchQuery && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                Tìm kiếm: &quot;{searchQuery}&quot;
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="hover:text-gray-900"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+            {statusFilter !== 'all' && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                {getActiveFilterLabel()}
+                <button
+                  onClick={() => setStatusFilter('all')}
+                  className="hover:text-blue-900"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+          </div>
+        )}
+
+>>>>>>> e1002d62472b6e1f854221279bd9b2304bbbffe0
         {/* Table Header */}
         <div className="border border-gray-200 rounded-lg bg-gray-50">
           <div className="grid grid-cols-[48px_2fr_2fr_1.5fr_1.5fr_1fr] gap-4 py-4 px-4 text-sm font-medium text-gray-600">

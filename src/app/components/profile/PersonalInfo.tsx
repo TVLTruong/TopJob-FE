@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import type { Profile } from "../../(candidate)/profile/types";
 import { CameraIcon, EditTextIcon, EmailIcon, PhoneIcon, CalendarIcon, GenderIcon, LocationIcon, LinkIcon } from "./Icons";
 
@@ -24,7 +25,7 @@ export default function PersonalInfo({ avatar, fileInputRef, handleAvatarClick, 
               className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold cursor-pointer hover:bg-blue-700 transition-colors overflow-hidden"
             >
               {avatar ? (
-                <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
+                <Image src={avatar} alt="Avatar" width={80} height={80} className="w-full h-full object-cover" />
               ) : (
                 profile.name.charAt(0).toUpperCase()
               )}

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Search, MapPin, ChevronDown, Check, ChevronsUpDown } from "lucide-react";
+import { Search, MapPin, Check, ChevronsUpDown } from "lucide-react";
 import Image from "next/image";
 import images from "@/app/utils/images";
 import { Combobox, Transition } from '@headlessui/react';
-import { vietnamCities, allOption, locationsWithAll } from '@/app/utils/vietnamLocations';
+import { allOption, locationsWithAll } from '@/app/utils/vietnamLocations';
 
 const suggestions = [
   "Java Developer",

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown, X, SlidersHorizontal, Briefcase, DollarSign, Clock, Layers, Award } from "lucide-react";
+import { useRouter } from "next/navigation";
 import HeroSearcher from "@/app/components/landing/searcher";
 import Jobcard from "@/app/components/job/Jobcard";
 import { Job } from "@/app/components/types/job.types";
@@ -333,6 +334,8 @@ function SalaryFilter({ minSalary, maxSalary, tempMin, tempMax, onTempChange }: 
 
 // Main Component
 export default function JobSearchPage() {
+  const router = useRouter();
+  
   // Applied filters (actual filters being used)
   const [selectedWorkTypes, setSelectedWorkTypes] = useState<string[]>([]);
   const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
@@ -340,6 +343,10 @@ export default function JobSearchPage() {
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
   const [minSalary, setMinSalary] = useState(0);
   const [maxSalary, setMaxSalary] = useState(100);
+  
+  const handleJobClick = (jobId: string) => {
+    router.push(`/JobList/JobDetail?id=${jobId}`);
+  };
   
   // Temporary filters (being edited)
   const [tempWorkTypes, setTempWorkTypes] = useState<string[]>([]);
@@ -509,6 +516,7 @@ export default function JobSearchPage() {
                 onApply={handleApplyJob}
                 onSave={handleSaveJob}
                 isSaved={savedJobs.includes(job.id)}
+                onClick={handleJobClick}
               />
             ))}
           </div>

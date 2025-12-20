@@ -1,17 +1,55 @@
-import type { Metadata } from "next";
+// app/layout.tsx
+'use client';
+
 import { Inter } from "next/font/google";
 import "@/app/globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Sidebar from '@/app/components/companyProfile/Sidebar';
+import Header from '@/app/components/Header';
+import Footer from '@/app/components/Footer';
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata = {
-  title: "TopJob",
-  description: "Dự án tìm việc làm",
-};
+function LayoutContent({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
-export default function CompanyLayout({
+  const isRecruiter = user?.role === 'EMPLOYER';
+  const isCandidate = user?.role === 'CANDIDATE';
+
+  // Layout cho CANDIDATE: Header + Content + Footer
+  if (isCandidate) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1">
+          {children}
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Layout cho RECRUITER: Sidebar + Content
+  if (isRecruiter) {
+    return (
+      <div className="flex max-w-7xl mx-auto">
+        <Sidebar />
+        <main className="flex-1">
+          {children}
+        </main>
+      </div>
+    );
+  }
+
+  // Chưa login hoặc role khác: chỉ content
+  return <div className="w-full">{children}</div>;
+}
+
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -20,12 +58,7 @@ export default function CompanyLayout({
     <html lang="vi">
       <body className={`${inter.className} bg-gray-50`}>
         <AuthProvider>
-          <div className="flex max-w-7xl mx-auto">
-            <Sidebar />
-            <main className="flex-1">
-              {children}
-            </main>
-          </div>
+          <LayoutContent>{children}</LayoutContent>
         </AuthProvider>
       </body>
     </html>

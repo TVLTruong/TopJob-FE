@@ -4,6 +4,12 @@ import { CloseIcon } from "./Icons";
 import { useState, useEffect } from "react";
 import locationData from "@/app/assets/danh-sach-3321-xa-phuong.json";
 
+interface LocationItem {
+  "Tên": string;
+  "Cấp": string;
+  "Tỉnh / Thành Phố": string;
+}
+
 interface BasicInfo {
   name: string;
   title: string;
@@ -37,7 +43,7 @@ export default function BasicInfoModal({
 
   // Load provinces once on mount
   useEffect(() => {
-    const data = locationData as any[];
+    const data = locationData as LocationItem[];
     const provinceSet = new Set<string>();
     data.forEach((item) => {
       if (item["Tỉnh / Thành Phố"]) {
@@ -54,7 +60,7 @@ export default function BasicInfoModal({
       return;
     }
 
-    const data = locationData as any[];
+    const data = locationData as LocationItem[];
     const list = data
       .filter((item) => item["Tỉnh / Thành Phố"] === basicInfo.province)
       .map((item) => item["Tên"])

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Images from "next/image";
+import { useRouter } from "next/navigation";
 import Jobcard from "@/app/components/job/Jobcard"; // Import Jobcard
 import { Job } from "@/app/components/types/job.types"; // Import kiểu Job
 import { ArrowRight } from "lucide-react"; // Import icon mũi tên
@@ -31,8 +31,13 @@ async function fetchFeaturedJobs(): Promise<Job[]> {
 
 
 export default function FeaturedJobs() {
+  const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleJobClick = (jobId: string) => {
+    router.push(`/JobList/JobDetail?id=${jobId}`);
+  };
 
   useEffect(() => {
     async function loadJobs() {
@@ -102,7 +107,7 @@ export default function FeaturedJobs() {
           // Hiển thị danh sách job
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {jobs.map((job) => (
-              <Jobcard key={job.id} job={job} />
+              <Jobcard key={job.id} job={job} onClick={handleJobClick} />
             ))}
           </div>
         )}

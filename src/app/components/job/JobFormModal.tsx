@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { X } from 'lucide-react';
 import ConfirmModal from '@/app/components/companyProfile/ConfirmModal';
 import type { JobDetailData } from '@/app/components/job/JobDetailContents';
@@ -51,7 +51,7 @@ export default function JobFormModal({
   const todayInput = useMemo(() => toInputDate(new Date()), []);
 
   // Initialize form state
-  const getInitialFormState = () => {
+  const getInitialFormState = useCallback(() => {
     if (mode === 'edit' && initialData) {
       const parts = initialData.deadline.split('/');
       const deadlineInput = parts.length === 3 
@@ -93,7 +93,7 @@ export default function JobFormModal({
       requirementsText: '',
       plusPointsText: ''
     };
-  };
+  }, [mode, initialData, todayInput]);
 
   const [form, setForm] = useState(getInitialFormState());
 
@@ -103,7 +103,7 @@ export default function JobFormModal({
       setForm(getInitialFormState());
       setErrors({});
     }
-  }, [isOpen, initialData, mode]);
+  }, [isOpen, getInitialFormState]);
 
   // Lock page scroll when modal open
   useEffect(() => {

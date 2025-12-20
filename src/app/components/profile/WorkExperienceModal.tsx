@@ -159,7 +159,7 @@ export default function WorkExperienceModal({
                   💡
                 </div>
                 <p className="text-sm text-gray-700">
-                  <span className="font-semibold">Gợi ý:</span> Mô tả ngắn gọn về ngành nghề của công ty, sau đó chi tiết về trách nhiệm và thành tích của bạn. Đối với dự án, hãy viết vào trường "Dự án" bên dưới.
+                  <span className="font-semibold">Gợi ý:</span> Mô tả ngắn gọn về ngành nghề của công ty, sau đó chi tiết về trách nhiệm và thành tích của bạn. Đối với dự án, hãy viết vào trường &quot;Dự án&quot; bên dưới.
                 </p>
               </div>
             </div>

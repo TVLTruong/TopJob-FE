@@ -151,9 +151,9 @@ export default function CVManagementPage() {
     setShowPreview(true);
   };
 
-  const handleDownload = (cv: { id?: number; name: any; size?: number; type?: string; uploadDate?: string; data: any; }) => {
+  const handleDownload = (cv: { id?: number; name: string; size?: number; type?: string; uploadDate?: string; data: string | ArrayBuffer | null; }) => {
     const link = document.createElement('a');
-    link.href = cv.data;
+    link.href = cv.data as string;
     link.download = cv.name;
     document.body.appendChild(link);
     link.click();
@@ -166,7 +166,7 @@ export default function CVManagementPage() {
     }
   };
 
-  const startEditing = (cv: { id: any; name: any; size?: number; type?: string; uploadDate?: string; data?: string | ArrayBuffer | null; }) => {
+  const startEditing = (cv: { id: number; name: string; size?: number; type?: string; uploadDate?: string; data?: string | ArrayBuffer | null; }) => {
     setEditingId(cv.id);
     setEditingName(cv.name);
   };

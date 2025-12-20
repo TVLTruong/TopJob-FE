@@ -215,6 +215,88 @@ export default function EmployerSignUpPage() {
                     </div>
                   ))}
                 </div>
+<<<<<<< HEAD
+=======
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phường / Xã <span className="text-red-600">*</span>
+                  </label>
+                  <select
+                    value={district}
+                    onChange={(e) => setDistrict(e.target.value)}
+                    disabled={!province}
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%23666' d='M8 11L3 6h10z'/%3E%3C/svg%3E")`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 1rem center',
+                      color: district === "" ? '#9CA3AF' : '#111827'
+                    }}
+                  >
+                    <option value="" disabled></option>
+                    {districts.map((dist) => (
+                      <option key={dist} value={dist}>
+                        {dist}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Số nhà, tên đường <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={streetAddress}
+                  onChange={(e) => setStreetAddress(e.target.value)}
+                  placeholder="123 Nguyễn Huệ"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Website URL <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="url"
+                  value={websiteUrl}
+                  onChange={(e) => setWebsiteUrl(e.target.value)}
+                  placeholder="https://example.com"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  URL bao gồm giao thức &quot;https&quot;, e.g: https://topjob.com
+                </p>
+              </div>
+
+              {error && (
+                <p className="text-sm text-center text-red-600">{error}</p>
+              )}
+
+              <div className="text-sm text-center text-gray-600 pt-4">
+                Bạn đã có tài khoản nhà tuyển dụng?{" "}
+                <a href="/login" className="text-emerald-600 hover:underline font-semibold">
+                  Đăng nhập
+                </a>
+              </div>
+
+              <div className="flex justify-center">
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading || !isFormValid}
+                  className={`w-full py-3 font-semibold text-white rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    isFormValid && !loading
+                      ? 'bg-emerald-500 hover:bg-emerald-600 focus:ring-emerald-500'
+                      : 'bg-gray-300 cursor-not-allowed'
+                  }`}
+                >
+                  {loading ? 'Đang xử lý...' : 'Liên hệ chúng tôi'}
+                </button>
+>>>>>>> e1002d62472b6e1f854221279bd9b2304bbbffe0
               </div>
             </div>
 

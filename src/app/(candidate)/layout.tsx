@@ -7,7 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext"; // <-- 1. IMPORT
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "TopJob",
   description: "Dự án tìm việc làm",
 };

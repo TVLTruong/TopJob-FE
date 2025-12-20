@@ -7,9 +7,10 @@ interface JobcardProps {
   onApply?: (jobId: string) => void;
   onSave?: (jobId: string) => void;
   isSaved?: boolean;
+  onClick?: (jobId: string) => void;
 }
 
-export default function Jobcard({ job, onApply, onSave, isSaved = false }: JobcardProps) {
+export default function Jobcard({ job, onApply, onSave, isSaved = false, onClick }: JobcardProps) {
   
   // Hàm xử lý khi nhấn nút Lưu
   const handleSaveClick = (e: React.MouseEvent) => {
@@ -22,7 +23,9 @@ export default function Jobcard({ job, onApply, onSave, isSaved = false }: Jobca
   // Hàm xử lý khi nhấn nút Ứng tuyển
   const handleApplyClick = (e: React.MouseEvent) => {
      e.stopPropagation();
-     if (onApply) {
+     if (onClick) {
+       onClick(job.id);
+     } else if (onApply) {
        onApply(job.id);
      } else {
        // Hành động mặc định nếu không có prop onApply (ví dụ: mở link job)
@@ -30,9 +33,18 @@ export default function Jobcard({ job, onApply, onSave, isSaved = false }: Jobca
      }
   };
 
+  // Hàm xử lý khi nhấn vào card
+  const handleCardClick = () => {
+    if (onClick) {
+      onClick(job.id);
+    }
+  };
+
   return (
     // Card cha: bo góc, bóng đổ, padding, nền trắng
-    <div className="bg-white rounded-lg shadow-md p-5 border border-gray-100 hover:shadow-lg transition-shadow duration-200 w-[325px]">
+    <div 
+      className="bg-white rounded-lg shadow-md p-5 border border-gray-100 hover:shadow-lg transition-shadow duration-200 w-[325px]"
+    >
       {/* Phần trên: Logo + Thông tin Job */}
       <div className="flex items-start space-x-4 mb-4">
         {/* Logo công ty */}
@@ -49,7 +61,10 @@ export default function Jobcard({ job, onApply, onSave, isSaved = false }: Jobca
         {/* Thông tin Job */}
         <div className="flex-1 min-w-0"> {/* min-w-0 để text wrap đúng */}
           <p className="text-sm text-gray-500 truncate">{job.companyName}</p>
-          <h3 className="text-xl font-bold text-gray-900 truncate mt-1 hover:text-emerald-700 cursor-pointer">
+          <h3 
+            onClick={handleCardClick}
+            className="text-xl font-bold text-gray-900 truncate mt-1 hover:text-emerald-700 cursor-pointer"
+          >
             {job.title}
           </h3>
           <p className="text-sm text-gray-600 font-medium mt-1">{job.salary}</p>

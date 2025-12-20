@@ -1,19 +1,23 @@
 'use client';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import JobDetailContent, { JobDetailData } from '@/app/components/job/JobDetailContents';
-import ConfirmModal from '@/app/components/companyProfile/ConfirmModal';
 import ApplicantsTab from '@/app/components/job/Applicant';
 import JobFormModal from '@/app/components/job/JobFormModal';
 import { ChevronDown, Power, Edit, Eye, EyeOff, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function JobDetailPage() {
+  const { user } = useAuth();
+  const isRecruiter = user?.role === 'EMPLOYER';
+  const isCandidate = user?.role === 'CANDIDATE';
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<'end' | 'hide' | 'delete' | null>(null);
+  const [confirmAction, setConfirmAction] = useState<'end' | 'hide' | 'delete' | 'apply' | 'unapply' | null>(null);
   const [activeTab, setActiveTab] = useState<'detail' | 'applicants'>('detail');
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [hasApplied, setHasApplied] = useState(false);
   const router = useRouter();
 
   // Helpers
@@ -60,6 +64,15 @@ export default function JobDetailPage() {
     setIsDropdownOpen(false);
   };
 
+  const handleApply = () => {
+    if (hasApplied) {
+      setConfirmAction('unapply');
+    } else {
+      setConfirmAction('apply');
+    }
+    setShowConfirmModal(true);
+  };
+
   const confirmHandler = () => {
     if (confirmAction === 'hide') {
       setIsHidden(!isHidden);
@@ -67,6 +80,12 @@ export default function JobDetailPage() {
       console.log('Kết thúc công việc');
     } else if (confirmAction === 'delete') {
       console.log('Xóa công việc');
+    } else if (confirmAction === 'apply') {
+      setHasApplied(true);
+      console.log('Đã ứng tuyển');
+    } else if (confirmAction === 'unapply') {
+      setHasApplied(false);
+      console.log('Đã hủy ứng tuyển');
     }
     setShowConfirmModal(false);
     setConfirmAction(null);
@@ -100,6 +119,20 @@ export default function JobDetailPage() {
           title: 'Xác nhận xóa',
           message: 'Bạn có chắc chắn muốn xóa công việc này không? Hành động này không thể hoàn tác.',
           confirmText: 'Xóa',
+          confirmClass: 'bg-red-600 hover:bg-red-700'
+        };
+      case 'apply':
+        return {
+          title: 'Xác nhận ứng tuyển',
+          message: 'Bạn có chắc chắn muốn ứng tuyển vào vị trí này không?',
+          confirmText: 'Ứng tuyển',
+          confirmClass: 'bg-emerald-600 hover:bg-emerald-700'
+        };
+      case 'unapply':
+        return {
+          title: 'Xác nhận hủy ứng tuyển',
+          message: 'Bạn có chắc chắn muốn hủy ứng tuyển vào vị trí này không?',
+          confirmText: 'Hủy ứng tuyển',
           confirmClass: 'bg-red-600 hover:bg-red-700'
         };
       default:
@@ -138,60 +171,77 @@ export default function JobDetailPage() {
                 </p>
               </div>
             </div>
-            <div className="relative">
+            
+            {/* Actions based on role */}
+            {isCandidate ? (
               <button 
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                onClick={handleApply}
+                className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors ${
+                  hasApplied 
+                    ? 'bg-gray-400 text-white cursor-pointer hover:bg-gray-500' 
+                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                }`}
               >
-                <span className="text-sm">Tùy chọn khác</span>
-                <ChevronDown className="w-4 h-4" />
+                <span className="text-sm">
+                  {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển'}
+                </span>
               </button>
-              
-              {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                  <button 
-                    onClick={handleEnd}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    <Power className="w-4 h-4" />
-                    <span>Kết thúc</span>
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setIsEditOpen(true);
-                      setIsDropdownOpen(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span>Chỉnh sửa</span>
-                  </button>
-                  <button 
-                    onClick={handleToggleHidden}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    {isHidden ? (
-                      <>
-                        <Eye className="w-4 h-4" />
-                        <span>Hủy ẩn</span>
-                      </>
-                    ) : (
-                      <>
-                        <EyeOff className="w-4 h-4" />
-                        <span>Ẩn</span>
-                      </>
-                    )}
-                  </button>
-                  <button 
-                    onClick={handleDelete}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-red-600"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>Xóa</span>
-                  </button>
-                </div>
-              )}
-            </div>
+            ) : isRecruiter ? (
+              <div className="relative">
+                <button 
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  <span className="text-sm">Tùy chọn khác</span>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                    <button 
+                      onClick={handleEnd}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <Power className="w-4 h-4" />
+                      <span>Kết thúc</span>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setIsEditOpen(true);
+                        setIsDropdownOpen(false);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <Edit className="w-4 h-4" />
+                      <span>Chỉnh sửa</span>
+                    </button>
+                    <button 
+                      onClick={handleToggleHidden}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      {isHidden ? (
+                        <>
+                          <Eye className="w-4 h-4" />
+                          <span>Hủy ẩn</span>
+                        </>
+                      ) : (
+                        <>
+                          <EyeOff className="w-4 h-4" />
+                          <span>Ẩn</span>
+                        </>
+                      )}
+                    </button>
+                    <button 
+                      onClick={handleDelete}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Xóa</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
 
           {/* Tabs */}
@@ -206,6 +256,7 @@ export default function JobDetailPage() {
             >
               Chi tiết công việc
             </button>
+            {isRecruiter && (
             <button 
               onClick={() => setActiveTab('applicants')}
               className={`pb-3 font-medium ${
@@ -216,15 +267,16 @@ export default function JobDetailPage() {
             >
               Ứng viên
             </button>
+            )}
           </div>
         </div>
 
         {/* Tab Content */}
         {activeTab === 'detail' ? (
           <JobDetailContent job={job} />
-        ) : (
+        ) : isRecruiter ? (
           <ApplicantsTab />
-        )}
+        ) : null}
 
         {/* Job Form Modal */}
         <JobFormModal

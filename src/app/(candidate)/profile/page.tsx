@@ -31,7 +31,7 @@ export default function CandidateProfilePage() {
     workExperience: [] as WorkExperience[],
   });
 
-  const [editingSections, setEditingSections] = useState({
+  const [editingSections, setEditingSections] = useState<Record<string, boolean>>({
     about: false
   });
 
@@ -95,7 +95,7 @@ export default function CandidateProfilePage() {
     }
   };
 
-  const toggleEdit = (section: keyof typeof editingSections) => {
+  const toggleEdit = (section: string) => {
     setEditingSections(prev => ({
       ...prev,
       [section]: !prev[section]

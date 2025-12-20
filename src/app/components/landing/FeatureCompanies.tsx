@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Images from "next/image";
 import CompanyCard from "@/app/components/company/CompanyCard";
 import { Company } from "@/app/components/types/company.types";
 // -------------------------
