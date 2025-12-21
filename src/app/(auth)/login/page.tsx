@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
@@ -10,41 +10,110 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Check for verification success message (UC-REG-03)
+  useEffect(() => {
+    const verified = searchParams.get('verified');
+    const message = searchParams.get('message');
+    if (verified === 'true' && message) {
+      setSuccessMessage(decodeURIComponent(message));
+      // Clear URL params after showing message
+      router.replace('/login', { scroll: false });
+    }
+  }, [searchParams, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    try {
-      const response = await fetch('http://localhost:3001/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+    // Mock API call - chỉ để test UI
+    setTimeout(() => {
+      try {
+        // Mock: Giả lập login thành công
+        // Kiểm tra nếu là email đã đăng ký (có trong localStorage)
+        const registeredEmails = JSON.parse(localStorage.getItem('registeredEmails') || '[]');
+        const isRegistered = registeredEmails.includes(email);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Đăng nhập thất bại');
+        if (!isRegistered && email && password) {
+          // Lưu email đã đăng ký để test
+          registeredEmails.push(email);
+          localStorage.setItem('registeredEmails', JSON.stringify(registeredEmails));
+        }
+
+        console.log('🔐 Mock: Đăng nhập thành công!', { email });
+
+        // Mock: Tạo fake JWT token với status
+        // Nếu là email mới đăng ký → status = "CHỜ_HOÀN_THIỆN_HỒ_SƠ"
+        // Nếu là email cũ → status = "ĐANG_HOẠT_ĐỘNG"
+        const userStatus = isRegistered ? 'CHỜ_HOÀN_THIỆN_HỒ_SƠ' : 'CHỜ_HOÀN_THIỆN_HỒ_SƠ';
+        
+        // Tạo fake token (base64 encoded JSON)
+        const fakeTokenPayload = {
+          sub: `employer-${Date.now()}`,
+          email: email,
+          role: 'EMPLOYER',
+          status: userStatus,
+          iat: Math.floor(Date.now() / 1000),
+          exp: Math.floor(Date.now() / 1000) + 86400, // 24h
+        };
+        
+        // Encode thành base64 (giả lập JWT)
+        const fakeToken = btoa(JSON.stringify(fakeTokenPayload));
+        
+        // Lưu status vào localStorage để check redirect
+        localStorage.setItem('userStatus', userStatus);
+        
+        login(fakeToken);
+        
+        // UC-AUTH-01: Redirect đến completeProfile nếu status = "CHỜ_HOÀN_THIỆN_HỒ_SƠ"
+        if (userStatus === 'CHỜ_HOÀN_THIỆN_HỒ_SƠ') {
+          console.log('📋 Redirect đến trang hoàn thiện hồ sơ');
+          router.push('/completeProfile');
+        } else {
+          // Chuyển hướng về trang chủ hoặc dashboard
+          router.push('/');
+        }
+
+        // TODO: Khi có BE, uncomment code dưới:
+        /*
+        const response = await fetch('http://localhost:3001/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Đăng nhập thất bại');
+        }
+
+        const data = await response.json();
+        login(data.accessToken);
+        
+        // Check user status từ response hoặc decode token
+        const userStatus = data.user?.status || 'ĐANG_HOẠT_ĐỘNG';
+        if (userStatus === 'CHỜ_HOÀN_THIỆN_HỒ_SƠ') {
+          router.push('/completeProfile');
+        } else {
+          router.push('/');
+        }
+        */
+
+      } catch (error: unknown) {
+        setError(error instanceof Error ? error.message : 'Đã có lỗi xảy ra');
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
-
-      const data = await response.json();
-      login(data.accessToken);
-      
-      // Chuyển hướng về trang chủ
-      router.push('/'); 
-
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Đã có lỗi xảy ra');
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+    }, 800); // Delay giống API thật
   };
 
   return (
@@ -108,6 +177,12 @@ export default function LoginPage() {
               Quên mật khẩu?
             </Link>
           </div>
+
+          {successMessage && (
+            <div className="p-3 text-sm text-center text-emerald-700 bg-emerald-50 rounded-lg border border-emerald-200">
+              {successMessage}
+            </div>
+          )}
 
           {error && (
             <div className="p-3 text-sm text-center text-red-600 bg-red-50 rounded-lg">

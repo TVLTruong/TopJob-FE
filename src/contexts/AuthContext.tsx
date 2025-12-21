@@ -96,6 +96,7 @@ interface UserPayload {
   sub: string;
   email: string;
   role: 'CANDIDATE' | 'EMPLOYER';
+  status?: string; // Thêm status để check redirect
   iat: number;
   exp: number;
 }
@@ -120,41 +121,78 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const storedToken = localStorage.getItem('accessToken');
       if (storedToken) {
-        const decodedUser = jwtDecode<UserPayload>(storedToken);
+        let decodedUser: UserPayload;
+        
+        try {
+          // Thử decode như JWT thật trước
+          decodedUser = jwtDecode<UserPayload>(storedToken);
+        } catch {
+          // Nếu không phải JWT, thử các format khác
+          try {
+            // Thử decode như base64 JSON (fake token)
+            decodedUser = JSON.parse(atob(storedToken)) as UserPayload;
+          } catch {
+            try {
+              // Thử parse trực tiếp như JSON string (fallback)
+              decodedUser = JSON.parse(storedToken) as UserPayload;
+            } catch {
+              throw new Error('Invalid token format');
+            }
+          }
+        }
         
         if (decodedUser.exp * 1000 > Date.now()) {
           setToken(storedToken);
           setUser(decodedUser);
-          console.log('✅ Token hợp lệ, user:', decodedUser.email);
+          console.log('✅ Token hợp lệ, user:', decodedUser.email, 'Status:', decodedUser.status);
         } else {
           console.log('⚠️ Token hết hạn');
           localStorage.removeItem('accessToken');
+          localStorage.removeItem('userStatus');
         }
-      } else {
-        // // ✅ QUAN TRỌNG: Gán fake user ở đây
-        // console.log('🔧 DEV: Fake login as CANDIDATE');
-        // setUser({
-        //   sub: 'candidate-123',
-        //   email: 'candidate@test.com',
-        //   role: 'CANDIDATE',
-        //   iat: Math.floor(Date.now() / 1000),
-        //   exp: Math.floor(Date.now() / 1000) + 86400,
-        // });
       }
     } catch (error) {
       console.error("❌ Lỗi parse token:", error);
       localStorage.removeItem('accessToken');
+      localStorage.removeItem('userStatus');
     }
-    setIsLoading(false); // ✅ Set false sau khi đã gán user
+    setIsLoading(false);
   }, []);
 
   const login = (newToken: string) => {
     try {
-      const decodedUser = jwtDecode<UserPayload>(newToken);
+      // Check nếu là fake token (base64 JSON) hoặc JWT thật
+      let decodedUser: UserPayload;
+      
+      try {
+        // Thử decode như JWT thật trước
+        decodedUser = jwtDecode<UserPayload>(newToken);
+      } catch {
+        // Nếu không phải JWT, thử các format khác
+        try {
+          // Thử decode như base64 JSON (fake token)
+          decodedUser = JSON.parse(atob(newToken)) as UserPayload;
+        } catch {
+          try {
+            // Thử parse trực tiếp như JSON string (fallback)
+            decodedUser = JSON.parse(newToken) as UserPayload;
+          } catch {
+            console.error('Không thể decode token');
+            return;
+          }
+        }
+      }
+      
       localStorage.setItem('accessToken', newToken);
       setToken(newToken);
       setUser(decodedUser);
-      console.log('✅ Đăng nhập thành công:', decodedUser.email);
+      
+      // Lưu status vào localStorage để check redirect
+      if (decodedUser.status) {
+        localStorage.setItem('userStatus', decodedUser.status);
+      }
+      
+      console.log('✅ Đăng nhập thành công:', decodedUser.email, 'Status:', decodedUser.status);
     } catch (error) {
        console.error("❌ Lỗi decode token:", error);
     }

@@ -7,11 +7,13 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Sidebar from '@/app/components/companyProfile/Sidebar';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
+import { usePathname } from 'next/navigation';
 
 const inter = Inter({ subsets: ["latin"] });
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
+  const pathname = usePathname();
   
   if (isLoading) {
     return <div>Loading...</div>;
@@ -19,6 +21,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
   const isRecruiter = user?.role === 'EMPLOYER';
   const isCandidate = user?.role === 'CANDIDATE';
+  
+  // Pages that should not have sidebar (profile completion flow)
+  const isProfileCompletionPage = pathname?.includes('/completeProfile') || pathname?.includes('/profile-completion-success');
 
   // Layout cho CANDIDATE: Header + Content + Footer
   if (isCandidate) {
@@ -33,8 +38,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Layout cho RECRUITER: Sidebar + Content
-  if (isRecruiter) {
+  // Layout cho RECRUITER: Sidebar + Content (except profile completion pages)
+  if (isRecruiter && !isProfileCompletionPage) {
     return (
       <div className="flex max-w-7xl mx-auto">
         <Sidebar />
@@ -45,7 +50,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Chưa login hoặc role khác: chỉ content
+  // Profile completion pages or chưa login: chỉ content
   return <div className="w-full">{children}</div>;
 }
 

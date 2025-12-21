@@ -8,6 +8,7 @@ type OtpModalProps = {
   message?: string
   onClose: () => void
   onVerify: (code: string) => Promise<boolean> | boolean
+  onResend?: () => Promise<boolean> | boolean
   resendLabel?: string
   submitLabel?: string
   secondsBeforeResend?: number
@@ -19,6 +20,7 @@ export default function OtpModal({
   message = 'Nhập mã OTP đã được gửi đến liên hệ của bạn.',
   onClose,
   onVerify,
+  onResend,
   resendLabel = 'Gửi lại mã',
   submitLabel = 'Xác nhận',
   secondsBeforeResend = 60
@@ -82,10 +84,18 @@ export default function OtpModal({
     }
   }
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (!canResend) return
-    setResendCountdown(secondsBeforeResend)
-    // No-op for now (mock). In real app, trigger resend API here.
+    
+    if (onResend) {
+      const success = await onResend()
+      if (success) {
+        setResendCountdown(secondsBeforeResend)
+      }
+    } else {
+      // Fallback: chỉ reset countdown nếu không có callback
+      setResendCountdown(secondsBeforeResend)
+    }
   }
 
   if (!open) return null
