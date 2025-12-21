@@ -131,15 +131,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem('accessToken');
         }
       } else {
-        // ✅ QUAN TRỌNG: Gán fake user ở đây
-        console.log('🔧 DEV: Fake login as CANDIDATE');
-        setUser({
-          sub: 'candidate-123',
-          email: 'candidate@test.com',
-          role: 'CANDIDATE',
-          iat: Math.floor(Date.now() / 1000),
-          exp: Math.floor(Date.now() / 1000) + 86400,
-        });
+        // // ✅ QUAN TRỌNG: Gán fake user ở đây
+        // console.log('🔧 DEV: Fake login as CANDIDATE');
+        // setUser({
+        //   sub: 'candidate-123',
+        //   email: 'candidate@test.com',
+        //   role: 'CANDIDATE',
+        //   iat: Math.floor(Date.now() / 1000),
+        //   exp: Math.floor(Date.now() / 1000) + 86400,
+        // });
       }
     } catch (error) {
       console.error("❌ Lỗi parse token:", error);

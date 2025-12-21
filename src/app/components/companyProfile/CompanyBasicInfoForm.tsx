@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import locationData from "@/app/assets/danh-sach-3321-xa-phuong.json";
+import Image from 'next/image'
 
 interface LocationItem {
   "Tên": string;
@@ -201,7 +202,7 @@ export default function CompanyBasicInfoForm({ value, onChange }: CompanyBasicIn
           />
           <label htmlFor="logo-upload" className="cursor-pointer">
             {logoPreview ? (
-              <img src={logoPreview} alt="Logo preview" className="mx-auto max-h-32 mb-2" />
+              <Image src={logoPreview} alt="Logo preview" className="mx-auto max-h-32 mb-2" />
             ) : (
               <div className="w-12 h-12 bg-gray-100 rounded mx-auto mb-2 flex items-center justify-center">
                 <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

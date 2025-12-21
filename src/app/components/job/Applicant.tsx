@@ -124,7 +124,7 @@ export default function ApplicantsTab() {
               <span className="text-sm text-gray-600">Đang lọc:</span>
               {searchQuery && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                  Tìm kiếm: "{searchQuery}"
+                  {`Tìm kiếm: "${searchQuery}"`}
                   <button
                     onClick={() => setSearchQuery('')}
                     className="hover:text-gray-900"

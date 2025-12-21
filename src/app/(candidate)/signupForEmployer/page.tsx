@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
+import Link from "next/link";
 import CompanyBasicInfoForm, { CompanyBasicInfo } from "@/app/components/companyProfile/CompanyBasicInfoForm";
 
 type Step = 1 | 2 | 3 | 4;
@@ -458,12 +459,12 @@ export default function EmployerSignUpPage() {
                       Tài khoản của bạn đang được quản trị viên kiểm duyệt. Vui lòng chờ phê duyệt trong vòng 24-48 giờ. 
                       Chúng tôi sẽ gửi thông báo qua email sau khi tài khoản được kích hoạt.
                     </p>
-                    <a
+                    <Link
                       href="/"
                       className="mt-2 inline-flex px-5 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600"
                     >
                       Về trang chủ
-                    </a>
+                    </Link>
                     </div>
                   </div>
                 </div>

@@ -1,12 +1,4 @@
 "use client"
-<<<<<<< HEAD
-import { useState, useEffect } from 'react'
-import ConfirmModal from './ConfirmModal'
-import { Users, Globe, Edit } from 'lucide-react'
-import CompanyBasicInfoForm, { CompanyBasicInfo } from './CompanyBasicInfoForm'
-
-const locationOptions = ['Hà Nội', 'Hồ Chí Minh', 'Đà Nẵng', 'Hải Phòng', 'Cần Thơ', 'Bình Dương', 'Đồng Nai']
-=======
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import ConfirmModal from './ConfirmModal'
@@ -20,9 +12,23 @@ interface LocationItem {
   "Tỉnh / Thành Phố": string;
 }
 
+interface CompanyBasicInfo {
+  companyName: string;
+  website: string;
+  locations: string[];
+  fields: string[];
+  province: string;
+  district: string;
+  streetAddress: string;
+  foundingDay: string;
+  foundingMonth: string;
+  foundingYear: string;
+  technologies: string[];
+  description: string;
+}
+
 const fieldOptions = ['Công nghệ thông tin', 'Trò chơi', 'Điện toán đám mây', 'Thương mại điện tử', 'Fintech', 'AI/Machine Learning']
 const techOptions = ['HTML 5', 'CSS 3', 'Javascript', 'React', 'Node.js', 'Python', 'Java', 'TypeScript', 'Vue.js', 'Angular']
->>>>>>> e1002d62472b6e1f854221279bd9b2304bbbffe0
 
 export default function CompanyHeader() {
   const { user } = useAuth()
@@ -43,8 +49,6 @@ export default function CompanyHeader() {
     technologies: ['HTML 5', 'CSS 3', 'Javascript'],
     description: 'VNG là công ty công nghệ hàng đầu Việt Nam, chuyên phát triển các sản phẩm và dịch vụ về trò chơi trực tuyến, điện toán đám mây, thanh toán điện tử và mạng xã hội. Được thành lập từ năm 2004, VNG đã khẳng định vị thế của mình trong ngành công nghiệp game và công nghệ.'
   })
-<<<<<<< HEAD
-=======
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   
   const [provinces, setProvinces] = useState<string[]>([])
@@ -52,13 +56,10 @@ export default function CompanyHeader() {
   const [showFieldDropdown, setShowFieldDropdown] = useState(false)
   const [showTechDropdown, setShowTechDropdown] = useState(false)
   const [showAddressForm, setShowAddressForm] = useState(false)
->>>>>>> e1002d62472b6e1f854221279bd9b2304bbbffe0
 
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [scrollbarWidth, setScrollbarWidth] = useState(0)
-<<<<<<< HEAD
-=======
   
   const [tempAddress, setTempAddress] = useState({
     province: '',
@@ -71,6 +72,41 @@ export default function CompanyHeader() {
   const addressFormRef = useRef<HTMLDivElement | null>(null)
   const fieldDropdownRef = useRef<HTMLDivElement | null>(null)
   const techDropdownRef = useRef<HTMLDivElement | null>(null)
+
+  // Handle logo file change
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (addressFormRef.current && !addressFormRef.current.contains(event.target as Node)) {
+        setShowAddressForm(false)
+      }
+      if (fieldDropdownRef.current && !fieldDropdownRef.current.contains(event.target as Node)) {
+        setShowFieldDropdown(false)
+      }
+      if (techDropdownRef.current && !techDropdownRef.current.contains(event.target as Node)) {
+        setShowTechDropdown(false)
+      }
+    }
+
+    if (showAddressForm || showFieldDropdown || showTechDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showAddressForm, showFieldDropdown, showTechDropdown])
 
   // Load danh sách tỉnh/thành phố từ JSON
   useEffect(() => {
@@ -101,7 +137,6 @@ export default function CompanyHeader() {
     
     setTempDistricts(districtList)
   }, [tempAddress.province])
->>>>>>> e1002d62472b6e1f854221279bd9b2304bbbffe0
 
   useEffect(() => {
     // Calculate scrollbar width once
@@ -137,6 +172,58 @@ export default function CompanyHeader() {
       document.body.style.paddingRight = ''
     }
   }, [isPopupOpen, scrollbarWidth])
+
+  // Helper functions
+  const removeItem = (field: keyof Pick<CompanyBasicInfo, 'locations' | 'fields' | 'technologies'>, value: string) => {
+    setFormData({
+      ...formData,
+      [field]: formData[field].filter((item) => item !== value)
+    })
+  }
+
+  const addItem = (field: keyof Pick<CompanyBasicInfo, 'fields' | 'technologies'>, value: string) => {
+    if (!formData[field].includes(value)) {
+      setFormData({
+        ...formData,
+        [field]: [...formData[field], value]
+      })
+    }
+  }
+
+  const toggleDropdown = (type: 'address' | 'field' | 'tech') => {
+    if (type === 'address') {
+      setShowAddressForm(!showAddressForm)
+      setShowFieldDropdown(false)
+      setShowTechDropdown(false)
+    } else if (type === 'field') {
+      setShowFieldDropdown(!showFieldDropdown)
+      setShowAddressForm(false)
+      setShowTechDropdown(false)
+    } else if (type === 'tech') {
+      setShowTechDropdown(!showTechDropdown)
+      setShowAddressForm(false)
+      setShowFieldDropdown(false)
+    }
+  }
+
+  const isAddressFormValid = tempAddress.province && tempAddress.district && tempAddress.streetAddress.trim() !== ''
+
+  const handleAddAddress = () => {
+    if (isAddressFormValid) {
+      const fullAddress = `${tempAddress.province}`
+      if (!formData.locations.includes(fullAddress)) {
+        setFormData({
+          ...formData,
+          locations: [...formData.locations, fullAddress],
+          province: tempAddress.province,
+          district: tempAddress.district,
+          streetAddress: tempAddress.streetAddress
+        })
+      }
+      setTempAddress({ province: '', district: '', streetAddress: '' })
+      setShowAddressForm(false)
+    }
+  }
 
   return (
     <>
@@ -201,9 +288,6 @@ export default function CompanyHeader() {
               <p className="text-sm text-gray-500 mb-6">
                 Đây là thông tin công ty mà bạn có thể cập nhật bất cứ lúc nào.
               </p>
-<<<<<<< HEAD
-              <CompanyBasicInfoForm value={formData} onChange={setFormData} />
-=======
 
               {/* Logo Upload */}
               <div className="mb-6">
@@ -510,7 +594,6 @@ export default function CompanyHeader() {
                 </div>
                 <p className="text-xs text-gray-400 mt-1">Tối đa 600 ký tự</p>
               </div>
->>>>>>> e1002d62472b6e1f854221279bd9b2304bbbffe0
             </div>
 
             {/* Footer - Fixed */}
