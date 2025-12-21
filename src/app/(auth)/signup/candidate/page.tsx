@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { AuthApi } from "@/utils/api/auth-api";
 
 export default function CandidateSignUpPage() {
   const [fullName, setFullName] = useState("");
@@ -15,9 +16,20 @@ export default function CandidateSignUpPage() {
   
   const router = useRouter();
 
+  const validatePassword = (password: string): boolean => {
+    if (password.length < 8) return false;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+    return passwordRegex.test(password);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!validatePassword(password)) {
+      setError("Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Mật khẩu và mật khẩu xác nhận không khớp!");
@@ -27,24 +39,11 @@ export default function CandidateSignUpPage() {
     setLoading(true);
 
     try {
-      const registerData = {
+      await AuthApi.registerCandidate({
         email: email,
         password: password,
         fullName: fullName,
-      };
-
-      const response = await fetch('http://localhost:3001/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(registerData),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Đăng ký thất bại, vui lòng thử lại.');
-      }
 
       console.log('Đăng ký thành công!');
       
@@ -157,11 +156,11 @@ export default function CandidateSignUpPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  minLength={6}
+                  minLength={8}
                   className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Tối thiểu 6 ký tự
+                  Tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt (@$!%*?&)
                 </p>
               </div>
 

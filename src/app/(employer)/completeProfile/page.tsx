@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef, useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import locationData from "@/app/assets/danh-sach-3321-xa-phuong.json";
 
 interface LocationItem {
@@ -237,7 +238,7 @@ export default function CompleteProfilePage() {
     setShowSuccessModal(false);
 
     // Mock API call - chỉ để test UI
-    const timeoutId = setTimeout(() => {
+    setTimeout(() => {
       try {
         console.log('📝 Mock: Gửi hồ sơ thành công!', {
           companyName,
@@ -263,7 +264,7 @@ export default function CompleteProfilePage() {
             tokenData.status = 'PENDING_APPROVAL';
             localStorage.setItem('accessToken', JSON.stringify(tokenData));
             localStorage.setItem('userStatus', 'PENDING_APPROVAL');
-          } catch (e) {
+          } catch {
             // Nếu không parse được, chỉ update status
             localStorage.setItem('userStatus', 'PENDING_APPROVAL');
           }
@@ -422,7 +423,9 @@ export default function CompleteProfilePage() {
                       />
                       <label htmlFor="logo-upload" className="cursor-pointer">
                         {logoPreview ? (
-                          <img src={logoPreview} alt="Logo preview" className="mx-auto max-h-32 mb-2" />
+                          <div className="relative w-32 h-32 mx-auto mb-2">
+                            <Image src={logoPreview} alt="Logo preview" fill className="object-contain" />
+                          </div>
                         ) : (
                           <div className="w-12 h-12 bg-gray-100 rounded mx-auto mb-2 flex items-center justify-center">
                             <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -705,7 +708,9 @@ export default function CompleteProfilePage() {
                         {logoPreview && (
                           <div className="mb-3">
                             <p className="text-gray-600 mb-1">Logo:</p>
-                            <img src={logoPreview} alt="Logo" className="h-16" />
+                            <div className="relative w-16 h-16">
+                              <Image src={logoPreview} alt="Logo" fill className="object-contain" />
+                            </div>
                           </div>
                         )}
                         <div>

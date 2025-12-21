@@ -21,8 +21,6 @@ export default function EmployerSignUpPage() {
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
   const [otpSessionId, setOtpSessionId] = useState<string | null>(null);
-  
-  const router = useRouter();
 
   const validateEmail = (email: string): boolean => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

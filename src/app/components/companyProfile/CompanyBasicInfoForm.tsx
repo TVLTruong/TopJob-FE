@@ -38,7 +38,6 @@ export default function CompanyBasicInfoForm({ value, onChange }: CompanyBasicIn
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
 
   const [provinces, setProvinces] = useState<string[]>([])
-  const [districts, setDistricts] = useState<string[]>([])
 
   const [showFieldDropdown, setShowFieldDropdown] = useState(false)
   const [showTechDropdown, setShowTechDropdown] = useState(false)
@@ -72,7 +71,6 @@ export default function CompanyBasicInfoForm({ value, onChange }: CompanyBasicIn
   // Load danh sách phường/xã khi chọn tỉnh/thành
   useEffect(() => {
     if (!value.province) {
-      setDistricts([])
       return
     }
 
@@ -81,8 +79,6 @@ export default function CompanyBasicInfoForm({ value, onChange }: CompanyBasicIn
       .filter((item) => item["Tỉnh / Thành Phố"] === value.province)
       .map((item) => item["Tên"])
       .sort()
-
-    setDistricts(districtList)
   }, [value.province])
 
   // Load danh sách phường/xã cho temp address
