@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // Import hook để điều hướng
-import { useAuth } from "@/contexts/AuthContext"; // Import hook Auth
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -11,8 +11,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const { login } = useAuth(); // Lấy hàm login từ Context
-  const router = useRouter(); // Khởi tạo router
+  const { login } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,8 +20,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // 1. Gọi API Login của NestJS
-      const response = await fetch('http://localhost:4000/auth/login', {
+      const response = await fetch('http://localhost:3001/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -31,22 +30,17 @@ export default function LoginPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        // errorData.message là "Email hoặc mật khẩu không hợp lệ" từ NestJS
         throw new Error(errorData.message || 'Đăng nhập thất bại');
       }
 
-      // 2. Lấy accessToken từ kết quả
-      const data = await response.json(); // { accessToken: "..." }
-      
-      // 3. GỌI HÀM LOGIN CỦA CONTEXT
-      // Đây là bước mấu chốt: Lưu token vào Context và localStorage
+      const data = await response.json();
       login(data.accessToken);
-
-      // 4. Đăng nhập thành công, chuyển hướng về trang chủ
+      
+      // Chuyển hướng về trang chủ
       router.push('/'); 
 
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'An error occurred');
+      setError(error instanceof Error ? error.message : 'Đã có lỗi xảy ra');
       console.error(error);
     } finally {
       setLoading(false);
@@ -54,17 +48,20 @@ export default function LoginPage() {
   };
 
   return (
-    // Dùng layout 1 cột đơn giản, căn giữa
-    <div className="flex items-center justify-center py-20">
+    <div className="flex items-center justify-center min-h-screen py-12 px-4">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
         
-        <h1 className="text-3xl font-bold text-center text-gray-900">
-          Đăng nhập
-        </h1>
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Đăng nhập
+          </h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Chào mừng trở lại với TopJob
+          </p>
+        </div>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           
-          {/* Email */}
           <div>
             <label 
               htmlFor="email" 
@@ -84,7 +81,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Mật khẩu */}
           <div>
             <label 
               htmlFor="password" 
@@ -113,24 +109,30 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          {/* Hiển thị lỗi */}
           {error && (
-            <p className="text-sm text-center text-red-600">{error}</p>
+            <div className="p-3 text-sm text-center text-red-600 bg-red-50 rounded-lg">
+              {error}
+            </div>
           )}
 
-          {/* Nút Đăng nhập */}
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 font-semibold text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"
-            >
-              {loading ? 'Đang xử lý...' : 'Đăng nhập'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 font-semibold text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Đang xử lý...' : 'Đăng nhập'}
+          </button>
         </form>
 
-        {/* Link tới trang Đăng ký */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">hoặc</span>
+          </div>
+        </div>
+
         <p className="text-sm text-center text-gray-600">
           Chưa có tài khoản?{' '}
           <Link href="/signup" className="font-semibold text-emerald-600 hover:underline">
