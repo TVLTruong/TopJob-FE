@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { Lock, Phone, Briefcase, Save, Eye, EyeOff, Mail } from 'lucide-react'
-import OtpModal from '@/app/components/companyProfile/OtpModal'
+import OtpModal from '@/app/components/common/OtpModal'
 
 type TabType = 'account' | 'password'
 

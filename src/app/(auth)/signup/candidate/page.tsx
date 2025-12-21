@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { AuthApi } from "@/utils/api/auth-api";
+import OtpModal from "@/app/components/common/OtpModal";
 
 export default function CandidateSignUpPage() {
   const [fullName, setFullName] = useState("");
@@ -13,6 +14,7 @@ export default function CandidateSignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showOtpModal, setShowOtpModal] = useState(false);
   
   const router = useRouter();
 
@@ -20,6 +22,29 @@ export default function CandidateSignUpPage() {
     if (password.length < 8) return false;
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
     return passwordRegex.test(password);
+  };
+
+  const handleVerifyOtp = async (code: string): Promise<boolean> => {
+    try {
+      await AuthApi.verifyOtp(email, code);
+      console.log('Xác thực OTP thành công!');
+      router.push('/login?verified=true');
+      return true;
+    } catch (error) {
+      console.error('Lỗi xác thực OTP:', error);
+      return false;
+    }
+  };
+
+  const handleResendOtp = async (): Promise<boolean> => {
+    try {
+      await AuthApi.resendOtp(email);
+      console.log('Đã gửi lại mã OTP');
+      return true;
+    } catch (error) {
+      console.error('Lỗi gửi lại OTP:', error);
+      return false;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,10 +70,10 @@ export default function CandidateSignUpPage() {
         fullName: fullName,
       });
 
-      console.log('Đăng ký thành công!');
+      console.log('Đăng ký thành công! Vui lòng xác thực OTP');
       
-      // Chuyển hướng về trang đăng nhập
-      router.push('/login?registered=true');
+      // Hiển thị modal OTP
+      setShowOtpModal(true);
 
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Đã có lỗi xảy ra');
@@ -208,6 +233,17 @@ export default function CandidateSignUpPage() {
           </div>
         </div>
       </main>
+
+      <OtpModal
+        open={showOtpModal}
+        title="Xác thực tài khoản"
+        message={`Mã OTP đã được gửi đến email ${email}. Vui lòng kiểm tra hộp thư của bạn.`}
+        onClose={() => setShowOtpModal(false)}
+        onVerify={handleVerifyOtp}
+        onResend={handleResendOtp}
+        resendLabel="Gửi lại mã"
+        submitLabel="Xác nhận"
+      />
     </div>
   );
 }

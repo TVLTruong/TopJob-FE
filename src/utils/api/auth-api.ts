@@ -68,11 +68,11 @@ export const AuthApi = {
   /**
    * Xác thực OTP
    */
-  verifyOtp: async (sessionId: string, code: string) => {
+  verifyOtp: async (email: string, otpCode: string, purpose?: string) => {
     const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId, code }),
+      body: JSON.stringify({ email, otpCode, purpose }),
     });
     
     return handleResponse(response);
