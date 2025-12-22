@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import locationData from "@/app/assets/danh-sach-3321-xa-phuong.json";
+import { AuthApi } from "@/utils/api/auth-api";
 
 interface LocationItem {
   "Tên": string;
@@ -16,7 +17,7 @@ interface OfficeLocation {
   id: string;
   province: string;
   district: string;
-  streetAddress: string;
+  detailedAddress: string;
   isHeadquarters: boolean;
 }
 
@@ -32,15 +33,29 @@ export default function CompleteProfilePage() {
   // Check authentication và redirect nếu cần
   useEffect(() => {
     if (!isLoading) {
-      // Nếu chưa login hoặc không phải EMPLOYER, redirect về login
-      if (!user || user.role !== 'EMPLOYER') {
+      if (!user) {
         router.push('/login');
+        return;
       }
-      // Có thể check status ở đây nếu cần
-      // const userStatus = localStorage.getItem('userStatus');
-      // if (userStatus !== 'CHỜ_HOÀN_THIỆN_HỒ_SƠ') {
-      //   router.push('/');
-      // }
+      
+      // Normalize role để so sánh (case-insensitive)
+      const userRole = (user.role || '').toString().toUpperCase();
+      
+      if (userRole !== 'EMPLOYER') {
+        router.push('/login');
+        return;
+      }
+      
+      // Check status: chỉ cho phép PENDING_PROFILE_COMPLETION
+      const userStatus = (user.status || localStorage.getItem('userStatus') || '').toString().toUpperCase();
+      
+      if (userStatus === 'PENDING_APPROVAL') {
+        setStep(4);
+      } else if (userStatus === 'ACTIVE') {
+        router.push('/');
+      } else if (userStatus === 'REJECTED') {
+        // Có thể hiển thị thông báo hoặc chuyển đến trang thông báo
+      }
     }
   }, [user, isLoading, router]);
 
@@ -48,7 +63,6 @@ export default function CompleteProfilePage() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState("");
-  const [taxCode, setTaxCode] = useState("");
   const [website, setWebsite] = useState("");
   const [description, setDescription] = useState("");
   const [benefits, setBenefits] = useState("");
@@ -60,7 +74,7 @@ export default function CompleteProfilePage() {
   const [tempLocation, setTempLocation] = useState({
     province: "",
     district: "",
-    streetAddress: "",
+    detailedAddress: "",
   });
   const [provinces, setProvinces] = useState<string[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
@@ -123,16 +137,16 @@ export default function CompleteProfilePage() {
   };
 
   const handleAddLocation = () => {
-    if (tempLocation.province && tempLocation.district && tempLocation.streetAddress) {
+    if (tempLocation.province && tempLocation.district && tempLocation.detailedAddress) {
       const newLocation: OfficeLocation = {
         id: Date.now().toString(),
         province: tempLocation.province,
         district: tempLocation.district,
-        streetAddress: tempLocation.streetAddress,
+        detailedAddress: tempLocation.detailedAddress,
         isHeadquarters: locations.length === 0, // First location is automatically headquarters
       };
       setLocations([...locations, newLocation]);
-      setTempLocation({ province: "", district: "", streetAddress: "" });
+      setTempLocation({ province: "", district: "", address: "" });
       setShowLocationForm(false);
     }
   };
@@ -162,10 +176,6 @@ export default function CompleteProfilePage() {
     }
     if (!companyName.trim()) {
       setValidationError("Vui lòng nhập Tên công ty.");
-      return false;
-    }
-    if (!taxCode.trim()) {
-      setValidationError("Vui lòng nhập Mã số thuế.");
       return false;
     }
     if (!website.trim()) {
@@ -217,13 +227,7 @@ export default function CompleteProfilePage() {
 
   const handleSubmit = async () => {
     // Validate all steps before submitting
-    console.log('📌 handleSubmit called');
-    console.log('Step 1 valid:', validateStep1());
-    console.log('Step 2 valid:', validateStep2());
-    
     if (!validateStep1() || !validateStep2()) {
-      // Go to first step with error
-      console.log('❌ Validation failed');
       if (!validateStep1()) {
         setStep(1);
       } else if (!validateStep2()) {
@@ -232,85 +236,66 @@ export default function CompleteProfilePage() {
       return;
     }
 
-    console.log('✅ All validation passed, setting submitting to true');
     setSubmitting(true);
     setValidationError(null);
     setShowSuccessModal(false);
 
-    // Mock API call - chỉ để test UI
-    setTimeout(() => {
-      try {
-        console.log('📝 Mock: Gửi hồ sơ thành công!', {
-          companyName,
-          taxCode,
-          website,
-          description,
-          benefits,
-          locations,
-          logoFile: logoFile ? logoFile.name : 'No logo',
-        });
-
-        // Năng lên Step 4 (Chờ duyệt)
-        console.log('🎉 Before setStep(4)');
-        setStep(4 as Step);
-        console.log('🎉 After setStep(4)');
-        setSubmitting(false);
-
-        // Mock: Cập nhật user status trong localStorage
-        const currentToken = localStorage.getItem('accessToken');
-        if (currentToken) {
-          try {
-            const tokenData = JSON.parse(currentToken);
-            tokenData.status = 'PENDING_APPROVAL';
-            localStorage.setItem('accessToken', JSON.stringify(tokenData));
-            localStorage.setItem('userStatus', 'PENDING_APPROVAL');
-          } catch {
-            // Nếu không parse được, chỉ update status
-            localStorage.setItem('userStatus', 'PENDING_APPROVAL');
-          }
-        }
-
-        // TODO: Khi có BE, uncomment code dưới:
-        /*
-        const formData = new FormData();
-        if (logoFile) {
-          formData.append("logo", logoFile);
-        }
-        formData.append("companyName", companyName);
-        formData.append("taxCode", taxCode);
-        formData.append("website", website);
-        formData.append("description", description);
-        formData.append("benefits", benefits);
-        formData.append("locations", JSON.stringify(locations));
-
-        const token = localStorage.getItem("accessToken");
-        const response = await fetch("/api/employer/profile/complete", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || "Failed to submit profile");
-        }
-
-        logout();
-        router.push("/profile-completion-success");
-        */
-
-      } catch (error) {
-        console.error("Error submitting profile:", error);
-        setValidationError(
-          error instanceof Error 
-            ? error.message 
-            : "Có lỗi xảy ra khi gửi hồ sơ. Vui lòng thử lại."
-        );
-        setSubmitting(false);
+    try {
+      // Lấy token từ localStorage
+      const token = localStorage.getItem("accessToken");
+      
+      if (!token) {
+        throw new Error("Không tìm thấy token. Vui lòng đăng nhập lại.");
       }
-    }, 1500); // Delay 1.5s để giống API thật
+
+      // Step 1: Upload logo nếu có
+      let logoUrl = "";
+      if (logoFile) {
+        setValidationError("Đang tải lên logo...");
+        const uploadResult = await AuthApi.uploadCompanyLogo(token, logoFile);
+        logoUrl = uploadResult.url;
+      }
+
+      // Step 2: Submit profile với logoUrl
+      setValidationError("Đang gửi hồ sơ...");
+      await AuthApi.completeEmployerProfile(token, {
+        companyName: companyName.trim(),
+        website: website.trim(),
+        description: description.trim(),
+        benefits: benefits.trim().split('\n').filter(b => b.trim()),
+        logoUrl: logoUrl,
+        locations: locations.map(loc => ({
+          province: loc.province,
+          district: loc.district,
+          detailedAddress: loc.detailedAddress,
+          isHeadquarters: loc.isHeadquarters,
+        })),
+      });
+
+      // Chuyển sang Step 4 (Chờ duyệt)
+      setStep(4 as Step);
+      setSubmitting(false);
+      setValidationError(null);
+
+      // Cập nhật status trong localStorage
+      localStorage.setItem('userStatus', 'PENDING_APPROVAL');
+      
+      // UC-EMP-01: Tự động đăng xuất sau 3 giây để user đọc thông báo
+      setTimeout(() => {
+        logout();
+        router.push('/login?message=' + encodeURIComponent('Hồ sơ đã được gửi thành công! Chúng tôi sẽ xem xét và thông báo kết quả qua email.'));
+      }, 3000);
+
+    } catch (error) {
+      setValidationError(
+        error instanceof Error 
+          ? error.message 
+          : "Có lỗi xảy ra khi gửi hồ sơ. Vui lòng thử lại."
+      );
+      setSubmitting(false);
+      // Quay lại bước xác nhận nếu có lỗi
+      setStep(3);
+    }
   };
 
   const handleSuccessGoHome = () => {
@@ -454,7 +439,7 @@ export default function CompleteProfilePage() {
                   </div>
 
                   {/* Tax Code */}
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Mã số thuế <span className="text-red-600">*</span>
                     </label>
@@ -465,7 +450,7 @@ export default function CompleteProfilePage() {
                       placeholder="Nhập mã số thuế"
                       className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
-                  </div>
+                  </div> */}
 
                   {/* Website */}
                   <div>
@@ -549,7 +534,7 @@ export default function CompleteProfilePage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-medium text-gray-900">
-                              {location.streetAddress}, {location.district}, {location.province}
+                              {location.detailedAddress}, {location.district}, {location.province}
                             </span>
                             {location.isHeadquarters && (
                               <span className="px-2 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700 rounded">
@@ -627,8 +612,8 @@ export default function CompleteProfilePage() {
                         </label>
                         <input
                           type="text"
-                          value={tempLocation.streetAddress}
-                          onChange={(e) => setTempLocation({ ...tempLocation, streetAddress: e.target.value })}
+                          value={tempLocation.detailedAddress}
+                          onChange={(e) => setTempLocation({ ...tempLocation, detailedAddress: e.target.value })}
                           placeholder="Số nhà, tên đường"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         />
@@ -638,7 +623,7 @@ export default function CompleteProfilePage() {
                           type="button"
                           onClick={() => {
                             setShowLocationForm(false);
-                            setTempLocation({ province: "", district: "", streetAddress: "" });
+                            setTempLocation({ province: "", district: "", detailedAddress: "" });
                           }}
                           className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-sm"
                         >
@@ -647,7 +632,7 @@ export default function CompleteProfilePage() {
                         <button
                           type="button"
                           onClick={handleAddLocation}
-                          disabled={!tempLocation.province || !tempLocation.district || !tempLocation.streetAddress}
+                          disabled={!tempLocation.province || !tempLocation.district || !tempLocation.detailedAddress}
                           className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                         >
                           Lưu địa điểm
@@ -718,10 +703,6 @@ export default function CompleteProfilePage() {
                           <span className="font-medium">{companyName}</span>
                         </div>
                         <div>
-                          <span className="text-gray-600">Mã số thuế:</span>{" "}
-                          <span className="font-medium">{taxCode}</span>
-                        </div>
-                        <div>
                           <span className="text-gray-600">Website:</span>{" "}
                           <span className="font-medium">{website}</span>
                         </div>
@@ -754,7 +735,7 @@ export default function CompleteProfilePage() {
                         {locations.map((location) => (
                           <div key={location.id} className="text-sm">
                             <span className="text-gray-600">
-                              {location.streetAddress}, {location.district}, {location.province}
+                              {location.detailedAddress}, {location.district}, {location.province}
                             </span>
                             {location.isHeadquarters && (
                               <span className="ml-2 px-2 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700 rounded">

@@ -4,6 +4,16 @@ import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { AuthApi } from "@/utils/api/auth-api";
+import { jwtDecode } from "jwt-decode";
+
+interface DecodedToken {
+  sub: string;
+  email: string;
+  role: string;
+  status?: string;
+  exp: number;
+}
 
 function LoginContent() {
   const [email, setEmail] = useState("");
@@ -19,101 +29,101 @@ function LoginContent() {
   // Check for verification success message (UC-REG-03)
   useEffect(() => {
     const verified = searchParams.get('verified');
-    const message = searchParams.get('message');
-    if (verified === 'true' && message) {
-      setSuccessMessage(decodeURIComponent(message));
-      // Clear URL params after showing message
-      router.replace('/login', { scroll: false });
+    const emailParam = searchParams.get('email');
+    
+    if (verified === 'true') {
+      setSuccessMessage('✅ Email đã được xác thực thành công! Vui lòng đăng nhập để hoàn tất hồ sơ công ty.');
+      
+      // Pre-fill email nếu có
+      if (emailParam) {
+        setEmail(decodeURIComponent(emailParam));
+      }
     }
-  }, [searchParams, router]);
+    
+    const message = searchParams.get('message');
+    if (message) {
+      setSuccessMessage(decodeURIComponent(message));
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    // Mock API call - chỉ để test UI
-    setTimeout(() => {
-      try {
-        // Mock: Giả lập login thành công
-        // Kiểm tra nếu là email đã đăng ký (có trong localStorage)
-        const registeredEmails = JSON.parse(localStorage.getItem('registeredEmails') || '[]');
-        const isRegistered = registeredEmails.includes(email);
-
-        if (!isRegistered && email && password) {
-          // Lưu email đã đăng ký để test
-          registeredEmails.push(email);
-          localStorage.setItem('registeredEmails', JSON.stringify(registeredEmails));
-        }
-
-        console.log('🔐 Mock: Đăng nhập thành công!', { email });
-
-        // Mock: Tạo fake JWT token với status
-        // Nếu là email mới đăng ký → status = "CHỜ_HOÀN_THIỆN_HỒ_SƠ"
-        // Nếu là email cũ → status = "ĐANG_HOẠT_ĐỘNG"
-        const userStatus = isRegistered ? 'CHỜ_HOÀN_THIỆN_HỒ_SƠ' : 'CHỜ_HOÀN_THIỆN_HỒ_SƠ';
-        
-        // Tạo fake token (base64 encoded JSON)
-        const fakeTokenPayload = {
-          sub: `employer-${Date.now()}`,
-          email: email,
-          role: 'EMPLOYER',
-          status: userStatus,
-          iat: Math.floor(Date.now() / 1000),
-          exp: Math.floor(Date.now() / 1000) + 86400, // 24h
-        };
-        
-        // Encode thành base64 (giả lập JWT)
-        const fakeToken = btoa(JSON.stringify(fakeTokenPayload));
-        
-        // Lưu status vào localStorage để check redirect
-        localStorage.setItem('userStatus', userStatus);
-        
-        login(fakeToken);
-        
-        // UC-AUTH-01: Redirect đến completeProfile nếu status = "CHỜ_HOÀN_THIỆN_HỒ_SƠ"
-        if (userStatus === 'CHỜ_HOÀN_THIỆN_HỒ_SƠ') {
-          console.log('📋 Redirect đến trang hoàn thiện hồ sơ');
-          router.push('/completeProfile');
-        } else {
-          // Chuyển hướng về trang chủ hoặc dashboard
-          router.push('/');
-        }
-
-        // TODO: Khi có BE, uncomment code dưới:
-        /*
-        const response = await fetch('http://localhost:3001/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email, password }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Đăng nhập thất bại');
-        }
-
-        const data = await response.json();
-        login(data.accessToken);
-        
-        // Check user status từ response hoặc decode token
-        const userStatus = data.user?.status || 'ĐANG_HOẠT_ĐỘNG';
-        if (userStatus === 'CHỜ_HOÀN_THIỆN_HỒ_SƠ') {
-          router.push('/completeProfile');
-        } else {
-          router.push('/');
-        }
-        */
-
-      } catch (error: unknown) {
-        setError(error instanceof Error ? error.message : 'Đã có lỗi xảy ra');
-        console.error(error);
-      } finally {
-        setLoading(false);
+    try {
+      console.log('🔐 Logging in with email:', email);
+      
+      // Gọi API login
+      const response = await AuthApi.login(email, password);
+      
+      console.log('📦 Full login response:', JSON.stringify(response, null, 2));
+      
+      // Kiểm tra nhiều trường hợp token field
+      const token = response.access_token || response.token || response.accessToken || 
+                    response.data?.access_token || response.data?.token || response.data?.accessToken;
+      
+      if (!token) {
+        console.error('❌ No token found in response');
+        console.error('Response keys:', Object.keys(response));
+        throw new Error('Đăng nhập thất bại: Không nhận được token từ server');
       }
-    }, 800); // Delay giống API thật
+
+      console.log('✅ Login successful, token received:', token.substring(0, 20) + '...');
+
+      // Decode token để lấy thông tin user
+      const decoded = jwtDecode<DecodedToken>(token);
+      console.log('👤 User info (decoded token):', {
+        email: decoded.email,
+        role: decoded.role,
+        roleType: typeof decoded.role,
+        status: decoded.status,
+        fullDecoded: decoded
+      });
+
+      // Lưu token vào context (sẽ tự động lưu vào localStorage)
+      login(token);
+
+      // Normalize role để so sánh (case-insensitive)
+      const userRole = (decoded.role || '').toString().toUpperCase();
+      console.log('🔍 Normalized role:', userRole);
+
+      // UC-EMP-01: Kiểm tra status và redirect
+      if (userRole === 'EMPLOYER') {
+        console.log('✅ Detected EMPLOYER role');
+        
+        const userStatus = (decoded.status || '').toString().toUpperCase();
+        
+        if (userStatus === 'PENDING_PROFILE_COMPLETION') {
+          console.log('📋 Status: PENDING_PROFILE_COMPLETION - Redirect to /completeProfile');
+          router.push('/completeProfile');
+        } else if (userStatus === 'PENDING_APPROVAL') {
+          console.log('⏳ Status: PENDING_APPROVAL - Show waiting page');
+          router.push('/pending-approval');
+        } else if (userStatus === 'ACTIVE') {
+          console.log('✅ Status: ACTIVE - Redirect to dashboard');
+          router.push('/employer/dashboard');
+        } else {
+          console.log('⚠️ Unknown status:', decoded.status, '- Redirect to home');
+          router.push('/');
+        }
+      } else if (userRole === 'CANDIDATE') {
+        console.log('✅ Detected CANDIDATE role - Redirect to home');
+        router.push('/');
+      } else {
+        console.warn('⚠️ Unknown role:', decoded.role, '- Redirect to home');
+        router.push('/');
+      }
+
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.';
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

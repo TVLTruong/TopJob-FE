@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { AuthApi } from "@/utils/api/auth-api";
+import OtpModal from "@/app/components/common/OtpModal";
 
 export default function EmployerSignUpPage() {
   const [fullName, setFullName] = useState("");
@@ -17,6 +18,10 @@ export default function EmployerSignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  
+  // OTP states
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   const router = useRouter();
 
@@ -83,18 +88,16 @@ export default function EmployerSignUpPage() {
         fullName: fullName.trim(),
         email: email.trim(),
         password: password,
-        position: position.trim(),
-        phoneNumber: phoneNumber.trim(),
+        workTitle: position.trim(),
+        contactPhone: phoneNumber.trim(),
         companyName: companyName.trim(),
       });
 
-      console.log('Đăng ký nhà tuyển dụng thành công!');
+      // console.log('Đăng ký nhà tuyển dụng thành công!');
       
-      // Hiển thị thông báo thành công
-      alert('Đăng ký thành công! Tài khoản của bạn đang chờ xét duyệt.');
-      
-      // Chuyển hướng về trang đăng nhập
-      router.push('/login?registered=employer');
+      // Lưu email và hiển thị OTP modal
+      setRegisteredEmail(email.trim());
+      setShowOtpModal(true);
 
     } catch (error: unknown) {
       // Xử lý lỗi từ API
@@ -112,6 +115,54 @@ export default function EmployerSignUpPage() {
       console.error('Lỗi khi đăng ký:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (code: string): Promise<boolean> => {
+    try {
+      console.log('Verifying OTP for:', registeredEmail, 'code:', code);
+      const response = await AuthApi.verifyEmail(registeredEmail, code);
+      
+      console.log('OTP Response:', response);
+      
+      // Backend trả về verified: true nhưng không có token
+      // User cần đăng nhập để nhận token
+      if (response.verified === true || response.success === true) {
+        console.log('Email verified successfully! Redirecting to login...');
+        
+        // Hiển thị thông báo thành công
+        alert('Xác thực email thành công! Vui lòng đăng nhập để hoàn tất hồ sơ công ty.');
+        
+        // Chuyển hướng về trang đăng nhập với query param
+        router.push('/login?verified=true&email=' + encodeURIComponent(registeredEmail));
+        return true;
+      }
+      
+      // Fallback: nếu có access_token trực tiếp (cho tương lai)
+      if (response.access_token) {
+        localStorage.setItem('accessToken', response.access_token);
+        if (response.refresh_token) {
+          localStorage.setItem('refreshToken', response.refresh_token);
+        }
+        router.push('/completeProfile');
+        return true;
+      }
+      
+      console.warn('Unexpected response:', response);
+      return false;
+    } catch (error) {
+      console.error('OTP verification failed:', error);
+      return false;
+    }
+  };
+
+  const handleResendOtp = async (): Promise<boolean> => {
+    try {
+      await AuthApi.resendVerificationEmail(registeredEmail);
+      return true;
+    } catch (error) {
+      console.error('Failed to resend OTP:', error);
+      return false;
     }
   };
 
@@ -384,6 +435,19 @@ export default function EmployerSignUpPage() {
           </div>
         </div>
       </main>
+      
+      {/* OTP Modal */}
+      <OtpModal
+        open={showOtpModal}
+        title="Xác thực Email"
+        message={`Mã OTP đã được gửi đến email ${registeredEmail}. Vui lòng kiểm tra hộp thư và nhập mã để hoàn tất đăng ký.`}
+        onClose={() => setShowOtpModal(false)}
+        onVerify={handleVerifyOtp}
+        onResend={handleResendOtp}
+        submitLabel="Xác nhận"
+        resendLabel="Gửi lại mã"
+        secondsBeforeResend={60}
+      />
     </div>
   );
 }

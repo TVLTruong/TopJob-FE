@@ -1,4 +1,16 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+// Log the API URL for debugging (only in development)
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  console.log('API_BASE_URL:', API_BASE_URL);
+}
+
+// OTP Purpose enum (phải khớp với backend)
+export enum OtpPurpose {
+  EMAIL_VERIFICATION = 'email_verification', // UCREG03: Xác thực email đăng ký
+  PASSWORD_RESET = 'password_reset', // UCAUTH03: Đặt lại mật khẩu
+  EMAIL_CHANGE = 'email_change', // Xác thực khi đổi email
+}
 
 // Helper function để xử lý response
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -36,13 +48,21 @@ export const AuthApi = {
     email: string;
     password: string;
   }) => {
-    const response = await fetch(`${API_BASE_URL}/auth/register/candidate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    
-    return handleResponse(response);
+    try {
+      console.log('Registering candidate to:', `${API_BASE_URL}/auth/register/candidate`);
+      console.log('Data:', { ...data, password: '***' }); // Hide password in logs
+      
+      const response = await fetch(`${API_BASE_URL}/auth/register/candidate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      
+      return handleResponse(response);
+    } catch (error) {
+      console.error('Fetch error:', error);
+      throw error;
+    }
   },
 
   /**
@@ -52,8 +72,8 @@ export const AuthApi = {
     fullName: string;
     email: string;
     password: string;
-    position: string;
-    phoneNumber: string;
+    workTitle: string;
+    contactPhone: string;
     companyName: string;
   }) => {
     const response = await fetch(`${API_BASE_URL}/auth/register/employer`, {
@@ -75,7 +95,7 @@ export const AuthApi = {
       body: JSON.stringify({ email, otpCode, purpose }),
     });
     
-    return handleResponse(response);
+    return handleResponse<{ access_token: string; refresh_token?: string }>(response);
   },
 
   /**
@@ -89,6 +109,20 @@ export const AuthApi = {
     });
     
     return handleResponse(response);
+  },
+
+  /**
+   * Xác thực Email sau đăng ký (alias cho verifyOtp)
+   */
+  verifyEmail: async (email: string, code: string) => {
+    return AuthApi.verifyOtp(email, code, OtpPurpose.EMAIL_VERIFICATION);
+  },
+
+  /**
+   * Gửi lại email verification (alias cho resendOtp)
+   */
+  resendVerificationEmail: async (email: string) => {
+    return AuthApi.resendOtp(email);
   },
 
   // ============= AUTHENTICATED REQUESTS =============
@@ -197,6 +231,56 @@ export const AuthApi = {
    */
   getCompanyById: async (id: string) => {
     const response = await fetch(`${API_BASE_URL}/companies/${id}`);
+    return handleResponse(response);
+  },
+
+  // ============= EMPLOYER ENDPOINTS =============
+  
+  /**
+   * Upload company logo
+   * POST /upload/company-logo
+   */
+  uploadCompanyLogo: async (token: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE_URL}/upload/company-logo`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    
+    return handleResponse<{ url: string; originalName: string; size: number; mimeType: string }>(response);
+  },
+
+  /**
+   * Hoàn thiện hồ sơ công ty (employer)
+   * POST /employer/profile/submit
+   */
+  completeEmployerProfile: async (token: string, data: {
+    companyName: string;
+    website: string;
+    description: string;
+    benefits: string[];
+    logoUrl: string;
+    locations: Array<{
+      province: string;
+      district: string;
+      detailedAddress: string;
+      isHeadquarters: boolean;
+    }>;
+  }) => {
+    const response = await fetch(`${API_BASE_URL}/employer/profile/submit`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    
     return handleResponse(response);
   },
 };

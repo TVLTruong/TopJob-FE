@@ -1,14 +1,15 @@
 "use client";
 
 import type { WorkExperience } from "../../(candidate)/profile/types";
-import { EditIcon, EditTextIcon } from "./Icons";
+import { EditIcon, EditTextIcon, TrashIcon } from "./Icons";
 
 interface Props {
   workExperience: WorkExperience[];
   openWorkModal: (index?: number | null) => void;
+  deleteWork: (index: number) => void;
 }
 
-export default function WorkExperienceSection({ workExperience, openWorkModal }: Props) {
+export default function WorkExperienceSection({ workExperience, openWorkModal, deleteWork }: Props) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
       <div className="flex items-start justify-between mb-4">
@@ -45,12 +46,22 @@ export default function WorkExperienceSection({ workExperience, openWorkModal }:
                     <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{work.description}</p>
                   )}
                 </div>
-                <button
-                  onClick={() => openWorkModal(index)}
-                  className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                >
-                  <EditIcon />
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => openWorkModal(index)}
+                    className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                    title="Chỉnh sửa"
+                  >
+                    <EditIcon />
+                  </button>
+                  <button
+                    onClick={() => deleteWork(index)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Xóa"
+                  >
+                    <TrashIcon />
+                  </button>
+                </div>
               </div>
             </div>
           ))}

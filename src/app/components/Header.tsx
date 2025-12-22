@@ -3,13 +3,67 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react"; // Import ChevronDown icon
+import { CandidateApi } from "@/utils/api/candidate-api";
 
 function UserDropdown({ onLogout }: { onLogout: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
-  const avatarPath = "/avatar-default-svgrepo-com.svg";
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const avatarPath = avatarUrl || "/avatar-default-svgrepo-com.svg";
+
+  // Fetch avatar when component mounts or when user changes
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        console.log('Fetching avatar, token exists:', !!token, 'user role:', user?.role);
+        
+        if (!token || !user) {
+          console.log('No token or user, skipping avatar fetch');
+          return;
+        }
+
+        // Check role case-insensitive
+        if (user.role?.toLowerCase() !== 'candidate') {
+          console.log('User is not a candidate (role:', user.role, '), skipping avatar fetch');
+          return;
+        }
+
+        console.log('Calling CandidateApi.getMyProfile...');
+        const profile = await CandidateApi.getMyProfile(token);
+        console.log('Profile received:', { avatarUrl: profile.avatarUrl });
+        
+        if (profile.avatarUrl) {
+          console.log('Setting avatar URL:', profile.avatarUrl);
+          setAvatarUrl(profile.avatarUrl);
+        } else {
+          console.log('No avatar URL in profile');
+        }
+      } catch (error) {
+        console.error('Error fetching avatar:', error);
+      }
+    };
+
+    fetchAvatar();
+  }, [user]);
+
+  // Listen for avatar updates from profile page
+  useEffect(() => {
+    const handleAvatarUpdate = (event: CustomEvent) => {
+      console.log('Avatar update event received:', event.detail.avatarUrl);
+      setAvatarUrl(event.detail.avatarUrl);
+    };
+
+    window.addEventListener('avatarUpdated', handleAvatarUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('avatarUpdated', handleAvatarUpdate as EventListener);
+    };
+  }, []);
+
+  console.log('Rendering UserDropdown with avatarPath:', avatarPath);
 
   return (
     <div className="relative">

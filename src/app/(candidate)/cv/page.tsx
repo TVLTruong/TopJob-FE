@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useRef, DragEvent, ChangeEvent } from "react";
+import { useState, useRef, DragEvent, ChangeEvent, useEffect } from "react";
+import { CandidateApi } from "@/utils/api/candidate-api";
+import type { CandidateCV } from "@/utils/api/candidate-api";
 
 // Icons
 const UploadIcon = () => (
@@ -46,6 +48,17 @@ const CheckIcon = () => (
   </svg>
 );
 
+const StarIcon = ({ filled }: { filled?: boolean }) => (
+  <svg 
+    className={`w-5 h-5 ${filled ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400'}`} 
+    fill={filled ? "currentColor" : "none"} 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+  </svg>
+);
+
 const CloseIcon = () => (
   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -53,22 +66,36 @@ const CloseIcon = () => (
 );
 
 export default function CVManagementPage() {
-  type CV = {
-    id: number;
-    name: string;
-    size: number;
-    type: string;
-    uploadDate: string;
-    data: string | ArrayBuffer | null;
-  };
-
-  const [cvList, setCvList] = useState<CV[]>([]);
+  const [cvList, setCvList] = useState<CandidateCV[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState<boolean>(false);
-  const [showPreview, setShowPreview] = useState<boolean>(false);
-  const [previewCV, setPreviewCV] = useState<CV | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Load CVs on mount
+  useEffect(() => {
+    loadCVs();
+  }, []);
+
+  const loadCVs = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        alert('Vui lòng đăng nhập để xem CV');
+        return;
+      }
+      const cvs = await CandidateApi.getMyCvs(token);
+      setCvList(cvs);
+    } catch (error) {
+      console.error('Error loading CVs:', error);
+      alert('Không thể tải danh sách CV');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDrag = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -98,34 +125,62 @@ export default function CVManagementPage() {
   };
 
   const handleFiles = (files: FileList | File[] | null) => {
-    if (!files) return;
-    Array.from(files).forEach((file: File) => {
-      // Chỉ chấp nhận PDF, DOC, DOCX
-      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-      
-      if (!allowedTypes.includes(file.type)) {
-        alert('Chỉ chấp nhận file PDF, DOC, DOCX');
+    if (!files || uploading) return;
+    
+    Array.from(files).forEach(async (file: File) => {
+      // Chỉ chấp nhận PDF
+      if (file.type !== 'application/pdf') {
+        alert('Chỉ chấp nhận file PDF');
         return;
       }
 
-      if (file.size > 5 * 1024 * 1024) { // 5MB
-        alert('File không được vượt quá 5MB');
+      if (file.size > 10 * 1024 * 1024) { // 10MB
+        alert('File không được vượt quá 10MB');
         return;
       }
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newCV = {
-          id: Date.now() + Math.random(),
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          uploadDate: new Date().toLocaleDateString('vi-VN'),
-          data: reader.result
-        };
-        setCvList(prev => [...prev, newCV]);
-      };
-      reader.readAsDataURL(file);
+      try {
+        setUploading(true);
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          alert('Vui lòng đăng nhập để upload CV');
+          return;
+        }
+
+        // Step 1: Upload file to storage
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/upload/candidate-cv`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Upload file thất bại');
+        }
+
+        const uploadData = await uploadResponse.json();
+        
+        // Step 2: Save CV metadata to profile
+        await CandidateApi.uploadCv(token, {
+          fileName: file.name.replace('.pdf', ''),
+          fileUrl: uploadData.url,
+          fileSize: file.size,
+        });
+
+        // Reload CVs
+        await loadCVs();
+        alert('Upload CV thành công');
+      } catch (error) {
+        console.error('Error uploading CV:', error);
+        alert('Không thể upload CV');
+      } finally {
+        setUploading(false);
+      }
     });
   };
 
@@ -133,47 +188,55 @@ export default function CVManagementPage() {
     fileInputRef.current?.click();
   };
 
-  const formatFileSize = (bytes: string | number) => {
-    const num: number = typeof bytes === 'string' ? Number(bytes) : bytes;
-    if (isNaN(num)) return '0 B';
-    if (num < 1024) return num + ' B';
-    if (num < 1024 * 1024) return (num / 1024).toFixed(2) + ' KB';
-    return (num / (1024 * 1024)).toFixed(2) + ' MB';
+  const handleDownload = (cv: CandidateCV) => {
+    window.open(cv.fileUrl, '_blank');
   };
 
-  const getFileExtension = (filename: string) => {
-    const ext = filename.split('.').pop() || '';
-    return ext.toUpperCase();
-  };
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa CV này?')) return;
 
-  const handlePreview = (cv: CV | null) => {
-    setPreviewCV(cv);
-    setShowPreview(true);
-  };
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        alert('Vui lòng đăng nhập để xóa CV');
+        return;
+      }
 
-  const handleDownload = (cv: { id?: number; name: string; size?: number; type?: string; uploadDate?: string; data: string | ArrayBuffer | null; }) => {
-    const link = document.createElement('a');
-    link.href = cv.data as string;
-    link.download = cv.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleDelete = (id: number) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa CV này?')) {
-      setCvList(prev => prev.filter(cv => cv.id !== id));
+      await CandidateApi.deleteCv(token, id);
+      await loadCVs();
+      alert('Xóa CV thành công');
+    } catch (error) {
+      console.error('Error deleting CV:', error);
+      alert('Không thể xóa CV');
     }
   };
 
-  const startEditing = (cv: { id: number; name: string; size?: number; type?: string; uploadDate?: string; data?: string | ArrayBuffer | null; }) => {
-    setEditingId(cv.id);
-    setEditingName(cv.name);
+  const handleSetDefault = async (id: string) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        alert('Vui lòng đăng nhập');
+        return;
+      }
+
+      await CandidateApi.setDefaultCv(token, id);
+      await loadCVs();
+      alert('Đặt CV mặc định thành công');
+    } catch (error) {
+      console.error('Error setting default CV:', error);
+      alert('Không thể đặt CV mặc định');
+    }
   };
 
-  const saveEdit = (id: number) => {
+  const startEditing = (cv: CandidateCV) => {
+    setEditingId(cv.id);
+    setEditingName(cv.fileName);
+  };
+
+  const saveEdit = (id: string) => {
+    // TODO: Implement update CV name API endpoint
     setCvList(prev => prev.map(cv => 
-      cv.id === id ? { ...cv, name: editingName } : cv
+      cv.id === id ? { ...cv, fileName: editingName } : cv
     ));
     setEditingId(null);
   };
@@ -183,8 +246,27 @@ export default function CVManagementPage() {
     setEditingName("");
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+          <p className="mt-4 text-gray-600">Đang tải danh sách CV...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
+      {uploading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 flex items-center space-x-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+            <span className="text-gray-700">Đang upload CV...</span>
+          </div>
+        </div>
+      )}
       <div className="max-w-6xl mx-auto">
         
         {/* Header */}
@@ -210,9 +292,10 @@ export default function CVManagementPage() {
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".pdf,.doc,.docx"
+              accept=".pdf"
               onChange={handleChange}
               className="hidden"
+              disabled={uploading}
             />
             
             <div className="flex flex-col items-center">
@@ -232,7 +315,7 @@ export default function CVManagementPage() {
               </button>
               
               <p className="text-sm text-gray-500">
-                Hỗ trợ: PDF, DOC, DOCX (Tối đa 5MB)
+                Hỗ trợ: PDF (Tối đa 10MB)
               </p>
             </div>
           </div>
@@ -262,15 +345,6 @@ export default function CVManagementPage() {
                   className="border border-gray-200 rounded-lg p-4 hover:border-emerald-300 hover:shadow-md transition-all"
                 >
                   <div className="flex items-start gap-4">
-                    {/* File Icon */}
-                    <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                        <span className="text-red-600 font-bold text-xs">
-                          {getFileExtension(cv.name)}
-                        </span>
-                      </div>
-                    </div>
-
                     {/* File Info */}
                     <div className="flex-1 min-w-0">
                       {editingId === cv.id ? (
@@ -298,27 +372,37 @@ export default function CVManagementPage() {
                           </button>
                         </div>
                       ) : (
-                        <h3 className="font-semibold text-gray-900 mb-1 truncate">
-                          {cv.name}
-                        </h3>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-gray-900 break-words">
+                            {cv.fileName}
+                          </h3>
+                          {cv.isDefault && (
+                            <span className="flex items-center gap-1 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full whitespace-nowrap">
+                              <StarIcon filled />
+                              Mặc định
+                            </span>
+                          )}
+                        </div>
                       )}
                       
                       <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span>{formatFileSize(cv.size)}</span>
-                        <span>•</span>
-                        <span>Ngày tải lên: {cv.uploadDate}</span>
+                        {cv.uploadedAt && (
+                          <span>Ngày tải lên: {new Date(cv.uploadedAt).toLocaleDateString('vi-VN')}</span>
+                        )}
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handlePreview(cv)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Xem trước"
-                      >
-                        <EyeIcon />
-                      </button>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {!cv.isDefault && (
+                        <button
+                          onClick={() => handleSetDefault(cv.id)}
+                          className="p-2 text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 rounded-lg transition-colors"
+                          title="Đặt làm CV mặc định"
+                        >
+                          <StarIcon />
+                        </button>
+                      )}
                       
                       <button
                         onClick={() => handleDownload(cv)}
@@ -350,76 +434,6 @@ export default function CVManagementPage() {
             </div>
           )}
         </div>
-
-        {/* Preview Modal */}
-        {showPreview && previewCV && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col">
-              {/* Modal Header */}
-              <div className="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">{previewCV.name}</h2>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {formatFileSize(previewCV.size)} • {previewCV.uploadDate}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowPreview(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <CloseIcon />
-                </button>
-              </div>
-
-              {/* Modal Body */}
-              <div className="flex-1 overflow-auto p-6">
-                {previewCV.type === 'application/pdf' && typeof previewCV.data === 'string' ? (
-                  <iframe
-                    src={previewCV.data}
-                    className="w-full h-full min-h-[600px] border border-gray-300 rounded-lg"
-                    title="CV Preview"
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-12">
-                    <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                      <FileIcon />
-                    </div>
-                    <p className="text-gray-700 text-lg mb-2">
-                      Không thể xem trước file {getFileExtension(previewCV.name)}
-                    </p>
-                    <p className="text-gray-500 text-sm mb-6">
-                      Vui lòng tải xuống để xem nội dung
-                    </p>
-                    <button
-                      onClick={() => handleDownload(previewCV)}
-                      className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center gap-2"
-                    >
-                      <DownloadIcon />
-                      Tải xuống file
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Modal Footer */}
-              <div className="border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
-                <button
-                  onClick={() => handleDownload(previewCV)}
-                  className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2"
-                >
-                  <DownloadIcon />
-                  Tải xuống
-                </button>
-                <button
-                  onClick={() => setShowPreview(false)}
-                  className="px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Đóng
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
       </div>
     </div>
