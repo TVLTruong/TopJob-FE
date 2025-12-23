@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import JobDetailContent, { JobDetailData } from '@/app/components/job/JobDetailContents';
 import ApplicantsTab from '@/app/components/job/Applicant';
 import JobFormModal from '@/app/components/job/JobFormModal';
-import { ChevronDown, Power, Edit, Eye, EyeOff, Trash2, X } from 'lucide-react';
+import { ChevronDown, Power, Edit, Eye, EyeOff, Trash2, X, Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -18,6 +18,7 @@ export default function JobDetailPage() {
   const [activeTab, setActiveTab] = useState<'detail' | 'applicants'>('detail');
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const router = useRouter();
 
   // Helpers
@@ -71,6 +72,11 @@ export default function JobDetailPage() {
       setConfirmAction('apply');
     }
     setShowConfirmModal(true);
+  };
+
+  const handleSaveJob = () => {
+    setIsSaved(!isSaved);
+    console.log(isSaved ? 'Đã bỏ lưu công việc' : 'Đã lưu công việc');
   };
 
   const confirmHandler = () => {
@@ -147,7 +153,7 @@ export default function JobDetailPage() {
 
   const modalContent = getModalContent();
 
-  const handleSaveJob = (updatedJob: JobDetailData) => {
+  const handleSaveJobData = (updatedJob: JobDetailData) => {
     setJob(updatedJob);
   };
 
@@ -174,18 +180,33 @@ export default function JobDetailPage() {
             
             {/* Actions based on role */}
             {isCandidate ? (
-              <button 
-                onClick={handleApply}
-                className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors ${
-                  hasApplied 
-                    ? 'bg-gray-400 text-white cursor-pointer hover:bg-gray-500' 
-                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                }`}
-              >
-                <span className="text-sm">
-                  {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển'}
-                </span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={handleApply}
+                  className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors ${
+                    hasApplied 
+                      ? 'bg-gray-400 text-white cursor-pointer hover:bg-gray-500' 
+                      : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                  }`}
+                >
+                  <span className="text-sm">
+                    {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển'}
+                  </span>
+                </button>
+                
+                {/* Nút Lưu công việc (trái tim) */}
+                <button
+                  onClick={handleSaveJob}
+                  className={`aspect-square h-10 flex items-center justify-center border rounded-lg transition-colors ${
+                    isSaved
+                      ? "border-red-500 bg-red-100 text-red-600 hover:bg-red-200"
+                      : "border-gray-300 text-gray-600 hover:bg-emerald-50 hover:border-emerald-500"
+                  }`}
+                  aria-label={isSaved ? "Bỏ lưu công việc" : "Lưu công việc"}
+                >
+                  <Heart size={20} fill={isSaved ? "currentColor" : "none"} />
+                </button>
+              </div>
             ) : isRecruiter ? (
               <div className="relative">
                 <button 
@@ -282,7 +303,7 @@ export default function JobDetailPage() {
         <JobFormModal
           isOpen={isEditOpen}
           onClose={() => setIsEditOpen(false)}
-          onSave={handleSaveJob}
+          onSave={handleSaveJobData}
           initialData={job}
           mode="edit"
         />

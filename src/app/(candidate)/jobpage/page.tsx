@@ -416,16 +416,12 @@ export default function JobSearchPage() {
     tempMaxSalary !== maxSalary;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Search Section - với background và tiêu đề */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 py-8">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <HeroSearcher />
-        </div>
-      </div>
+    <div className="min-h-screen">
+      {/* Search Section */}
+      <HeroSearcher />
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 max-w-[1400px] py-8">
+      <div className="container mx-auto px-4 max-w-[1400px] py-8 bg-gray-50">
         {/* Horizontal Filters Bar */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
           <div className="flex flex-wrap items-center gap-3">

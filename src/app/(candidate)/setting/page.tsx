@@ -22,6 +22,7 @@ export default function SettingsPage() {
   
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -67,11 +68,22 @@ export default function SettingsPage() {
       return;
     }
     
+    if (!confirmPassword.trim()) {
+      showToast("Vui lòng xác nhận mật khẩu mới");
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      showToast("Mật khẩu xác nhận không khớp");
+      return;
+    }
+    
     // Gọi API đổi mật khẩu
     console.log("Changing password");
     showToast("Đổi mật khẩu thành công!", "success");
     setOldPassword("");
     setNewPassword("");
+    setConfirmPassword("");
   };
 
   const handleDeleteAccount = () => {
@@ -196,7 +208,7 @@ export default function SettingsPage() {
             </div>
 
             {/* New Password */}
-            <div className="mb-6">
+            <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Mật khẩu mới
               </label>
@@ -208,6 +220,21 @@ export default function SettingsPage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
               <p className="text-xs text-gray-500 mt-1">Tối thiểu 8 ký tự</p>
+            </div>
+
+            {/* Confirm Password */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Xác nhận mật khẩu mới
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Nhập lại mật khẩu mới"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">Nhập lại mật khẩu để xác nhận</p>
             </div>
 
             <button
