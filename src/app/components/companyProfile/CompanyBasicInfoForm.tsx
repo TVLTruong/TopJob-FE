@@ -75,7 +75,8 @@ export default function CompanyBasicInfoForm({ value, onChange }: CompanyBasicIn
     }
 
     const data = locationData as LocationItem[]
-    const districtList = data
+    // Filter districts based on province
+    data
       .filter((item) => item["Tỉnh / Thành Phố"] === value.province)
       .map((item) => item["Tên"])
       .sort()

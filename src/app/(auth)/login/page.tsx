@@ -15,6 +15,17 @@ interface DecodedToken {
   exp: number;
 }
 
+interface LoginResponse {
+  access_token?: string;
+  token?: string;
+  accessToken?: string;
+  data?: {
+    access_token?: string;
+    token?: string;
+    accessToken?: string;
+  };
+}
+
 function LoginContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,66 +63,55 @@ function LoginContent() {
     setLoading(true);
 
     try {
-      console.log('🔐 Logging in with email:', email);
+      // Clear old token BEFORE login
+      const oldToken = localStorage.getItem('accessToken');
+      if (oldToken) {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
       
       // Gọi API login
-      const response = await AuthApi.login(email, password);
-      
-      console.log('📦 Full login response:', JSON.stringify(response, null, 2));
+      const response = await AuthApi.login(email, password) as LoginResponse;
       
       // Kiểm tra nhiều trường hợp token field
       const token = response.access_token || response.token || response.accessToken || 
                     response.data?.access_token || response.data?.token || response.data?.accessToken;
       
       if (!token) {
-        console.error('❌ No token found in response');
-        console.error('Response keys:', Object.keys(response));
         throw new Error('Đăng nhập thất bại: Không nhận được token từ server');
       }
 
-      console.log('✅ Login successful, token received:', token.substring(0, 20) + '...');
-
       // Decode token để lấy thông tin user
       const decoded = jwtDecode<DecodedToken>(token);
-      console.log('👤 User info (decoded token):', {
-        email: decoded.email,
-        role: decoded.role,
-        roleType: typeof decoded.role,
-        status: decoded.status,
-        fullDecoded: decoded
-      });
+      
+      // Verify token content matches login email (security check)
+      if (decoded.email !== email) {
+        console.error('⚠️ Token email mismatch');
+        throw new Error('Token không khớp với email đăng nhập. Vui lòng thử lại.');
+      }
 
       // Lưu token vào context (sẽ tự động lưu vào localStorage)
       login(token);
 
       // Normalize role để so sánh (case-insensitive)
       const userRole = (decoded.role || '').toString().toUpperCase();
-      console.log('🔍 Normalized role:', userRole);
 
       // UC-EMP-01: Kiểm tra status và redirect
       if (userRole === 'EMPLOYER') {
-        console.log('✅ Detected EMPLOYER role');
-        
         const userStatus = (decoded.status || '').toString().toUpperCase();
         
         if (userStatus === 'PENDING_PROFILE_COMPLETION') {
-          console.log('📋 Status: PENDING_PROFILE_COMPLETION - Redirect to /completeProfile');
           router.push('/completeProfile');
         } else if (userStatus === 'PENDING_APPROVAL') {
-          console.log('⏳ Status: PENDING_APPROVAL - Show waiting page');
           router.push('/pending-approval');
         } else if (userStatus === 'ACTIVE') {
-          console.log('✅ Status: ACTIVE - Redirect to dashboard');
           router.push('/employer/dashboard');
         } else {
-          console.log('⚠️ Unknown status:', decoded.status, '- Redirect to home');
           router.push('/');
         }
       } else if (userRole === 'CANDIDATE') {
-        console.log('✅ Detected CANDIDATE role - Redirect to home');
         router.push('/');
       } else {
-        console.warn('⚠️ Unknown role:', decoded.role, '- Redirect to home');
         router.push('/');
       }
 

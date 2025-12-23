@@ -7,6 +7,16 @@ import Image from "next/image";
 import { AuthApi } from "@/utils/api/auth-api";
 import OtpModal from "@/app/components/common/OtpModal";
 
+interface VerifyEmailResponse {
+  verified: boolean;
+  message: string;
+  userId: string;
+  email: string;
+  access_token?: string;
+  refresh_token?: string;
+  success?: boolean;
+}
+
 export default function EmployerSignUpPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -121,7 +131,7 @@ export default function EmployerSignUpPage() {
   const handleVerifyOtp = async (code: string): Promise<boolean> => {
     try {
       console.log('Verifying OTP for:', registeredEmail, 'code:', code);
-      const response = await AuthApi.verifyEmail(registeredEmail, code);
+      const response = await AuthApi.verifyEmail(registeredEmail, code) as VerifyEmailResponse;
       
       console.log('OTP Response:', response);
       

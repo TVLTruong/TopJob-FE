@@ -112,10 +112,19 @@ export interface Job {
 // ============= HELPER FUNCTION =============
 
 async function handleResponse<T>(response: Response): Promise<T> {
+  // Log response for debugging
+  console.log('API Response:', {
+    url: response.url,
+    status: response.status,
+    statusText: response.statusText,
+    ok: response.ok
+  });
+  
   if (!response.ok) {
     const error = await response.json().catch(() => ({
-      message: 'An error occurred'
+      message: `HTTP ${response.status}: ${response.statusText}`
     }));
+    console.error('API Error:', error);
     throw new Error(error.message || `HTTP error! status: ${response.status}`);
   }
   return response.json();
@@ -131,13 +140,29 @@ export const CandidateApi = {
    * GET /candidates/me
    */
   getMyProfile: async (token: string): Promise<CandidateProfile> => {
-    const response = await fetch(`${API_BASE_URL}/candidates/me`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    
-    return handleResponse<CandidateProfile>(response);
+    try {
+      // Add timestamp to prevent caching
+      const timestamp = new Date().getTime();
+      const url = `${API_BASE_URL}/candidates/me?_t=${timestamp}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+      });
+      
+      return handleResponse<CandidateProfile>(response);
+    } catch (error) {
+      console.error('Failed to fetch profile:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        API_BASE_URL,
+      });
+      throw error;
+    }
   },
 
   /**

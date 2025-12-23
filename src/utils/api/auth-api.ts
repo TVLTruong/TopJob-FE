@@ -95,7 +95,14 @@ export const AuthApi = {
       body: JSON.stringify({ email, otpCode, purpose }),
     });
     
-    return handleResponse<{ access_token: string; refresh_token?: string }>(response);
+    return handleResponse<{
+      verified: boolean;
+      message: string;
+      userId: string;
+      email: string;
+      access_token?: string;
+      refresh_token?: string;
+    }>(response);
   },
 
   /**
