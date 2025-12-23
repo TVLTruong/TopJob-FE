@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "@/app/globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "TopJob - Đăng nhập/Đăng ký",
@@ -17,7 +14,7 @@ export default function AuthLayout({
 }>) {
   return (
     <html lang="vi">
-      <body className={`${inter.className} bg-gray-50`}>
+      <body className="bg-gray-50">
         <AuthProvider>
           {/* Layout đơn giản cho auth - không có Header/Footer */}
           <main className="min-h-screen">
