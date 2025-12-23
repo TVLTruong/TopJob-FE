@@ -2,9 +2,28 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
+// Helper to get auth headers
+const getAuthHeaders = () => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      return {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+    }
+  }
+  return {
+    'Content-Type': 'application/json',
+  };
+};
+
+// ==================== INTERFACES ====================
+
 export interface EmployerApprovalPayload {
-  status: 'ACTIVE' | 'REJECTED' | 'PENDING_PROFILE_COMPLETION';
+  status?: 'ACTIVE' | 'REJECTED' | 'PENDING_PROFILE_COMPLETION';
   reason?: string;
+  notes?: string;
 }
 
 export interface EmployerProfile {
@@ -20,6 +39,18 @@ export interface EmployerProfile {
   description?: string;
 }
 
+export interface JobPostingApprovalPayload {
+  notes?: string;
+  reason?: string;
+}
+
+export interface JobPostingApprovalPayload {
+  notes?: string;
+  reason?: string;
+}
+
+// ==================== EMPLOYER APPROVAL APIs ====================
+
 // Get list of employers pending approval
 export const getEmployersForApproval = async (
   status?: string,
@@ -33,7 +64,8 @@ export const getEmployersForApproval = async (
     params.append('limit', limit.toString());
 
     const response = await axios.get(
-      `${API_BASE_URL}/admin/employer-approval?${params.toString()}`
+      `${API_BASE_URL}/admin/employer-approval?${params.toString()}`,
+      { headers: getAuthHeaders() }
     );
     return response.data;
   } catch (error) {
@@ -46,7 +78,8 @@ export const getEmployersForApproval = async (
 export const getEmployerProfile = async (employerId: string) => {
   try {
     const response = await axios.get(
-      `${API_BASE_URL}/admin/employer-approval/${employerId}`
+      `${API_BASE_URL}/admin/employer-approval/${employerId}`,
+      { headers: getAuthHeaders() }
     );
     return response.data;
   } catch (error) {
@@ -56,13 +89,12 @@ export const getEmployerProfile = async (employerId: string) => {
 };
 
 // Approve employer profile
-export const approveEmployer = async (employerId: string) => {
+export const approveEmployer = async (employerId: string, notes?: string) => {
   try {
     const response = await axios.post(
       `${API_BASE_URL}/admin/employer-approval/${employerId}/approve`,
-      {
-        status: 'ACTIVE'
-      }
+      { notes },
+      { headers: getAuthHeaders() }
     );
     return response.data;
   } catch (error) {
@@ -74,26 +106,13 @@ export const approveEmployer = async (employerId: string) => {
 // Reject employer profile
 export const rejectEmployer = async (
   employerId: string,
-  reason: string,
-  registrationType?: 'new' | 'edit'
+  reason: string
 ) => {
   try {
-    const payload: any = {
-      reason
-    };
-
-    // Different status based on registration type
-    if (registrationType === 'new') {
-      payload.status = 'PENDING_PROFILE_COMPLETION'; // Change back to pending completion for new profiles
-    } else if (registrationType === 'edit') {
-      payload.status = 'APPROVED'; // Keep as approved, just reject pending edits
-    } else {
-      payload.status = 'REJECTED';
-    }
-
     const response = await axios.post(
       `${API_BASE_URL}/admin/employer-approval/${employerId}/reject`,
-      payload
+      { reason },
+      { headers: getAuthHeaders() }
     );
     return response.data;
   } catch (error) {
@@ -102,42 +121,75 @@ export const rejectEmployer = async (
   }
 };
 
-// Approve employer profile changes/edits
-export const approveEmployerEdits = async (employerId: string) => {
-  try {
-    const response = await axios.post(
-      `${API_BASE_URL}/admin/employer-approval/${employerId}/approve-edits`,
-      {
-        status: 'APPROVED'
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error approving employer edits:', error);
-    throw error;
-  }
-};
+// ==================== JOB APPROVAL APIs ====================
 
-// Search employers
-export const searchEmployers = async (
-  query: string,
-  status?: string,
+// Get list of jobs pending approval
+export const getJobsForApproval = async (
+  search?: string,
+  categoryId?: string,
+  employerId?: string,
   page: number = 1,
   limit: number = 10
 ) => {
   try {
     const params = new URLSearchParams();
-    params.append('q', query);
-    if (status) params.append('status', status);
+    if (search) params.append('search', search);
+    if (categoryId) params.append('categoryId', categoryId);
+    if (employerId) params.append('employerId', employerId);
     params.append('page', page.toString());
     params.append('limit', limit.toString());
 
     const response = await axios.get(
-      `${API_BASE_URL}/admin/employer-approval/search?${params.toString()}`
+      `${API_BASE_URL}/admin/job-approval?${params.toString()}`,
+      { headers: getAuthHeaders() }
     );
     return response.data;
   } catch (error) {
-    console.error('Error searching employers:', error);
+    console.error('Error fetching jobs for approval:', error);
+    throw error;
+  }
+};
+
+// Get single job details
+export const getJobDetail = async (jobId: string) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/admin/job-approval/${jobId}`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching job detail:', error);
+    throw error;
+  }
+};
+
+// Approve job posting
+export const approveJob = async (jobId: string, notes?: string) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/admin/job-approval/${jobId}/approve`,
+      { notes },
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error approving job:', error);
+    throw error;
+  }
+};
+
+// Reject job posting
+export const rejectJob = async (jobId: string, reason: string) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/admin/job-approval/${jobId}/reject`,
+      { reason },
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error rejecting job:', error);
     throw error;
   }
 };

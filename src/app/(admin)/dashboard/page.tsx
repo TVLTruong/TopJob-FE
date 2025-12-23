@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, Users, Briefcase, AlertCircle } from 'lucide-react';
+import { Users, Briefcase, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminDashboard() {

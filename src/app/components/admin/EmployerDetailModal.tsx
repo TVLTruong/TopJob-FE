@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import { X, Plus, Minus } from 'lucide-react';
+import Image from 'next/image';
 
 interface EmployerProfile {
   id: number;
@@ -84,7 +85,7 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
           <div className="flex items-start gap-4 pb-6 border-b border-gray-200">
             <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
               {employer.companyLogo ? (
-                <img
+                <Image
                   src={employer.companyLogo}
                   alt={employer.companyName}
                   className="w-full h-full object-cover"

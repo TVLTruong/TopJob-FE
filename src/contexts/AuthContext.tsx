@@ -95,7 +95,7 @@ import { jwtDecode } from 'jwt-decode';
 interface UserPayload {
   sub: string;
   email: string;
-  role: 'CANDIDATE' | 'EMPLOYER';
+  role: 'CANDIDATE' | 'EMPLOYER' | 'ADMIN';
   status?: string; // Thêm status để check redirect
   iat: number;
   exp: number;
@@ -166,8 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         sessionStorage.removeItem('lastUserId');
       }
-    } catch (error) {
-
+    } catch {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('userStatus');
     }
@@ -220,7 +219,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (decodedUser.status) {
         localStorage.setItem('userStatus', decodedUser.status);
       }
-    } catch (error) {
+    } catch {
        // Silent error - no logging in production
     }
   };

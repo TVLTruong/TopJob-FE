@@ -1,17 +1,18 @@
 'use client';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, ChevronLeft, ChevronRight, Filter, Eye, Check, X } from 'lucide-react';
 import ApproveModal from './ApproveModal';
 import RejectModal from './RejectModal';
 import JobDetailModal from './JobDetailModal';
+import { getJobsForApproval, approveJob, rejectJob, getJobDetail } from '@/utils/api/admin-api';
 
 interface JobPosting {
-  id: number;
+  id: string;
   jobTitle: string;
   companyName: string;
   salary: string;
   level: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'PENDING_APPROVAL' | 'ACTIVE' | 'REJECTED';
   createdDate: string;
   description?: string;
   requirements?: string[];
@@ -26,64 +27,64 @@ export default function JobPostingApprovalList() {
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
-  const [jobPostings, setJobPostings] = useState<JobPosting[]>([
-    {
-      id: 1,
-      jobTitle: 'Senior Frontend Developer',
-      companyName: 'Tech Solutions Vietnam',
-      salary: '20-30 triệu/tháng',
-      level: 'Senior',
-      status: 'pending',
-      createdDate: '24/05/2025',
-      description: 'Chúng tôi đang tìm kiếm một Senior Frontend Developer có kinh nghiệm với React, TypeScript...',
-      requirements: ['React', 'TypeScript', '5+ năm kinh nghiệm', 'English']
-    },
-    {
-      id: 2,
-      jobTitle: 'Backend Engineer',
-      companyName: 'Digital Innovations Inc',
-      salary: '18-25 triệu/tháng',
-      level: 'Mid-level',
-      status: 'pending',
-      createdDate: '23/05/2025',
-      description: 'Tuyển dụng Backend Engineer làm việc với Node.js, MongoDB...',
-      requirements: ['Node.js', 'MongoDB', '3+ năm', 'Docker']
-    },
-    {
-      id: 3,
-      jobTitle: 'UI/UX Designer',
-      companyName: 'Smart Business Solutions',
-      salary: '15-20 triệu/tháng',
-      level: 'Mid-level',
-      status: 'pending',
-      createdDate: '22/05/2025',
-      description: 'Tuyển dụng UI/UX Designer có kinh nghiệm thiết kế...',
-      requirements: ['Figma', 'Prototyping', 'Design System']
-    },
-    {
-      id: 4,
-      jobTitle: 'DevOps Engineer',
-      companyName: 'CloudTech Vietnam',
-      salary: '25-35 triệu/tháng',
-      level: 'Senior',
-      status: 'pending',
-      createdDate: '21/05/2025',
-      description: 'Tuyển DevOps Engineer quản lý cloud infrastructure...',
-      requirements: ['AWS/GCP', 'Kubernetes', 'CI/CD', 'Linux']
-    },
-  ]);
+  const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Fetch jobs from API
+  const fetchJobs = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getJobsForApproval(
+        searchQuery || undefined,
+        undefined,
+        undefined,
+        currentPage,
+        10
+      );
+      
+      // Map BE data to FE format
+      const mappedJobs = response.data.map((job: Record<string, unknown>) => ({
+        id: job.id,
+        jobTitle: job.title,
+        companyName: job.employer?.companyName || 'N/A',
+        salary: job.salaryMin && job.salaryMax 
+          ? `${job.salaryMin / 1000000}-${job.salaryMax / 1000000} triệu/tháng`
+          : job.isNegotiable ? 'Thỏa thuận' : 'N/A',
+        level: job.experienceLevel || 'N/A',
+        status: job.status,
+        createdDate: new Date(job.createdAt).toLocaleDateString('vi-VN'),
+        description: job.description,
+        requirements: job.requiredSkills || [],
+      }));
+      
+      setJobPostings(mappedJobs);
+      setTotalCount(response.meta?.total || response.data.length);
+    } catch (err) {
+      console.error('Error fetching jobs:', err);
+      setError(err instanceof Error ? err.message : 'Không thể tải danh sách tin tuyển dụng');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, searchQuery]);
+
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
 
   const statusConfig = {
-    pending: { label: 'Chờ duyệt', color: 'bg-orange-100 text-orange-600 border-orange-300' },
-    approved: { label: 'Đã duyệt', color: 'bg-green-100 text-green-600 border-green-300' },
-    rejected: { label: 'Từ chối', color: 'bg-red-100 text-red-600 border-red-300' },
+    PENDING_APPROVAL: { label: 'Chờ duyệt', color: 'bg-orange-100 text-orange-600 border-orange-300' },
+    ACTIVE: { label: 'Đã duyệt', color: 'bg-green-100 text-green-600 border-green-300' },
+    REJECTED: { label: 'Từ chối', color: 'bg-red-100 text-red-600 border-red-300' },
   };
 
   const filterOptions = [
-    { value: 'all', label: 'Tất cả', count: jobPostings.length },
-    { value: 'pending', label: 'Chờ duyệt', count: jobPostings.filter(j => j.status === 'pending').length },
-    { value: 'approved', label: 'Đã duyệt', count: jobPostings.filter(j => j.status === 'approved').length },
-    { value: 'rejected', label: 'Từ chối', count: jobPostings.filter(j => j.status === 'rejected').length },
+    { value: 'all', label: 'Tất cả', count: totalCount },
+    { value: 'PENDING_APPROVAL', label: 'Chờ duyệt', count: jobPostings.filter(j => j.status === 'PENDING_APPROVAL').length },
+    { value: 'ACTIVE', label: 'Đã duyệt', count: jobPostings.filter(j => j.status === 'ACTIVE').length },
+    { value: 'REJECTED', label: 'Từ chối', count: jobPostings.filter(j => j.status === 'REJECTED').length },
   ];
 
   const filteredJobs = useMemo(() => {
@@ -93,16 +94,8 @@ export default function JobPostingApprovalList() {
       filtered = filtered.filter(j => j.status === statusFilter);
     }
 
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(j =>
-        j.jobTitle.toLowerCase().includes(query) ||
-        j.companyName.toLowerCase().includes(query)
-      );
-    }
-
     return filtered;
-  }, [jobPostings, statusFilter, searchQuery]);
+  }, [jobPostings, statusFilter]);
 
   const getActiveFilterLabel = () => {
     const option = filterOptions.find(opt => opt.value === statusFilter);
@@ -110,15 +103,21 @@ export default function JobPostingApprovalList() {
   };
 
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
-  const paginatedJobs = filteredJobs.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+  const paginatedJobs = filteredJobs;
 
-  const handleViewDetails = (job: JobPosting) => {
-    setSelectedJob(job);
-    setShowDetailModal(true);
+  const handleViewDetails = async (job: JobPosting) => {
+    try {
+      const detail = await getJobDetail(job.id);
+      setSelectedJob({
+        ...job,
+        ...detail.data
+      });
+      setShowDetailModal(true);
+    } catch (err) {
+      console.error('Error fetching job detail:', err);
+      alert('Không thể tải chi tiết tin tuyển dụng');
+    }
   };
 
   const handleOpenApproveModal = (job: JobPosting) => {
@@ -126,15 +125,18 @@ export default function JobPostingApprovalList() {
     setShowApproveModal(true);
   };
 
-  const handleApprove = () => {
-    if (selectedJob) {
-      setJobPostings(prev =>
-        prev.map(j =>
-          j.id === selectedJob.id ? { ...j, status: 'approved' as const } : j
-        )
-      );
+  const handleApprove = async () => {
+    if (!selectedJob) return;
+    
+    try {
+      await approveJob(selectedJob.id);
+      setShowApproveModal(false);
+      fetchJobs(); // Refresh list
+      alert('Đã duyệt tin tuyển dụng thành công');
+    } catch (err) {
+      console.error('Error approving job:', err);
+      alert(err instanceof Error ? err.message : 'Không thể duyệt tin tuyển dụng');
     }
-    setShowApproveModal(false);
   };
 
   const handleOpenRejectModal = (job: JobPosting) => {
@@ -142,15 +144,18 @@ export default function JobPostingApprovalList() {
     setShowRejectModal(true);
   };
 
-  const handleReject = (reason: string) => {
-    if (selectedJob) {
-      setJobPostings(prev =>
-        prev.map(j =>
-          j.id === selectedJob.id ? { ...j, status: 'rejected' as const } : j
-        )
-      );
+  const handleReject = async (reason: string) => {
+    if (!selectedJob) return;
+    
+    try {
+      await rejectJob(selectedJob.id, reason);
+      setShowRejectModal(false);
+      fetchJobs(); // Refresh list
+      alert('Đã từ chối tin tuyển dụng');
+    } catch (err) {
+      console.error('Error rejecting job:', err);
+      alert(err instanceof Error ? err.message : 'Không thể từ chối tin tuyển dụng');
     }
-    setShowRejectModal(false);
   };
 
   return (
@@ -159,9 +164,24 @@ export default function JobPostingApprovalList() {
       <div className="p-6">
         <div>
           <h2 className="text-2xl font-bold mb-6">
-            Số tin cần duyệt: {jobPostings.filter(j => j.status === 'pending').length}
+            Số tin cần duyệt: {jobPostings.filter(j => j.status === 'PENDING_APPROVAL').length}
           </h2>
         </div>
+
+        {/* Loading indicator */}
+        {loading && (
+          <div className="text-center py-4">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p className="mt-2 text-gray-600">Đang tải...</p>
+          </div>
+        )}
+
+        {/* Error message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
         {/* Search & Filter controls */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">

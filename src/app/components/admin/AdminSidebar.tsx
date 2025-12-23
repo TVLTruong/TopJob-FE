@@ -4,44 +4,45 @@ import React, { useState } from 'react'
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { BarChart3, FileCheck, Briefcase, LogOut, X } from 'lucide-react'
 
 export default function AdminSidebar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { logout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const navItems = [
     {
-      href: '/dashboard',
+      href: '/admin/dashboard',
       icon: BarChart3,
       label: 'Tổng quan'
     },
     {
-      href: '/employer-approval',
+      href: '/admin/employer-approval',
       icon: FileCheck,
       label: 'Duyệt Hồ sơ NTD'
     },
     {
-      href: '/job-posting-approval',
+      href: '/admin/job-posting-approval',
       icon: Briefcase,
       label: 'Duyệt tin tuyển dụng'
     }
   ];
 
-  const isActive = (href: string) => pathname.startsWith(href);
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href);
 
   const handleLogout = () => {
     setShowLogoutModal(false);
-    // Logout logic here
-    router.push('/login');
+    logout(); // Sử dụng logout từ AuthContext
   };
 
   return (
     <aside className="w-72 bg-white border-r h-screen overflow-y-auto flex flex-col sticky top-0">
       <div className="p-6 flex flex-col h-full">
         {/* Logo */}
-        <div className="mb-8 cursor-pointer" onClick={() => router.push('/dashboard')}>
+        <div className="mb-8 cursor-pointer" onClick={() => router.push('/admin/dashboard')}>
           <Image
             src="/logo.svg"
             alt="TopJob Logo"
