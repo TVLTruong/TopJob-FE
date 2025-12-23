@@ -26,8 +26,8 @@ export default function CandidateSignUpPage() {
 
   const handleVerifyOtp = async (code: string): Promise<boolean> => {
     try {
-      await AuthApi.verifyOtp(email, code);
-      console.log('Xác thực OTP thành công!');
+      const response = await AuthApi.verifyOtp(email, code);
+      console.log('Xác thực OTP thành công!', response);
       router.push('/login?verified=true');
       return true;
     } catch (error) {

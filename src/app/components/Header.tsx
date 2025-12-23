@@ -18,36 +18,53 @@ function UserDropdown({ onLogout }: { onLogout: () => void }) {
     const fetchAvatar = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-        console.log('Fetching avatar, token exists:', !!token, 'user role:', user?.role);
         
         if (!token || !user) {
-          console.log('No token or user, skipping avatar fetch');
+          setAvatarUrl(null);
+          sessionStorage.removeItem('candidateAvatar');
+          sessionStorage.removeItem('avatarUserId');
           return;
         }
 
         // Check role case-insensitive
         if (user.role?.toLowerCase() !== 'candidate') {
-          console.log('User is not a candidate (role:', user.role, '), skipping avatar fetch');
+          setAvatarUrl(null);
+          sessionStorage.removeItem('candidateAvatar');
+          sessionStorage.removeItem('avatarUserId');
           return;
         }
 
-        console.log('Calling CandidateApi.getMyProfile...');
+        // Check cache - only use if correct user
+        const cachedAvatar = sessionStorage.getItem('candidateAvatar');
+        const cachedUserId = sessionStorage.getItem('avatarUserId');
+        
+        if (cachedAvatar && cachedUserId === user.sub) {
+          setAvatarUrl(cachedAvatar);
+          return;
+        }
+
         const profile = await CandidateApi.getMyProfile(token);
-        console.log('Profile received:', { avatarUrl: profile.avatarUrl });
         
         if (profile.avatarUrl) {
-          console.log('Setting avatar URL:', profile.avatarUrl);
           setAvatarUrl(profile.avatarUrl);
+          sessionStorage.setItem('candidateAvatar', profile.avatarUrl);
+          sessionStorage.setItem('avatarUserId', user.sub);
         } else {
-          console.log('No avatar URL in profile');
+          setAvatarUrl(null);
+          sessionStorage.removeItem('candidateAvatar');
+          sessionStorage.removeItem('avatarUserId');
         }
       } catch (error) {
-        console.error('Error fetching avatar:', error);
+        setAvatarUrl(null);
+        sessionStorage.removeItem('candidateAvatar');
+        sessionStorage.removeItem('avatarUserId');
       }
     };
 
+    // Reset avatar immediately when user changes
+    setAvatarUrl(null);
     fetchAvatar();
-  }, [user]);
+  }, [user?.sub]);
 
   // Listen for avatar updates from profile page
   useEffect(() => {
@@ -56,10 +73,17 @@ function UserDropdown({ onLogout }: { onLogout: () => void }) {
       setAvatarUrl(event.detail.avatarUrl);
     };
 
+    const handleAvatarClear = () => {
+      console.log('Avatar clear event received');
+      setAvatarUrl(null);
+    };
+
     window.addEventListener('avatarUpdated', handleAvatarUpdate as EventListener);
+    window.addEventListener('avatarCleared', handleAvatarClear as EventListener);
     
     return () => {
       window.removeEventListener('avatarUpdated', handleAvatarUpdate as EventListener);
+      window.removeEventListener('avatarCleared', handleAvatarClear as EventListener);
     };
   }, []);
 

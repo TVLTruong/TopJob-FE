@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useRef, ChangeEvent, useEffect } from "react";
+import { useState, useRef, ChangeEvent, useEffect, useCallback } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { jwtDecode } from "jwt-decode";
 import PersonalInfo from "../../components/profile/PersonalInfo";
 import AboutSection from "../../components/profile/AboutSection";
 import EducationSection from "../../components/profile/EducationSection";
@@ -14,12 +16,10 @@ import type {
   Education, 
   WorkExperience, 
   Profile,
-  convertApiProfileToUIProfile,
-  convertEducationToApiFormat,
-  convertWorkExperienceToApiFormat,
 } from "./types";
 
 export default function CandidateProfilePage() {
+  const { user, token } = useAuth();
   const [avatar, setAvatar] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(true);
@@ -88,33 +88,89 @@ export default function CandidateProfilePage() {
     description: ""
   });
 
-  // Fetch profile on component mount
+  // Listen to avatarCleared event from AuthContext
   useEffect(() => {
-    loadProfile();
+    const handleClearCache = () => {
+      setAvatar(null);
+      setProfile({
+        name: "",
+        title: "",
+        email: "",
+        phone: "",
+        dateOfBirth: "",
+        gender: "",
+        province: "",
+        district: "",
+        address: "",
+        personalLink: "",
+        about: "",
+        education: [] as Education[],
+        workExperience: [] as WorkExperience[],
+      });
+    };
+    
+    window.addEventListener('avatarCleared', handleClearCache);
+    return () => window.removeEventListener('avatarCleared', handleClearCache);
   }, []);
 
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('accessToken');
+      const currentToken = token || localStorage.getItem('accessToken');
       
-      if (!token) {
+      if (!currentToken) {
+        console.log('❌ No token found');
+        setAvatar(null);
+        setProfile({
+          name: "",
+          title: "",
+          email: "",
+          phone: "",
+          dateOfBirth: "",
+          gender: "",
+          province: "",
+          district: "",
+          address: "",
+          personalLink: "",
+          about: "",
+          education: [] as Education[],
+          workExperience: [] as WorkExperience[],
+        });
         showToast('Vui lòng đăng nhập để xem hồ sơ', 'error');
         return;
       }
 
-      const apiProfile = await CandidateApi.getMyProfile(token);
+      const apiProfile = await CandidateApi.getMyProfile(currentToken);
       const { convertApiProfileToUIProfile } = await import('./types');
       const uiProfile = convertApiProfileToUIProfile(apiProfile);
       
       setProfile(uiProfile);
       if (apiProfile.avatarUrl) {
         setAvatar(apiProfile.avatarUrl);
+      } else {
+        setAvatar(null);
       }
       
       // Không cần hiển thị toast thành công khi load profile ban đầu
     } catch (error) {
       console.error('Error loading profile:', error);
+      // Reset profile on error
+      setAvatar(null);
+      setProfile({
+        name: "",
+        title: "",
+        email: "",
+        phone: "",
+        dateOfBirth: "",
+        gender: "",
+        province: "",
+        district: "",
+        address: "",
+        personalLink: "",
+        about: "",
+        education: [] as Education[],
+        workExperience: [] as WorkExperience[],
+      });
       showToast(
         error instanceof Error ? error.message : 'Không thể tải hồ sơ',
         'error'
@@ -122,7 +178,33 @@ export default function CandidateProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  // Fetch profile when user or token changes
+  useEffect(() => {
+    if (!user || !token) {
+      setAvatar(null);
+      setProfile({
+        name: "",
+        title: "",
+        email: "",
+        phone: "",
+        dateOfBirth: "",
+        gender: "",
+        province: "",
+        district: "",
+        address: "",
+        personalLink: "",
+        about: "",
+        education: [] as Education[],
+        workExperience: [] as WorkExperience[],
+      });
+      setLoading(false);
+      return;
+    }
+    
+    loadProfile();
+  }, [user, token, loadProfile]); // Re-run when user or token changes
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -146,9 +228,9 @@ export default function CandidateProfilePage() {
 
     try {
       setSaving(true);
-      const token = localStorage.getItem('accessToken');
+      const currentToken = token || localStorage.getItem('accessToken');
       
-      if (!token) {
+      if (!currentToken) {
         showToast('Vui lòng đăng nhập để upload ảnh', 'error');
         return;
       }
@@ -163,7 +245,7 @@ export default function CandidateProfilePage() {
       reader.readAsDataURL(file);
 
       // Upload to server
-      const result = await CandidateApi.uploadAvatar(token, file);
+      const result = await CandidateApi.uploadAvatar(currentToken, file);
       setAvatar(result.avatarUrl);
       
       // Dispatch event to notify Header component
@@ -586,7 +668,7 @@ export default function CandidateProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 py-8 px-4" key={user?.sub}>
       {/* Toast Notification */}
       {toast && (
         <Toast 

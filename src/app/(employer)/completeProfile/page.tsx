@@ -146,7 +146,7 @@ export default function CompleteProfilePage() {
         isHeadquarters: locations.length === 0, // First location is automatically headquarters
       };
       setLocations([...locations, newLocation]);
-      setTempLocation({ province: "", district: "", address: "" });
+      setTempLocation({ province: "", district: "", detailedAddress: "" });
       setShowLocationForm(false);
     }
   };

@@ -120,6 +120,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const storedToken = localStorage.getItem('accessToken');
+      const lastUserId = sessionStorage.getItem('lastUserId');
+      
       if (storedToken) {
         let decodedUser: UserPayload;
         
@@ -142,17 +144,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         
         if (decodedUser.exp * 1000 > Date.now()) {
+          const currentUserId = decodedUser.sub;
+          
+          // Kiểm tra xem có phải user khác không
+          if (lastUserId && lastUserId !== currentUserId) {
+            // Clear avatar cache
+            sessionStorage.clear();
+            window.dispatchEvent(new CustomEvent('avatarCleared'));
+          }
+          
+          // Lưu userId hiện tại
+          sessionStorage.setItem('lastUserId', currentUserId);
+          
           setToken(storedToken);
           setUser(decodedUser);
-          console.log('✅ Token hợp lệ, user:', decodedUser.email, 'Status:', decodedUser.status);
         } else {
-          console.log('⚠️ Token hết hạn');
           localStorage.removeItem('accessToken');
           localStorage.removeItem('userStatus');
+          sessionStorage.removeItem('lastUserId');
         }
+      } else {
+        sessionStorage.removeItem('lastUserId');
       }
     } catch (error) {
-      console.error("❌ Lỗi parse token:", error);
+
       localStorage.removeItem('accessToken');
       localStorage.removeItem('userStatus');
     }
@@ -183,7 +198,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
       
+      // ✅ QUAN TRỌNG: Kiểm tra user ID thay đổi
+      const oldUserId = sessionStorage.getItem('lastUserId');
+      const newUserId = decodedUser.sub;
+      
+      if (oldUserId && oldUserId !== newUserId) {
+        // Clear sessionStorage cache (avatar, profile, etc.)
+        sessionStorage.clear();
+        
+        // Dispatch event để Header và Profile xóa cache
+        window.dispatchEvent(new CustomEvent('avatarCleared'));
+      }
+      
+      // Set token và user mới
       localStorage.setItem('accessToken', newToken);
+      sessionStorage.setItem('lastUserId', newUserId);
       setToken(newToken);
       setUser(decodedUser);
       
@@ -191,18 +220,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (decodedUser.status) {
         localStorage.setItem('userStatus', decodedUser.status);
       }
-      
-      console.log('✅ Đăng nhập thành công:', decodedUser.email, 'Status:', decodedUser.status);
     } catch (error) {
-       console.error("❌ Lỗi decode token:", error);
+       // Silent error - no logging in production
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('accessToken');
+    // Clear ALL storage
+    localStorage.clear();
+    sessionStorage.clear();
+    
     setToken(null);
     setUser(null);
-    console.log('🔓 Đã đăng xuất');
+    
+    // Dispatch event to clear avatar in Header component
+    window.dispatchEvent(new CustomEvent('avatarCleared'));
+    
     window.location.href = '/';
   };
 
