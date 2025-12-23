@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "@/app/globals.css";
 import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext"; // <-- 1. IMPORT
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "TopJob",
@@ -19,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
-      <body className={`${inter.className} bg-gray-50`}>
+      <body className="bg-gray-50">
         <AuthProvider> {/* <-- 2. BỌC Ở NGOÀI */}
           <Header />
           <main className="mt-0">

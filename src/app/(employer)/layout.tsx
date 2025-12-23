@@ -1,15 +1,12 @@
 // app/layout.tsx
 'use client';
 
-import { Inter } from "next/font/google";
 import "@/app/globals.css";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Sidebar from '@/app/components/companyProfile/Sidebar';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import { usePathname } from 'next/navigation';
-
-const inter = Inter({ subsets: ["latin"] });
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -61,7 +58,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
-      <body className={`${inter.className} bg-gray-50`}>
+      <body className="bg-gray-50">
         <AuthProvider>
           <LayoutContent>{children}</LayoutContent>
         </AuthProvider>
