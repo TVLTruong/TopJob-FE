@@ -34,9 +34,16 @@ export default function FeaturedJobs() {
   const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [savedJobs, setSavedJobs] = useState<string[]>([]);
 
   const handleJobClick = (jobId: string) => {
     router.push(`/JobList/JobDetail?id=${jobId}`);
+  };
+
+  const handleSaveJob = (jobId: string) => {
+    setSavedJobs(prev =>
+      prev.includes(jobId) ? prev.filter(id => id !== jobId) : [...prev, jobId]
+    );
   };
 
   useEffect(() => {
@@ -107,7 +114,13 @@ export default function FeaturedJobs() {
           // Hiển thị danh sách job
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {jobs.map((job) => (
-              <Jobcard key={job.id} job={job} onClick={handleJobClick} />
+              <Jobcard 
+                key={job.id} 
+                job={job} 
+                onClick={handleJobClick}
+                onSave={handleSaveJob}
+                isSaved={savedJobs.includes(job.id)}
+              />
             ))}
           </div>
         )}
