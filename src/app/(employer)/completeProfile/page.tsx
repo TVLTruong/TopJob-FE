@@ -66,7 +66,42 @@ export default function CompleteProfilePage() {
   const [website, setWebsite] = useState("");
   const [description, setDescription] = useState("");
   const [benefits, setBenefits] = useState("");
+  const [technologies, setTechnologies] = useState<string[]>([]);
+  const [showTechDropdown, setShowTechDropdown] = useState(false);
+  const techDropdownRef = useRef<HTMLDivElement | null>(null);
+  const [contacts, setContacts] = useState({
+    email: "",
+    facebook: "",
+    linkedin: "",
+    twitter: "",
+  });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const availableTechnologies = [
+    "HTML 5",
+    "CSS 3",
+    "JavaScript",
+    "TypeScript",
+    "React",
+    "Next.js",
+    "Vue.js",
+    "Angular",
+    "Node.js",
+    "Python",
+    "Java",
+    "C#",
+    "PHP",
+    "Ruby",
+    "Go",
+    "Rust",
+    "Docker",
+    "Kubernetes",
+    "AWS",
+    "Azure",
+    "MongoDB",
+    "PostgreSQL",
+    "MySQL",
+  ];
 
   // Step 2: Locations
   const [locations, setLocations] = useState<OfficeLocation[]>([]);
@@ -81,6 +116,18 @@ export default function CompleteProfilePage() {
 
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [stepContainerHeight, setStepContainerHeight] = useState<number | null>(null);
+
+  // Close tech dropdown if clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (!techDropdownRef.current?.contains(target)) {
+        setShowTechDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Load provinces
   useLayoutEffect(() => {
@@ -190,6 +237,15 @@ export default function CompleteProfilePage() {
       setValidationError("Vui lòng nhập Phúc lợi.");
       return false;
     }
+    if (technologies.length === 0) {
+      setValidationError("Vui lòng chọn ít nhất 1 công nghệ.");
+      return false;
+    }
+    const hasContact = Object.values(contacts).some(value => value.trim());
+    if (!hasContact) {
+      setValidationError("Vui lòng điền ít nhất 1 thông tin liên hệ.");
+      return false;
+    }
     setValidationError(null);
     return true;
   };
@@ -263,6 +319,13 @@ export default function CompleteProfilePage() {
         website: website.trim(),
         description: description.trim(),
         benefits: benefits.trim().split('\n').filter(b => b.trim()),
+        technologies: technologies,
+        contacts: {
+          email: contacts.email.trim(),
+          facebook: contacts.facebook.trim(),
+          linkedin: contacts.linkedin.trim(),
+          twitter: contacts.twitter.trim(),
+        },
         logoUrl: logoUrl,
         locations: locations.map(loc => ({
           province: loc.province,
@@ -494,6 +557,121 @@ export default function CompleteProfilePage() {
                       className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
                     />
                     <p className="text-xs text-gray-400 mt-1">Mỗi dòng là một phúc lợi</p>
+                  </div>
+
+                  {/* Technologies */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Công nghệ <span className="text-red-600">*</span>
+                    </label>
+                    <div className="relative" ref={techDropdownRef}>
+                      <div className="flex flex-wrap gap-2 p-2 border border-gray-300 rounded-lg min-h-[42px]">
+                        {technologies.map((tech) => (
+                          <span key={tech} className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
+                            {tech}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTechnologies(technologies.filter((t) => t !== tech));
+                                setValidationError(null);
+                              }}
+                              className="hover:text-emerald-900"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setShowTechDropdown(!showTechDropdown)}
+                          className="ml-auto text-gray-400 hover:text-gray-600"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                        </button>
+                      </div>
+                      {showTechDropdown && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          {availableTechnologies
+                            .filter((tech) => !technologies.includes(tech))
+                            .map((tech) => (
+                              <div
+                                key={tech}
+                                onClick={() => {
+                                  setTechnologies([...technologies, tech]);
+                                  setShowTechDropdown(false);
+                                  setValidationError(null);
+                                }}
+                                className="px-4 py-2 hover:bg-emerald-50 cursor-pointer text-sm"
+                              >
+                                {tech}
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Contacts */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Liên hệ <span className="text-red-600">*</span> (điền ít nhất 1)
+                    </label>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                        <input
+                          type="email"
+                          value={contacts.email}
+                          onChange={(e) => {
+                            setContacts({ ...contacts, email: e.target.value });
+                            setValidationError(null);
+                          }}
+                          placeholder="example@company.com"
+                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Facebook</label>
+                        <input
+                          type="url"
+                          value={contacts.facebook}
+                          onChange={(e) => {
+                            setContacts({ ...contacts, facebook: e.target.value });
+                            setValidationError(null);
+                          }}
+                          placeholder="https://facebook.com/yourcompany"
+                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">LinkedIn</label>
+                        <input
+                          type="url"
+                          value={contacts.linkedin}
+                          onChange={(e) => {
+                            setContacts({ ...contacts, linkedin: e.target.value });
+                            setValidationError(null);
+                          }}
+                          placeholder="https://linkedin.com/company/yourcompany"
+                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">X (Twitter)</label>
+                        <input
+                          type="url"
+                          value={contacts.twitter}
+                          onChange={(e) => {
+                            setContacts({ ...contacts, twitter: e.target.value });
+                            setValidationError(null);
+                          }}
+                          placeholder="https://x.com/yourcompany"
+                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   {validationError && step === 1 && (
@@ -744,6 +922,57 @@ export default function CompleteProfilePage() {
                             )}
                           </div>
                         ))}
+                      </div>
+                    </div>
+
+                    {/* Technologies Review */}
+                    {technologies.length > 0 && (
+                      <div className="border border-gray-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900 mb-3">Công nghệ</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {technologies.map((tech) => (
+                            <span key={tech} className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
+                              {tech}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Contacts Review */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-900 mb-3">Liên hệ</h3>
+                      <div className="space-y-2">
+                        {contacts.email && (
+                          <div className="text-sm">
+                            <span className="text-gray-600">Email:</span>{" "}
+                            <span className="font-medium break-all">{contacts.email}</span>
+                          </div>
+                        )}
+                        {contacts.facebook && (
+                          <div className="text-sm">
+                            <span className="text-gray-600">Facebook:</span>{" "}
+                            <a href={contacts.facebook} target="_blank" rel="noopener noreferrer" className="font-medium text-emerald-600 hover:underline break-all">
+                              {contacts.facebook}
+                            </a>
+                          </div>
+                        )}
+                        {contacts.linkedin && (
+                          <div className="text-sm">
+                            <span className="text-gray-600">LinkedIn:</span>{" "}
+                            <a href={contacts.linkedin} target="_blank" rel="noopener noreferrer" className="font-medium text-emerald-600 hover:underline break-all">
+                              {contacts.linkedin}
+                            </a>
+                          </div>
+                        )}
+                        {contacts.twitter && (
+                          <div className="text-sm">
+                            <span className="text-gray-600">X (Twitter):</span>{" "}
+                            <a href={contacts.twitter} target="_blank" rel="noopener noreferrer" className="font-medium text-emerald-600 hover:underline break-all">
+                              {contacts.twitter}
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
