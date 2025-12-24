@@ -4,13 +4,11 @@ import React, { useState } from 'react'
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
 import { BarChart3, FileCheck, Briefcase, LogOut, X } from 'lucide-react'
 
 export default function AdminSidebar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { logout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const navItems = [
@@ -35,7 +33,11 @@ export default function AdminSidebar() {
 
   const handleLogout = () => {
     setShowLogoutModal(false);
-    logout(); // Sử dụng logout từ AuthContext
+    // Clear all storage
+    localStorage.clear();
+    sessionStorage.clear();
+    // Redirect to login
+    router.push('/login');
   };
 
   return (

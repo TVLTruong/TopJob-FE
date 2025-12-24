@@ -6,13 +6,29 @@ import RejectModal from './RejectModal';
 import JobDetailModal from './JobDetailModal';
 import { getJobsForApproval, approveJob, rejectJob, getJobDetail } from '@/utils/api/admin-api';
 
-interface JobPosting {
+interface JobPostingAPI {
   id: string;
+  title: string;
+  employer?: {
+    companyName?: string;
+  };
+  salaryMin?: number;
+  salaryMax?: number;
+  isNegotiable?: boolean;
+  experienceLevel?: string;
+  status: 'PENDING_APPROVAL' | 'ACTIVE' | 'REJECTED';
+  createdAt: string;
+  description?: string;
+  requiredSkills?: string[];
+}
+
+interface JobPosting {
+  id: number;
   jobTitle: string;
   companyName: string;
   salary: string;
   level: string;
-  status: 'PENDING_APPROVAL' | 'ACTIVE' | 'REJECTED';
+  status: 'pending' | 'approved' | 'rejected';
   createdDate: string;
   description?: string;
   requirements?: string[];
@@ -46,19 +62,37 @@ export default function JobPostingApprovalList() {
       );
       
       // Map BE data to FE format
-      const mappedJobs = response.data.map((job: Record<string, unknown>) => ({
-        id: job.id,
-        jobTitle: job.title,
-        companyName: job.employer?.companyName || 'N/A',
-        salary: job.salaryMin && job.salaryMax 
-          ? `${job.salaryMin / 1000000}-${job.salaryMax / 1000000} triệu/tháng`
-          : job.isNegotiable ? 'Thỏa thuận' : 'N/A',
-        level: job.experienceLevel || 'N/A',
-        status: job.status,
-        createdDate: new Date(job.createdAt).toLocaleDateString('vi-VN'),
-        description: job.description,
-        requirements: job.requiredSkills || [],
-      }));
+      const mappedJobs = response.data.map((job: JobPostingAPI) => {
+        // Convert BE status to FE status
+        let feStatus: 'pending' | 'approved' | 'rejected';
+        switch (job.status) {
+          case 'PENDING_APPROVAL':
+            feStatus = 'pending';
+            break;
+          case 'ACTIVE':
+            feStatus = 'approved';
+            break;
+          case 'REJECTED':
+            feStatus = 'rejected';
+            break;
+          default:
+            feStatus = 'pending';
+        }
+        
+        return {
+          id: parseInt(job.id, 10),
+          jobTitle: job.title,
+          companyName: job.employer?.companyName || 'N/A',
+          salary: job.salaryMin && job.salaryMax 
+            ? `${job.salaryMin / 1000000}-${job.salaryMax / 1000000} triệu/tháng`
+            : job.isNegotiable ? 'Thỏa thuận' : 'N/A',
+          level: job.experienceLevel || 'N/A',
+          status: feStatus,
+          createdDate: new Date(job.createdAt).toLocaleDateString('vi-VN'),
+          description: job.description,
+          requirements: job.requiredSkills || [],
+        };
+      });
       
       setJobPostings(mappedJobs);
       setTotalCount(response.meta?.total || response.data.length);
@@ -75,16 +109,16 @@ export default function JobPostingApprovalList() {
   }, [fetchJobs]);
 
   const statusConfig = {
-    PENDING_APPROVAL: { label: 'Chờ duyệt', color: 'bg-orange-100 text-orange-600 border-orange-300' },
-    ACTIVE: { label: 'Đã duyệt', color: 'bg-green-100 text-green-600 border-green-300' },
-    REJECTED: { label: 'Từ chối', color: 'bg-red-100 text-red-600 border-red-300' },
+    pending: { label: 'Chờ duyệt', color: 'bg-orange-100 text-orange-600 border-orange-300' },
+    approved: { label: 'Đã duyệt', color: 'bg-green-100 text-green-600 border-green-300' },
+    rejected: { label: 'Từ chối', color: 'bg-red-100 text-red-600 border-red-300' },
   };
 
   const filterOptions = [
     { value: 'all', label: 'Tất cả', count: totalCount },
-    { value: 'PENDING_APPROVAL', label: 'Chờ duyệt', count: jobPostings.filter(j => j.status === 'PENDING_APPROVAL').length },
-    { value: 'ACTIVE', label: 'Đã duyệt', count: jobPostings.filter(j => j.status === 'ACTIVE').length },
-    { value: 'REJECTED', label: 'Từ chối', count: jobPostings.filter(j => j.status === 'REJECTED').length },
+    { value: 'PENDING_APPROVAL', label: 'Chờ duyệt', count: jobPostings.filter(j => j.status === 'pending').length },
+    { value: 'ACTIVE', label: 'Đã duyệt', count: jobPostings.filter(j => j.status === 'approved').length },
+    { value: 'REJECTED', label: 'Từ chối', count: jobPostings.filter(j => j.status === 'rejected').length },
   ];
 
   const filteredJobs = useMemo(() => {
@@ -108,7 +142,7 @@ export default function JobPostingApprovalList() {
 
   const handleViewDetails = async (job: JobPosting) => {
     try {
-      const detail = await getJobDetail(job.id);
+      const detail = await getJobDetail(job.id.toString());
       setSelectedJob({
         ...job,
         ...detail.data
@@ -129,7 +163,7 @@ export default function JobPostingApprovalList() {
     if (!selectedJob) return;
     
     try {
-      await approveJob(selectedJob.id);
+      await approveJob(selectedJob.id.toString());
       setShowApproveModal(false);
       fetchJobs(); // Refresh list
       alert('Đã duyệt tin tuyển dụng thành công');
@@ -148,7 +182,7 @@ export default function JobPostingApprovalList() {
     if (!selectedJob) return;
     
     try {
-      await rejectJob(selectedJob.id, reason);
+      await rejectJob(selectedJob.id.toString(), reason);
       setShowRejectModal(false);
       fetchJobs(); // Refresh list
       alert('Đã từ chối tin tuyển dụng');
@@ -164,7 +198,7 @@ export default function JobPostingApprovalList() {
       <div className="p-6">
         <div>
           <h2 className="text-2xl font-bold mb-6">
-            Số tin cần duyệt: {jobPostings.filter(j => j.status === 'PENDING_APPROVAL').length}
+            Số tin cần duyệt: {jobPostings.filter(j => j.status === 'pending').length}
           </h2>
         </div>
 

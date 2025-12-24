@@ -5,7 +5,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/a
 // Helper to get auth headers
 const getAuthHeaders = () => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('accessToken');
     if (token) {
       return {
         'Authorization': `Bearer ${token}`,
@@ -89,11 +89,11 @@ export const getEmployerProfile = async (employerId: string) => {
 };
 
 // Approve employer profile
-export const approveEmployer = async (employerId: string, notes?: string) => {
+export const approveEmployer = async (employerId: string, note?: string) => {
   try {
     const response = await axios.post(
       `${API_BASE_URL}/admin/employer-approval/${employerId}/approve`,
-      { notes },
+      { note },
       { headers: getAuthHeaders() }
     );
     return response.data;
@@ -165,11 +165,11 @@ export const getJobDetail = async (jobId: string) => {
 };
 
 // Approve job posting
-export const approveJob = async (jobId: string, notes?: string) => {
+export const approveJob = async (jobId: string, note?: string) => {
   try {
     const response = await axios.post(
       `${API_BASE_URL}/admin/job-approval/${jobId}/approve`,
-      { notes },
+      { note },
       { headers: getAuthHeaders() }
     );
     return response.data;

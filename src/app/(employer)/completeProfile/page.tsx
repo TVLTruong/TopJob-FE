@@ -71,6 +71,7 @@ export default function CompleteProfilePage() {
   const techDropdownRef = useRef<HTMLDivElement | null>(null);
   const [contacts, setContacts] = useState({
     email: "",
+    phone: "",
     facebook: "",
     linkedin: "",
     twitter: "",
@@ -320,12 +321,11 @@ export default function CompleteProfilePage() {
         description: description.trim(),
         benefits: benefits.trim().split('\n').filter(b => b.trim()),
         technologies: technologies,
-        contacts: {
-          email: contacts.email.trim(),
-          facebook: contacts.facebook.trim(),
-          linkedin: contacts.linkedin.trim(),
-          twitter: contacts.twitter.trim(),
-        },
+        contactEmail: contacts.email.trim() || undefined,
+        contactPhone: contacts.phone.trim() || undefined,
+        facebookUrl: contacts.facebook.trim() || undefined,
+        linkedlnUrl: contacts.linkedin.trim() || undefined,
+        xUrl: contacts.twitter.trim() || undefined,
         logoUrl: logoUrl,
         locations: locations.map(loc => ({
           province: loc.province,
@@ -629,6 +629,19 @@ export default function CompleteProfilePage() {
                             setValidationError(null);
                           }}
                           placeholder="example@company.com"
+                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Số điện thoại</label>
+                        <input
+                          type="tel"
+                          value={contacts.phone}
+                          onChange={(e) => {
+                            setContacts({ ...contacts, phone: e.target.value });
+                            setValidationError(null);
+                          }}
+                          placeholder="0123456789"
                           className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         />
                       </div>

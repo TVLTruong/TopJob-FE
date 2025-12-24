@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { jwtDecode } from 'jwt-decode'
 import AdminSidebar from '@/app/components/admin/AdminSidebar'
@@ -18,10 +18,16 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
+  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isClient) return
     // Check if user is authenticated and is admin
-    const token = localStorage.getItem('access_token')
+    const token = localStorage.getItem('accessToken')
     
     if (!token) {
       router.push('/login')
@@ -34,7 +40,7 @@ export default function AdminLayout({
       
       // Check if token is expired
       if (decoded.exp * 1000 < Date.now()) {
-        localStorage.removeItem('access_token')
+        localStorage.removeItem('accessToken')
         router.push('/login')
         return
       }
@@ -46,10 +52,15 @@ export default function AdminLayout({
       }
     } catch (error) {
       console.error('Invalid token:', error)
-      localStorage.removeItem('access_token')
+      localStorage.removeItem('accessToken')
       router.push('/login')
     }
-  }, [router])
+  }, [router, isClient])
+
+  // Prevent hydration mismatch by not rendering until client-side
+  if (!isClient) {
+    return null; // Don't render anything on server to avoid mismatch
+  }
 
   return (
     <div className="flex h-screen">

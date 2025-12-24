@@ -7,19 +7,46 @@ import ApproveModal from './ApproveModal';
 import EmployerDetailModal from './EmployerDetailModal';
 import { getEmployersForApproval, approveEmployer, rejectEmployer, getEmployerProfile } from '@/utils/api/admin-api';
 
-interface EmployerProfile {
+interface EmployerProfileAPI {
   id: string;
+  companyName: string;
+  logoUrl?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  taxCode?: string;
+  status: 'PENDING_APPROVAL' | 'PENDING_EDIT_APPROVAL' | 'ACTIVE' | 'REJECTED';
+  profileStatus?: 'PENDING_EDIT_APPROVAL' | 'APPROVED';
+  createdAt: string;
+  description?: string;
+  address?: string;
+  website?: string;
+  user?: {
+    email?: string;
+  };
+}
+
+interface EmployerProfile {
+  id: number;
   companyName: string;
   companyLogo: string;
   email: string;
   phone: string;
   taxCode: string;
-  status: 'PENDING_APPROVAL' | 'PENDING_EDIT_APPROVAL' | 'ACTIVE' | 'REJECTED';
+  status: 'pending_new' | 'pending_edit' | 'approved' | 'rejected';
   createdDate: string;
   registrationType?: 'new' | 'edit';
   description?: string;
   address?: string;
   website?: string;
+  technologies?: string[];
+  benefits?: string[];
+  locations?: Array<{
+    id?: string;
+    province: string;
+    district: string;
+    detailedAddress: string;
+    isHeadquarters: boolean;
+  }>;
   oldData?: Partial<EmployerProfile>;
 }
 
@@ -47,20 +74,41 @@ export default function EmployerApprovalList() {
       const response = await getEmployersForApproval(status, currentPage, 10);
       
       // Map BE data to FE format
-      const mappedEmployers = response.data.map((emp: Record<string, unknown>) => ({
-        id: emp.id,
-        companyName: emp.companyName,
-        companyLogo: emp.logoUrl || '',
-        email: emp.contactEmail || emp.user?.email || '',
-        phone: emp.contactPhone || '',
-        taxCode: emp.taxCode || '',
-        status: emp.status,
-        createdDate: new Date(emp.createdAt).toLocaleDateString('vi-VN'),
-        registrationType: emp.status === 'PENDING_APPROVAL' ? 'new' : 'edit',
-        description: emp.description,
-        address: emp.address,
-        website: emp.website,
-      }));
+      const mappedEmployers = response.data.map((emp: EmployerProfileAPI) => {
+        // Convert BE status to FE status
+        let feStatus: 'pending_new' | 'pending_edit' | 'approved' | 'rejected';
+        // Check both status and profileStatus for accurate mapping
+        if (emp.status === 'PENDING_APPROVAL') {
+          feStatus = 'pending_new';
+        } else if (emp.status === 'ACTIVE' && emp.profileStatus === 'PENDING_EDIT_APPROVAL') {
+          feStatus = 'pending_edit';
+        } else if (emp.status === 'ACTIVE') {
+          feStatus = 'approved';
+        } else if (emp.status === 'REJECTED') {
+          feStatus = 'rejected';
+        } else {
+          feStatus = 'pending_new';
+        }
+        
+        return {
+          id: parseInt(emp.id, 10),
+          companyName: emp.companyName,
+          companyLogo: emp.logoUrl || '',
+          email: emp.contactEmail || emp.user?.email || '',
+          phone: emp.contactPhone || '',
+          taxCode: emp.taxCode || '',
+          status: feStatus,
+          createdDate: new Date(emp.createdAt as string).toLocaleDateString('vi-VN'),
+          // Determine registration type based on both status and profileStatus
+          registrationType: (emp.status === 'PENDING_APPROVAL' || 
+                            (emp.status === 'ACTIVE' && emp.profileStatus !== 'PENDING_EDIT_APPROVAL'))
+                            ? 'new' 
+                            : 'edit',
+          description: emp.description,
+          address: emp.address,
+          website: emp.website,
+        };
+      });
       
       setEmployers(mappedEmployers);
       setTotalCount(response.meta?.total || response.data.length);
@@ -77,18 +125,18 @@ export default function EmployerApprovalList() {
   }, [fetchEmployers]);
 
   const statusConfig = {
-    PENDING_APPROVAL: { label: 'Chờ duyệt (Mới)', color: 'bg-orange-100 text-orange-600 border-orange-300' },
-    PENDING_EDIT_APPROVAL: { label: 'Chờ duyệt (Sửa đổi)', color: 'bg-yellow-100 text-yellow-600 border-yellow-300' },
-    ACTIVE: { label: 'Đã duyệt', color: 'bg-green-100 text-green-600 border-green-300' },
-    REJECTED: { label: 'Từ chối', color: 'bg-red-100 text-red-600 border-red-300' },
+    pending_new: { label: 'Chờ duyệt (Mới)', color: 'bg-orange-100 text-orange-600 border-orange-300' },
+    pending_edit: { label: 'Chờ duyệt (Sửa đổi)', color: 'bg-yellow-100 text-yellow-600 border-yellow-300' },
+    approved: { label: 'Đã duyệt', color: 'bg-green-100 text-green-600 border-green-300' },
+    rejected: { label: 'Từ chối', color: 'bg-red-100 text-red-600 border-red-300' },
   };
 
   const filterOptions = [
     { value: 'all', label: 'Tất cả', count: totalCount },
-    { value: 'PENDING_APPROVAL', label: 'Chờ duyệt (Mới)', count: employers.filter(e => e.status === 'PENDING_APPROVAL').length },
-    { value: 'PENDING_EDIT_APPROVAL', label: 'Chờ duyệt (Sửa đổi)', count: employers.filter(e => e.status === 'PENDING_EDIT_APPROVAL').length },
-    { value: 'ACTIVE', label: 'Đã duyệt', count: employers.filter(e => e.status === 'ACTIVE').length },
-    { value: 'REJECTED', label: 'Từ chối', count: employers.filter(e => e.status === 'REJECTED').length },
+    { value: 'PENDING_APPROVAL', label: 'Chờ duyệt (Mới)', count: employers.filter(e => e.status === 'pending_new').length },
+    { value: 'PENDING_EDIT_APPROVAL', label: 'Chờ duyệt (Sửa đổi)', count: employers.filter(e => e.status === 'pending_edit').length },
+    { value: 'ACTIVE', label: 'Đã duyệt', count: employers.filter(e => e.status === 'approved').length },
+    { value: 'REJECTED', label: 'Từ chối', count: employers.filter(e => e.status === 'rejected').length },
   ];
 
   const filteredEmployers = useMemo(() => {
@@ -117,11 +165,32 @@ export default function EmployerApprovalList() {
 
   const handleViewDetails = async (employer: EmployerProfile) => {
     try {
-      const detail = await getEmployerProfile(employer.id);
-      setSelectedEmployer({
+      const response = await getEmployerProfile(employer.id.toString());
+      console.log('Full API Response:', response);
+      
+      // Backend returns { employer, user, pendingEdits, hasPendingEdits } directly
+      const detail = response.employer || {};
+      console.log('Employer detail:', detail);
+      
+      // Determine correct registration type from detail
+      const registrationType: 'new' | 'edit' = 
+        (detail.status === 'ACTIVE' && detail.profileStatus === 'PENDING_EDIT_APPROVAL')
+          ? 'edit'
+          : 'new';
+      
+      // Map backend response to frontend interface
+      const mappedEmployer = {
         ...employer,
-        ...detail.data
-      });
+        registrationType: registrationType,
+        description: detail.description || employer.description,
+        website: detail.website || employer.website,
+        technologies: detail.technologies || [],
+        benefits: detail.benefits || [],
+        locations: detail.locations || [],
+      };
+      console.log('Mapped employer:', mappedEmployer);
+      
+      setSelectedEmployer(mappedEmployer);
       setShowDetailModal(true);
     } catch (err) {
       console.error('Error fetching employer detail:', err);
@@ -138,7 +207,7 @@ export default function EmployerApprovalList() {
     if (!selectedEmployer) return;
     
     try {
-      await approveEmployer(selectedEmployer.id);
+      await approveEmployer(selectedEmployer.id.toString());
       setShowApproveModal(false);
       fetchEmployers(); // Refresh list
       alert('Đã duyệt nhà tuyển dụng thành công');
@@ -157,7 +226,7 @@ export default function EmployerApprovalList() {
     if (!selectedEmployer) return;
     
     try {
-      await rejectEmployer(selectedEmployer.id, reason);
+      await rejectEmployer(selectedEmployer.id.toString(), reason);
       setShowRejectModal(false);
       fetchEmployers(); // Refresh list
       alert('Đã từ chối nhà tuyển dụng');
@@ -173,7 +242,7 @@ export default function EmployerApprovalList() {
       <div className="p-6">
         <div>
           <h2 className="text-2xl font-bold mb-6">
-            Số hồ sơ cần duyệt: {employers.filter(e => e.status === 'PENDING_APPROVAL' || e.status === 'PENDING_EDIT_APPROVAL').length}
+            Số hồ sơ cần duyệt: {employers.filter(e => e.status === 'pending_new' || e.status === 'pending_edit').length}
           </h2>
         </div>
 
@@ -307,10 +376,10 @@ export default function EmployerApprovalList() {
               Email
               <span className="text-gray-400">⇅</span>
             </div>
-            <div className="flex items-center gap-1">
+            {/* <div className="flex items-center gap-1">
               Mã số thuế
               <span className="text-gray-400">⇅</span>
-            </div>
+            </div> */}
             <div className="flex items-center gap-1">
               Trạng thái
               <span className="text-gray-400">⇅</span>
