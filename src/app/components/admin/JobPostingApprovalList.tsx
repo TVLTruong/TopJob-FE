@@ -321,38 +321,40 @@ export default function JobPostingApprovalList() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 justify-end">
+                  <div className="flex items-center gap-2 justify-end h-10">
                     <button
                       onClick={() => handleViewDetails(job)}
                       className="flex items-center gap-2 px-3 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition whitespace-nowrap"
                       title="Chi tiết"
                     >
-                      <Eye className="w-4 h-4" />
-                      <span className="text-sm">Chi tiết</span>
+                      
+                      <span className="text-sm">Xem chi tiết</span>
                     </button>
 
-                    {job.status === 'pending' ? (
-                      <>
-                        <button
-                          onClick={() => handleOpenApproveModal(job)}
-                          className="p-2 text-white bg-green-600 hover:bg-green-700 rounded-lg transition"
-                          title="Duyệt"
-                        >
-                          <Check className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleOpenRejectModal(job)}
-                          className="p-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition"
-                          title="Từ chối"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </>
-                    ) : (
-                      <div className="px-3 py-2 text-sm text-gray-500 italic">
-                        Đã xử lý
-                      </div>
-                    )}
+                    <div className="w-20 flex items-center justify-center">
+                      {job.status === 'pending' ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleOpenApproveModal(job)}
+                            className="p-2 text-white bg-green-600 hover:bg-green-700 rounded-lg transition"
+                            title="Duyệt"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleOpenRejectModal(job)}
+                            className="p-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition"
+                            title="Từ chối"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-500 italic whitespace-nowrap">
+                          Đã xử lý
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))

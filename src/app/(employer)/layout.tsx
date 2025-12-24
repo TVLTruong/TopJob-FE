@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Sidebar from '@/app/components/companyProfile/Sidebar';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
+import DevToolbar from '@/components/common/DevToolbar';
 import { usePathname } from 'next/navigation';
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
@@ -61,6 +62,7 @@ export default function RootLayout({
       <body className="bg-gray-50">
         <AuthProvider>
           <LayoutContent>{children}</LayoutContent>
+          <DevToolbar />
         </AuthProvider>
       </body>
     </html>

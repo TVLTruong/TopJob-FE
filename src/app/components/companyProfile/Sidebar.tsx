@@ -1,13 +1,16 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Building2, Users, Globe, LogOut, Settings, HelpCircle } from 'lucide-react'
+import LogoutModal from '../common/LogoutModal'
 
 export default function Sidebar() {
+  const router = useRouter();
   const pathname = usePathname();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const navItems = [
     {
@@ -41,6 +44,12 @@ export default function Sidebar() {
   ];
 
   const isActive = (href: string) => pathname.startsWith(href);
+
+  const handleLogout = () => {
+    setShowLogoutModal(false);
+    // Logout logic here
+    router.push('/login');
+  };
 
   return (
     <aside className="w-72 bg-white border-r h-screen overflow-y-auto flex flex-col sticky top-0">
@@ -117,10 +126,20 @@ export default function Sidebar() {
             <p className="text-xs text-gray-500">@huynqd.com</p>
           </div>
         </div>
-        <button className="flex items-center justify-center gap-3 px-4 py-2.5 text-red-600 bg-white hover:bg-red-50 rounded-lg w-full transition shadow-md border border-red-200">
+        <button 
+          onClick={() => setShowLogoutModal(true)}
+          className="flex items-center justify-center gap-3 px-4 py-2.5 text-red-600 bg-white hover:bg-red-50 rounded-lg w-full transition shadow-md border border-red-200"
+        >
           <LogOut className="w-5 h-5" />
           <span>Đăng xuất</span>
         </button>
+
+        {/* Logout Confirmation Modal */}
+        <LogoutModal
+          isOpen={showLogoutModal}
+          onClose={() => setShowLogoutModal(false)}
+          onConfirm={handleLogout}
+        />
       </div>
     </aside>
   );

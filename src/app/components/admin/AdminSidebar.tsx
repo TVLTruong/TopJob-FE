@@ -4,7 +4,8 @@ import React, { useState } from 'react'
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from 'next/navigation';
-import { BarChart3, FileCheck, Briefcase, LogOut, X } from 'lucide-react'
+import { BarChart3, FileCheck, Briefcase, LogOut } from 'lucide-react'
+import LogoutModal from '../common/LogoutModal'
 
 export default function AdminSidebar() {
   const router = useRouter();
@@ -85,38 +86,11 @@ export default function AdminSidebar() {
         </button>
 
         {/* Logout Confirmation Modal */}
-        {showLogoutModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]" onClick={() => setShowLogoutModal(false)}>
-            <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 p-8" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Xác nhận đăng xuất</h2>
-                <button
-                  onClick={() => setShowLogoutModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <p className="text-base text-gray-600 mb-8">
-                Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowLogoutModal(false)}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
-                >
-                  Hủy
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-medium text-white transition"
-                >
-                  Đăng xuất
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <LogoutModal
+          isOpen={showLogoutModal}
+          onClose={() => setShowLogoutModal(false)}
+          onConfirm={handleLogout}
+        />
       </div>
     </aside>
   );

@@ -107,6 +107,9 @@ interface AuthContextType {
   login: (token: string) => void;
   logout: () => void;
   isLoading: boolean;
+  // 🔥 Helper for DEV: Quick role mock
+  mockEmployer: () => void;
+  mockCandidate: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -239,8 +242,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = '/';
   };
 
+  // 🔥 DEV HELPER: Quick mock EMPLOYER
+  const mockEmployer = () => {
+    const mockUser: UserPayload = {
+      sub: 'dev-employer-123',
+      email: 'employer@dev.com',
+      role: 'EMPLOYER',
+      status: 'APPROVED',
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 86400 // 24h
+    };
+    
+    const mockToken = btoa(JSON.stringify(mockUser));
+    login(mockToken);
+    
+    // Reload to apply sidebar
+    setTimeout(() => window.location.reload(), 100);
+  };
+
+  // 🔥 DEV HELPER: Quick mock CANDIDATE
+  const mockCandidate = () => {
+    const mockUser: UserPayload = {
+      sub: 'dev-candidate-456',
+      email: 'candidate@dev.com',
+      role: 'CANDIDATE',
+      status: 'APPROVED',
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 86400
+    };
+    
+    const mockToken = btoa(JSON.stringify(mockUser));
+    login(mockToken);
+    
+    setTimeout(() => window.location.reload(), 100);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isLoading, mockEmployer, mockCandidate }}>
       {children}
     </AuthContext.Provider>
   );
