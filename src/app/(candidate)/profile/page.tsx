@@ -2,7 +2,6 @@
 
 import { useState, useRef, ChangeEvent, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { jwtDecode } from "jwt-decode";
 import PersonalInfo from "../../components/profile/PersonalInfo";
 import AboutSection from "../../components/profile/AboutSection";
 import EducationSection from "../../components/profile/EducationSection";

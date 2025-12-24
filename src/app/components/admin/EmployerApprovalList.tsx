@@ -1,11 +1,29 @@
 'use client';
-import React, { useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Search, ChevronLeft, ChevronRight, Filter, Eye, Check, X } from 'lucide-react';
 import RejectModal from './RejectModal';
 import ApproveModal from './ApproveModal';
 import EmployerDetailModal from './EmployerDetailModal';
+import { getEmployersForApproval, approveEmployer, rejectEmployer, getEmployerProfile } from '@/utils/api/admin-api';
+
+interface EmployerProfileAPI {
+  id: string;
+  companyName: string;
+  logoUrl?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  taxCode?: string;
+  status: 'PENDING_APPROVAL' | 'PENDING_EDIT_APPROVAL' | 'ACTIVE' | 'REJECTED';
+  profileStatus?: 'PENDING_EDIT_APPROVAL' | 'APPROVED';
+  createdAt: string;
+  description?: string;
+  address?: string;
+  website?: string;
+  user?: {
+    email?: string;
+  };
+}
 
 interface EmployerProfile {
   id: number;
@@ -20,11 +38,19 @@ interface EmployerProfile {
   description?: string;
   address?: string;
   website?: string;
+  technologies?: string[];
+  benefits?: string[];
+  locations?: Array<{
+    id?: string;
+    province: string;
+    district: string;
+    detailedAddress: string;
+    isHeadquarters: boolean;
+  }>;
   oldData?: Partial<EmployerProfile>;
 }
 
 export default function EmployerApprovalList() {
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -33,68 +59,70 @@ export default function EmployerApprovalList() {
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedEmployer, setSelectedEmployer] = useState<EmployerProfile | null>(null);
-  const [employers, setEmployers] = useState<EmployerProfile[]>([
-    {
-      id: 1,
-      companyName: 'Tech Solutions Vietnam',
-      companyLogo: '',
-      email: 'hr@techsolutions.vn',
-      phone: '0234567890',
-      taxCode: '0123456789',
-      status: 'pending_new',
-      createdDate: '24/05/2025',
-      registrationType: 'new',
-      description: 'Leading tech company in Vietnam - Providing comprehensive IT solutions and consulting services for businesses across Southeast Asia.',
-      address: 'Tòa nhà landmark 81, Quận 1, TP.HCM',
-      website: 'www.techsolutions.vn'
-    },
-    {
-      id: 2,
-      companyName: 'Digital Innovations Inc',
-      companyLogo: '',
-      email: 'contact@digitalinnov.vn',
-      phone: '0287654321',
-      taxCode: '9876543210',
-      status: 'pending_new',
-      createdDate: '23/05/2025',
-      registrationType: 'new',
-      description: 'Digital transformation solutions and cloud infrastructure services',
-      address: 'Phố Mễ Trì, Tây Hồ, Hà Nội',
-      website: 'www.digitalinnov.vn'
-    },
-    {
-      id: 3,
-      companyName: 'Smart Business Solutions',
-      companyLogo: '',
-      email: 'info@smartbusiness.vn',
-      phone: '0298765432',
-      taxCode: '1122334455',
-      status: 'pending_edit',
-      createdDate: '22/05/2025',
-      registrationType: 'edit',
-      description: 'Business consulting services and enterprise software solutions',
-      address: 'Khu công nghệ cao, Dĩ An, Bình Dương',
-      website: 'www.smartbusiness.vn',
-      oldData: {
-        description: 'Business consulting services',
-        email: 'contact@smartbusiness.vn'
-      }
-    },
-    {
-      id: 4,
-      companyName: 'CloudTech Vietnam',
-      companyLogo: '',
-      email: 'support@cloudtech.vn',
-      phone: '0265432109',
-      taxCode: '5566778899',
-      status: 'pending_new',
-      createdDate: '21/05/2025',
-      registrationType: 'new',
-      description: 'Cloud computing solutions and data analytics platform',
-      address: 'Phạm Hùng, Nam Từ Liêm, Hà Nội',
-      website: 'www.cloudtech.vn'
-    },
-  ]);
+  const [employers, setEmployers] = useState<EmployerProfile[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Fetch employers from API
+  const fetchEmployers = React.useCallback(async () => {
+
+    try {
+      setLoading(true);
+      setError(null);
+      const status = statusFilter !== 'all' ? statusFilter : undefined;
+      const response = await getEmployersForApproval(status, currentPage, 10);
+      
+      // Map BE data to FE format
+      const mappedEmployers = response.data.map((emp: EmployerProfileAPI) => {
+        // Convert BE status to FE status
+        let feStatus: 'pending_new' | 'pending_edit' | 'approved' | 'rejected';
+        // Check both status and profileStatus for accurate mapping
+        if (emp.status === 'PENDING_APPROVAL') {
+          feStatus = 'pending_new';
+        } else if (emp.status === 'ACTIVE' && emp.profileStatus === 'PENDING_EDIT_APPROVAL') {
+          feStatus = 'pending_edit';
+        } else if (emp.status === 'ACTIVE') {
+          feStatus = 'approved';
+        } else if (emp.status === 'REJECTED') {
+          feStatus = 'rejected';
+        } else {
+          feStatus = 'pending_new';
+        }
+        
+        return {
+          id: parseInt(emp.id, 10),
+          companyName: emp.companyName,
+          companyLogo: emp.logoUrl || '',
+          email: emp.contactEmail || emp.user?.email || '',
+          phone: emp.contactPhone || '',
+          taxCode: emp.taxCode || '',
+          status: feStatus,
+          createdDate: new Date(emp.createdAt as string).toLocaleDateString('vi-VN'),
+          // Determine registration type based on both status and profileStatus
+          registrationType: (emp.status === 'PENDING_APPROVAL' || 
+                            (emp.status === 'ACTIVE' && emp.profileStatus !== 'PENDING_EDIT_APPROVAL'))
+                            ? 'new' 
+                            : 'edit',
+          description: emp.description,
+          address: emp.address,
+          website: emp.website,
+        };
+      });
+      
+      setEmployers(mappedEmployers);
+      setTotalCount(response.meta?.total || response.data.length);
+    } catch (err) {
+      console.error('Error fetching employers:', err);
+      setError(err instanceof Error ? err.message : 'Không thể tải danh sách nhà tuyển dụng');
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter, currentPage]);
+
+  useEffect(() => {
+    fetchEmployers();
+  }, [fetchEmployers]);
 
   const statusConfig = {
     pending_new: { label: 'Chờ duyệt (Mới)', color: 'bg-orange-100 text-orange-600 border-orange-300' },
@@ -104,19 +132,15 @@ export default function EmployerApprovalList() {
   };
 
   const filterOptions = [
-    { value: 'all', label: 'Tất cả', count: employers.length },
-    { value: 'pending_new', label: 'Chờ duyệt (Mới)', count: employers.filter(e => e.status === 'pending_new').length },
-    { value: 'pending_edit', label: 'Chờ duyệt (Sửa đổi)', count: employers.filter(e => e.status === 'pending_edit').length },
-    { value: 'approved', label: 'Đã duyệt', count: employers.filter(e => e.status === 'approved').length },
-    { value: 'rejected', label: 'Từ chối', count: employers.filter(e => e.status === 'rejected').length },
+    { value: 'all', label: 'Tất cả', count: totalCount },
+    { value: 'PENDING_APPROVAL', label: 'Chờ duyệt (Mới)', count: employers.filter(e => e.status === 'pending_new').length },
+    { value: 'PENDING_EDIT_APPROVAL', label: 'Chờ duyệt (Sửa đổi)', count: employers.filter(e => e.status === 'pending_edit').length },
+    { value: 'ACTIVE', label: 'Đã duyệt', count: employers.filter(e => e.status === 'approved').length },
+    { value: 'REJECTED', label: 'Từ chối', count: employers.filter(e => e.status === 'rejected').length },
   ];
 
   const filteredEmployers = useMemo(() => {
     let filtered = employers;
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(e => e.status === statusFilter);
-    }
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
@@ -128,7 +152,7 @@ export default function EmployerApprovalList() {
     }
 
     return filtered;
-  }, [employers, statusFilter, searchQuery]);
+  }, [employers, searchQuery]);
 
   const getActiveFilterLabel = () => {
     const option = filterOptions.find(opt => opt.value === statusFilter);
@@ -136,15 +160,42 @@ export default function EmployerApprovalList() {
   };
 
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(filteredEmployers.length / itemsPerPage);
-  const paginatedEmployers = filteredEmployers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+  const paginatedEmployers = filteredEmployers;
 
-  const handleViewDetails = (employer: EmployerProfile) => {
-    setSelectedEmployer(employer);
-    setShowDetailModal(true);
+  const handleViewDetails = async (employer: EmployerProfile) => {
+    try {
+      const response = await getEmployerProfile(employer.id.toString());
+      console.log('Full API Response:', response);
+      
+      // Backend returns { employer, user, pendingEdits, hasPendingEdits } directly
+      const detail = response.employer || {};
+      console.log('Employer detail:', detail);
+      
+      // Determine correct registration type from detail
+      const registrationType: 'new' | 'edit' = 
+        (detail.status === 'ACTIVE' && detail.profileStatus === 'PENDING_EDIT_APPROVAL')
+          ? 'edit'
+          : 'new';
+      
+      // Map backend response to frontend interface
+      const mappedEmployer = {
+        ...employer,
+        registrationType: registrationType,
+        description: detail.description || employer.description,
+        website: detail.website || employer.website,
+        technologies: detail.technologies || [],
+        benefits: detail.benefits || [],
+        locations: detail.locations || [],
+      };
+      console.log('Mapped employer:', mappedEmployer);
+      
+      setSelectedEmployer(mappedEmployer);
+      setShowDetailModal(true);
+    } catch (err) {
+      console.error('Error fetching employer detail:', err);
+      alert('Không thể tải chi tiết nhà tuyển dụng');
+    }
   };
 
   const handleOpenApproveModal = (employer: EmployerProfile) => {
@@ -152,15 +203,18 @@ export default function EmployerApprovalList() {
     setShowApproveModal(true);
   };
 
-  const handleApprove = () => {
-    if (selectedEmployer) {
-      setEmployers(prev =>
-        prev.map(e =>
-          e.id === selectedEmployer.id ? { ...e, status: 'approved' as const } : e
-        )
-      );
+  const handleApprove = async () => {
+    if (!selectedEmployer) return;
+    
+    try {
+      await approveEmployer(selectedEmployer.id.toString());
+      setShowApproveModal(false);
+      fetchEmployers(); // Refresh list
+      alert('Đã duyệt nhà tuyển dụng thành công');
+    } catch (err) {
+      console.error('Error approving employer:', err);
+      alert(err instanceof Error ? err.message : 'Không thể duyệt nhà tuyển dụng');
     }
-    setShowApproveModal(false);
   };
 
   const handleOpenRejectModal = (employer: EmployerProfile) => {
@@ -168,15 +222,18 @@ export default function EmployerApprovalList() {
     setShowRejectModal(true);
   };
 
-  const handleReject = (reason: string) => {
-    if (selectedEmployer) {
-      setEmployers(prev =>
-        prev.map(e =>
-          e.id === selectedEmployer.id ? { ...e, status: 'rejected' as const } : e
-        )
-      );
+  const handleReject = async (reason: string) => {
+    if (!selectedEmployer) return;
+    
+    try {
+      await rejectEmployer(selectedEmployer.id.toString(), reason);
+      setShowRejectModal(false);
+      fetchEmployers(); // Refresh list
+      alert('Đã từ chối nhà tuyển dụng');
+    } catch (err) {
+      console.error('Error rejecting employer:', err);
+      alert(err instanceof Error ? err.message : 'Không thể từ chối nhà tuyển dụng');
     }
-    setShowRejectModal(false);
   };
 
   return (
@@ -188,6 +245,21 @@ export default function EmployerApprovalList() {
             Số hồ sơ cần duyệt: {employers.filter(e => e.status === 'pending_new' || e.status === 'pending_edit').length}
           </h2>
         </div>
+
+        {/* Loading indicator */}
+        {loading && (
+          <div className="text-center py-4">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p className="mt-2 text-gray-600">Đang tải...</p>
+          </div>
+        )}
+
+        {/* Error message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
         {/* Search & Filter controls */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -304,10 +376,10 @@ export default function EmployerApprovalList() {
               Email
               <span className="text-gray-400">⇅</span>
             </div>
-            <div className="flex items-center gap-1">
+            {/* <div className="flex items-center gap-1">
               Mã số thuế
               <span className="text-gray-400">⇅</span>
-            </div>
+            </div> */}
             <div className="flex items-center gap-1">
               Trạng thái
               <span className="text-gray-400">⇅</span>

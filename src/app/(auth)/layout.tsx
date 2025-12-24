@@ -13,15 +13,11 @@ export default function AuthLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
-      <body className="bg-gray-50">
-        <AuthProvider>
-          {/* Layout đơn giản cho auth - không có Header/Footer */}
-          <main className="min-h-screen">
-            {children}
-          </main>
-        </AuthProvider>
-      </body>
-    </html>
+    <AuthProvider>
+      {/* Layout đơn giản cho auth - không có Header/Footer */}
+      <main className="min-h-screen">
+        {children}
+      </main>
+    </AuthProvider>
   );
 }

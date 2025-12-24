@@ -12,8 +12,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi">
-      <body className="bg-gray-50">{children}</body>
+    <html lang="vi" suppressHydrationWarning>
+      <body className="bg-gray-50" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }

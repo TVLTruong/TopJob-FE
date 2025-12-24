@@ -96,8 +96,12 @@ function LoginContent() {
       // Normalize role để so sánh (case-insensitive)
       const userRole = (decoded.role || '').toString().toUpperCase();
 
+      // UC-ADMIN: Kiểm tra role ADMIN và redirect đến employer approval
+      if (userRole === 'ADMIN') {
+        router.push('/employer-approval');
+      }
       // UC-EMP-01: Kiểm tra status và redirect
-      if (userRole === 'EMPLOYER') {
+      else if (userRole === 'EMPLOYER') {
         const userStatus = (decoded.status || '').toString().toUpperCase();
         
         if (userStatus === 'PENDING_PROFILE_COMPLETION') {
@@ -105,7 +109,7 @@ function LoginContent() {
         } else if (userStatus === 'PENDING_APPROVAL') {
           router.push('/pending-approval');
         } else if (userStatus === 'ACTIVE') {
-          router.push('/employer/dashboard');
+          router.push('/companyProfilePage');
         } else {
           router.push('/');
         }

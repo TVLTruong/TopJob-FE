@@ -95,7 +95,7 @@ import { jwtDecode } from 'jwt-decode';
 interface UserPayload {
   sub: string;
   email: string;
-  role: 'CANDIDATE' | 'EMPLOYER';
+  role: 'CANDIDATE' | 'EMPLOYER' | 'ADMIN';
   status?: string; // Thêm status để check redirect
   iat: number;
   exp: number;
@@ -169,8 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         sessionStorage.removeItem('lastUserId');
       }
-    } catch (error) {
-
+    } catch {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('userStatus');
     }
@@ -223,7 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (decodedUser.status) {
         localStorage.setItem('userStatus', decodedUser.status);
       }
-    } catch (error) {
+    } catch {
        // Silent error - no logging in production
     }
   };
@@ -254,9 +253,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     
     const mockToken = btoa(JSON.stringify(mockUser));
-    login(mockToken);
     
-    // Reload to apply sidebar
+    // Clear old session
+    sessionStorage.clear();
+    
+    // Set new token and user
+    localStorage.setItem('accessToken', mockToken);
+    localStorage.setItem('userStatus', 'APPROVED');
+    sessionStorage.setItem('lastUserId', mockUser.sub);
+    
+    setToken(mockToken);
+    setUser(mockUser);
+    
+    // Dispatch event và reload
+    window.dispatchEvent(new CustomEvent('avatarCleared'));
     setTimeout(() => window.location.reload(), 100);
   };
 
@@ -272,8 +282,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     
     const mockToken = btoa(JSON.stringify(mockUser));
-    login(mockToken);
     
+    // Clear old session
+    sessionStorage.clear();
+    
+    // Set new token and user
+    localStorage.setItem('accessToken', mockToken);
+    localStorage.setItem('userStatus', 'APPROVED');
+    sessionStorage.setItem('lastUserId', mockUser.sub);
+    
+    setToken(mockToken);
+    setUser(mockUser);
+    
+    // Dispatch event và reload
+    window.dispatchEvent(new CustomEvent('avatarCleared'));
     setTimeout(() => window.location.reload(), 100);
   };
 

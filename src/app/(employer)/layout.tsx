@@ -58,13 +58,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
-      <body className="bg-gray-50">
-        <AuthProvider>
-          <LayoutContent>{children}</LayoutContent>
-          <DevToolbar />
-        </AuthProvider>
-      </body>
-    </html>
+    <AuthProvider>
+      <LayoutContent>{children}</LayoutContent>
+      <DevToolbar />
+    </AuthProvider>
   );
 }

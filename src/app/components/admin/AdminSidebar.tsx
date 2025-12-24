@@ -14,27 +14,30 @@ export default function AdminSidebar() {
 
   const navItems = [
     {
-      href: '/dashboard',
+      href: '/admin/dashboard',
       icon: BarChart3,
       label: 'Tổng quan'
     },
     {
-      href: '/employer-approval',
+      href: '/admin/employer-approval',
       icon: FileCheck,
       label: 'Duyệt Hồ sơ NTD'
     },
     {
-      href: '/job-posting-approval',
+      href: '/admin/job-posting-approval',
       icon: Briefcase,
       label: 'Duyệt tin tuyển dụng'
     }
   ];
 
-  const isActive = (href: string) => pathname.startsWith(href);
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href);
 
   const handleLogout = () => {
     setShowLogoutModal(false);
-    // Logout logic here
+    // Clear all storage
+    localStorage.clear();
+    sessionStorage.clear();
+    // Redirect to login
     router.push('/login');
   };
 
@@ -42,7 +45,7 @@ export default function AdminSidebar() {
     <aside className="w-72 bg-white border-r h-screen overflow-y-auto flex flex-col sticky top-0">
       <div className="p-6 flex flex-col h-full">
         {/* Logo */}
-        <div className="mb-8 cursor-pointer" onClick={() => router.push('/dashboard')}>
+        <div className="mb-8 cursor-pointer" onClick={() => router.push('/admin/dashboard')}>
           <Image
             src="/logo.svg"
             alt="TopJob Logo"

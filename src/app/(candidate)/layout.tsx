@@ -15,16 +15,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
-      <body className="bg-gray-50">
-        <AuthProvider> {/* <-- 2. BỌC Ở NGOÀI */}
-          <Header />
-          <main className="mt-0">
-            {children}
-          </main>
-          <Footer />
-        </AuthProvider>
-      </body>
-    </html>
+    <AuthProvider>
+      <Header />
+      <main className="mt-0">
+        {children}
+      </main>
+      <Footer />
+    </AuthProvider>
   );
 }

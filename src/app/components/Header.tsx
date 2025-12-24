@@ -54,7 +54,7 @@ function UserDropdown({ onLogout }: { onLogout: () => void }) {
           sessionStorage.removeItem('candidateAvatar');
           sessionStorage.removeItem('avatarUserId');
         }
-      } catch (error) {
+      } catch {
         setAvatarUrl(null);
         sessionStorage.removeItem('candidateAvatar');
         sessionStorage.removeItem('avatarUserId');
@@ -64,7 +64,7 @@ function UserDropdown({ onLogout }: { onLogout: () => void }) {
     // Reset avatar immediately when user changes
     setAvatarUrl(null);
     fetchAvatar();
-  }, [user?.sub]);
+  }, [user?.sub, user]);
 
   // Listen for avatar updates from profile page
   useEffect(() => {
