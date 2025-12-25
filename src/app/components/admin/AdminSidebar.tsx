@@ -14,17 +14,17 @@ export default function AdminSidebar() {
 
   const navItems = [
     {
-      href: '/admin/dashboard',
+      href: '/dashboard',
       icon: BarChart3,
       label: 'Tổng quan'
     },
     {
-      href: '/admin/employer-approval',
+      href: '/employer-approval',
       icon: FileCheck,
       label: 'Duyệt Hồ sơ NTD'
     },
     {
-      href: '/admin/job-posting-approval',
+      href: '/job-posting-approval',
       icon: Briefcase,
       label: 'Duyệt tin tuyển dụng'
     }

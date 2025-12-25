@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
 
 export default function DevToolbar() {
-  const { user, mockEmployer, mockCandidate, logout } = useAuth();
+  const { user, mockEmployer, mockCandidate, mockAdmin, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
   // ⚠️ CHỈ HIỆN Ở DEV MODE
@@ -49,16 +49,23 @@ export default function DevToolbar() {
           <div className="space-y-2">
             <button
               onClick={mockEmployer}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-all font-medium"
+              className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-all font-medium flex items-center justify-center gap-2"
             >
               👔 Mock as EMPLOYER
             </button>
             
             <button
               onClick={mockCandidate}
-              className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-all font-medium"
+              className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-all font-medium flex items-center justify-center gap-2"
             >
               👤 Mock as CANDIDATE
+            </button>
+
+            <button
+              onClick={mockAdmin}
+              className="w-full bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-all font-medium flex items-center justify-center gap-2"
+            >
+              🛡️ Mock as ADMIN
             </button>
 
             {user && (

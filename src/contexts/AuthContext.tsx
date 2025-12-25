@@ -110,6 +110,7 @@ interface AuthContextType {
   // 🔥 Helper for DEV: Quick role mock
   mockEmployer: () => void;
   mockCandidate: () => void;
+  mockAdmin: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -299,8 +300,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTimeout(() => window.location.reload(), 100);
   };
 
+  // 🔥 DEV HELPER: Quick mock ADMIN
+  const mockAdmin = () => {
+    const mockUser: UserPayload = {
+      sub: 'dev-admin-789',
+      email: 'admin@dev.com',
+      role: 'admin',
+      status: 'APPROVED',
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 86400
+    };
+    
+    const mockToken = btoa(JSON.stringify(mockUser));
+    
+    // Clear old session
+    sessionStorage.clear();
+    
+    // Set new token and user
+    localStorage.setItem('accessToken', mockToken);
+    localStorage.setItem('userStatus', 'APPROVED');
+    sessionStorage.setItem('lastUserId', mockUser.sub);
+    
+    setToken(mockToken);
+    setUser(mockUser);
+    
+    // Dispatch event và reload
+    window.dispatchEvent(new CustomEvent('avatarCleared'));
+    setTimeout(() => window.location.reload(), 100);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading, mockEmployer, mockCandidate }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isLoading, mockEmployer, mockCandidate, mockAdmin }}>
       {children}
     </AuthContext.Provider>
   );

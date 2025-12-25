@@ -13,6 +13,14 @@ interface LocationItem {
   "Tỉnh / Thành Phố": string;
 }
 
+interface OfficeLocation {
+  id: string;
+  province: string;
+  district: string;
+  detailedAddress: string;
+  isHeadquarters: boolean;
+}
+
 interface CompanyBasicInfo {
   companyName: string;
   website: string;
@@ -26,6 +34,11 @@ interface CompanyBasicInfo {
   foundingYear: string;
   technologies: string[];
   description: string;
+  benefits: string;
+  contactEmail: string;
+  facebookUrl: string;
+  linkedinUrl: string;
+  xUrl: string;
 }
 
 const fieldOptions = ['Công nghệ thông tin', 'Trò chơi', 'Điện toán đám mây', 'Thương mại điện tử', 'Fintech', 'AI/Machine Learning']
@@ -49,7 +62,12 @@ export default function CompanyHeader() {
     foundingMonth: '',
     foundingYear: '',
     technologies: [],
-    description: ''
+    description: '',
+    benefits: '',
+    contactEmail: '',
+    facebookUrl: '',
+    linkedinUrl: '',
+    xUrl: ''
   })
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   
@@ -62,6 +80,9 @@ export default function CompanyHeader() {
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [scrollbarWidth, setScrollbarWidth] = useState(0)
+  
+  // New state for managing locations with headquarters
+  const [locationsList, setLocationsList] = useState<OfficeLocation[]>([])
   
   const [tempAddress, setTempAddress] = useState({
     province: '',
@@ -125,9 +146,59 @@ export default function CompanyHeader() {
         foundingMonth: '',
         foundingYear: profile.foundedYear ? profile.foundedYear.toString() : '',
         technologies: profile.technologies || [],
-        description: profile.description || ''
+        description: profile.description || '',
+        benefits: profile.benefits?.join('\\n') || '',
+        contactEmail: profile.contactEmail || '',
+        facebookUrl: profile.facebookUrl || '',
+        linkedinUrl: profile.linkedlnUrl || '',
+        xUrl: profile.xUrl || ''
       });
+      
+      // Load locations into locationsList with isHeadquarters flag
+      if (profile.locations && profile.locations.length > 0) {
+        setLocationsList(profile.locations.map((loc, index) => ({
+          id: `loc-${index}`,
+          province: loc.province,
+          district: loc.district || '',
+          detailedAddress: loc.detailedAddress || '',
+          isHeadquarters: index === 0 // First location is headquarters by default
+        })));
+      }
+      
       setLogoPreview(profile.logoUrl || null);
+    } else if (process.env.NODE_ENV === 'development') {
+      // 🔥 DEV MODE: Mock data for UI development
+      setFormData({
+        companyName: 'VNG',
+        website: 'https://www.vng.com.vn',
+        locations: ['Hồ Chí Minh'],
+        fields: ['Công nghệ thông tin', 'Trò chơi'],
+        province: 'Hồ Chí Minh',
+        district: 'Quận 1',
+        streetAddress: '123 Nguyễn Huệ',
+        foundingDay: '1',
+        foundingMonth: 'January',
+        foundingYear: '2004',
+        technologies: ['React', 'Node.js', 'Python'],
+        description: 'VNG là công ty công nghệ hàng đầu Việt Nam',
+        benefits: 'Chế độ bảo hiểm sức khỏe mở rộng\\nNghỉ phép linh hoạt 12 ngày\\nLương tháng 13',
+        contactEmail: 'contact@vng.com.vn',
+        facebookUrl: 'https://facebook.com/vng',
+        linkedinUrl: 'https://linkedin.com/company/vng',
+        xUrl: 'https://x.com/vng'
+      });
+      
+      setLocationsList([
+        {
+          id: 'loc-1',
+          province: 'Hồ Chí Minh',
+          district: 'Quận 1',
+          detailedAddress: '123 Nguyễn Huệ',
+          isHeadquarters: true
+        }
+      ]);
+      
+      setLogoPreview('/logo.svg');
     }
   }, [profile]);
 
@@ -212,6 +283,30 @@ export default function CompanyHeader() {
       })
     }
   }
+  
+  // Location management functions
+  const handleRemoveLocation = (id: string) => {
+    const newLocations = locationsList.filter((loc) => loc.id !== id)
+    // If we removed the headquarters, make the first remaining location the headquarters
+    if (newLocations.length > 0 && locationsList.find((l) => l.id === id)?.isHeadquarters) {
+      newLocations[0].isHeadquarters = true
+    }
+    setLocationsList(newLocations)
+    // Update formData.locations
+    setFormData({
+      ...formData,
+      locations: newLocations.map(loc => loc.province)
+    })
+  }
+
+  const handleSetHeadquarters = (id: string) => {
+    setLocationsList(
+      locationsList.map((loc) => ({
+        ...loc,
+        isHeadquarters: loc.id === id,
+      }))
+    )
+  }
 
   const toggleDropdown = (type: 'address' | 'field' | 'tech') => {
     if (type === 'address') {
@@ -233,16 +328,25 @@ export default function CompanyHeader() {
 
   const handleAddAddress = () => {
     if (isAddressFormValid) {
-      const fullAddress = `${tempAddress.province}`
-      if (!formData.locations.includes(fullAddress)) {
-        setFormData({
-          ...formData,
-          locations: [...formData.locations, fullAddress],
-          province: tempAddress.province,
-          district: tempAddress.district,
-          streetAddress: tempAddress.streetAddress
-        })
+      const newLocation: OfficeLocation = {
+        id: Date.now().toString(),
+        province: tempAddress.province,
+        district: tempAddress.district,
+        detailedAddress: tempAddress.streetAddress,
+        isHeadquarters: locationsList.length === 0, // First location is automatically headquarters
       }
+      
+      setLocationsList([...locationsList, newLocation])
+      
+      // Update formData
+      setFormData({
+        ...formData,
+        locations: [...formData.locations, tempAddress.province],
+        province: locationsList.length === 0 ? tempAddress.province : formData.province,
+        district: locationsList.length === 0 ? tempAddress.district : formData.district,
+        streetAddress: locationsList.length === 0 ? tempAddress.streetAddress : formData.streetAddress
+      })
+      
       setTempAddress({ province: '', district: '', streetAddress: '' })
       setShowAddressForm(false)
     }
@@ -250,7 +354,7 @@ export default function CompanyHeader() {
 
   return (
     <>
-      <div className="bg-white rounded-xl p-8 mb-6 shadow-sm">
+      <div className="bg-white p-8 mb-3 shadow-sm">
         {isLoading ? (
           <div className="animate-pulse">
             <div className="flex items-start gap-6">
@@ -403,107 +507,138 @@ export default function CompanyHeader() {
                   Giới thiệu thông tin chính xác của công ty của bạn đến người dùng một cách nhanh chóng và dễ dàng, giúp họ biết được công ty của bạn đang hoạt động ở lĩnh vực nào và những công nghệ nào được sử dụng.
                 </p>
 
-                {/* Vị trí */}
-                <div className="mb-4 relative">
+                {/* Văn phòng làm việc */}
+                <div className="mb-4">
                   <label className="block text-sm font-medium mb-2">Văn phòng làm việc</label>
-                  <div className="relative">
-                    <div className="flex flex-wrap gap-2 p-2 border border-gray-300 rounded-lg min-h-[42px]">
-                      {formData.locations.map((location) => (
-                        <span key={location} className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded text-sm">
-                          {location}
-                          <button onClick={() => removeItem('locations', location)}>
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
-                      <button 
-                        onClick={() => toggleDropdown('address')}
-                        className="ml-auto text-gray-400 hover:text-gray-600"
-                        title="Thêm địa chỉ chi tiết"
+                  <p className="text-xs text-gray-500 mb-4">
+                    Thêm các địa điểm văn phòng của công ty. Bạn có thể đánh dấu một địa điểm là trụ sở chính.
+                  </p>
+                  
+                  {/* Locations List */}
+                  <div className="space-y-3 mb-4">
+                    {locationsList.map((location) => (
+                      <div
+                        key={location.id}
+                        className="flex items-center justify-between p-4 border border-gray-300 rounded-lg bg-gray-50"
                       >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
-                    {showAddressForm && (
-                      <div className="absolute z-10 w-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
-                        <div className="grid grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Tỉnh / Thành phố</label>
-                            <select
-                              value={tempAddress.province}
-                              onChange={(e) => setTempAddress({...tempAddress, province: e.target.value, district: ''})}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none"
-                              style={{
-                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%23666' d='M8 11L3 6h10z'/%3E%3C/svg%3E")`,
-                                backgroundRepeat: 'no-repeat',
-                                backgroundPosition: 'right 0.75rem center'
-                              }}
-                            >
-                              <option value="">Chọn tỉnh/thành phố</option>
-                              {provinces.map((prov) => (
-                                <option key={prov} value={prov}>
-                                  {prov}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Phường / Xã</label>
-                            <select
-                              value={tempAddress.district}
-                              onChange={(e) => setTempAddress({...tempAddress, district: e.target.value})}
-                              disabled={!tempAddress.province}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none disabled:bg-gray-100"
-                              style={{
-                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%23666' d='M8 11L3 6h10z'/%3E%3C/svg%3E")`,
-                                backgroundRepeat: 'no-repeat',
-                                backgroundPosition: 'right 0.75rem center',
-                                color: tempAddress.district === "" ? '#9CA3AF' : '#111827'
-                              }}
-                            >
-                              <option value="">Chọn phường/xã</option>
-                              {tempDistricts.map((dist) => (
-                                <option key={dist} value={dist}>
-                                  {dist}
-                                </option>
-                              ))}
-                            </select>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-gray-900">
+                              {location.detailedAddress}, {location.district}, {location.province}
+                            </span>
+                            {location.isHeadquarters && (
+                              <span className="px-2 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700 rounded">
+                                Trụ sở chính
+                              </span>
+                            )}
                           </div>
                         </div>
-
-                        <div className="mb-4">
-                          <label className="block text-sm font-medium mb-2">Địa chỉ</label>
-                          <input
-                            type="text"
-                            value={tempAddress.streetAddress}
-                            onChange={(e) => setTempAddress({...tempAddress, streetAddress: e.target.value})}
-                            placeholder="Số nhà, tên đường"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                          />
-                        </div>
-
-                        <div className="flex justify-center gap-3">
+                        <div className="flex items-center gap-2">
+                          {!location.isHeadquarters && locationsList.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleSetHeadquarters(location.id)}
+                              className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-100"
+                            >
+                              Đặt làm trụ sở
+                            </button>
+                          )}
                           <button
-                            onClick={() => {
-                              setTempAddress({ province: '', district: '', streetAddress: '' })
-                              setShowAddressForm(false)
-                            }}
-                            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition text-sm"
+                            type="button"
+                            onClick={() => handleRemoveLocation(location.id)}
+                            className="px-3 py-1.5 text-xs text-red-600 border border-red-300 rounded-lg hover:bg-red-50"
                           >
-                            Hủy
-                          </button>
-                          <button
-                            onClick={handleAddAddress}
-                            disabled={!isAddressFormValid}
-                            className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition text-sm disabled:bg-gray-300 disabled:cursor-not-allowed"
-                          >
-                            Thêm địa chỉ
+                            Xóa
                           </button>
                         </div>
                       </div>
-                    )}
+                    ))}
                   </div>
+                  
+                  {/* Add Location Form */}
+                  {showAddressForm ? (
+                    <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-4">Thêm địa điểm mới</h3>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Tỉnh/Thành phố <span className="text-red-600">*</span>
+                          </label>
+                          <select
+                            value={tempAddress.province}
+                            onChange={(e) => setTempAddress({ ...tempAddress, province: e.target.value, district: '' })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          >
+                            <option value="">Chọn tỉnh/thành phố</option>
+                            {provinces.map((prov) => (
+                              <option key={prov} value={prov}>
+                                {prov}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Quận/Huyện <span className="text-red-600">*</span>
+                          </label>
+                          <select
+                            value={tempAddress.district}
+                            onChange={(e) => setTempAddress({ ...tempAddress, district: e.target.value })}
+                            disabled={!tempAddress.province}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100"
+                          >
+                            <option value="">Chọn quận/huyện</option>
+                            {tempDistricts.map((dist) => (
+                              <option key={dist} value={dist}>
+                                {dist}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Địa chỉ chi tiết <span className="text-red-600">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={tempAddress.streetAddress}
+                          onChange={(e) => setTempAddress({ ...tempAddress, streetAddress: e.target.value })}
+                          placeholder="Số nhà, tên đường"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                      <div className="flex justify-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTempAddress({ province: '', district: '', streetAddress: '' })
+                            setShowAddressForm(false)
+                          }}
+                          className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition text-sm"
+                        >
+                          Hủy
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleAddAddress}
+                          disabled={!isAddressFormValid}
+                          className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition text-sm disabled:bg-gray-300 disabled:cursor-not-allowed"
+                        >
+                          Thêm địa chỉ
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowAddressForm(true)}
+                      className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg text-sm text-gray-600 flex items-center justify-center gap-2 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition"
+                    >
+                      <Plus className="w-4 h-4" />
+                      + Thêm địa điểm
+                    </button>
+                  )}
                 </div>
 
                 {/* Lĩnh vực */}
@@ -649,6 +784,68 @@ export default function CompanyHeader() {
                 </div>
                 <p className="text-xs text-gray-400 mt-1">Tối đa 600 ký tự</p>
               </div>
+
+              {/* Phúc lợi & Đãi ngộ */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2">Phúc lợi & Đãi ngộ</label>
+                <p className="text-xs text-gray-500 mb-3">
+                  Mỗi dòng là một phúc lợi. Nhấn Enter để xuống dòng.
+                </p>
+                <textarea
+                  value={formData.benefits}
+                  onChange={(e) => setFormData({...formData, benefits: e.target.value})}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                  rows={6}
+                  placeholder="Chế độ bảo hiểm sức khỏe&#10;Nghỉ phép linh hoạt&#10;Lương tháng 13..."
+                />
+              </div>
+
+              {/* Liên hệ */}
+              <div className="mb-6">
+                <h3 className="text-base font-semibold mb-4">Thông tin liên hệ</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Email liên hệ</label>
+                    <input
+                      type="email"
+                      value={formData.contactEmail}
+                      onChange={(e) => setFormData({...formData, contactEmail: e.target.value})}
+                      placeholder="contact@company.com"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Facebook</label>
+                    <input
+                      type="url"
+                      value={formData.facebookUrl}
+                      onChange={(e) => setFormData({...formData, facebookUrl: e.target.value})}
+                      placeholder="https://facebook.com/company"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">LinkedIn</label>
+                    <input
+                      type="url"
+                      value={formData.linkedinUrl}
+                      onChange={(e) => setFormData({...formData, linkedinUrl: e.target.value})}
+                      placeholder="https://linkedin.com/company"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">X (Twitter)</label>
+                    <input
+                      type="url"
+                      value={formData.xUrl}
+                      onChange={(e) => setFormData({...formData, xUrl: e.target.value})}
+                      placeholder="https://x.com/company"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Footer - Fixed */}
@@ -675,8 +872,38 @@ export default function CompanyHeader() {
         message="Bạn có chắc muốn lưu các thay đổi vừa chỉnh sửa không?"
         onCancel={() => setShowConfirmModal(false)}
         onConfirm={() => {
-          setShowConfirmModal(false)
-          setShowSuccessModal(true)
+          // Update profile with form data
+          const benefitsArray = formData.benefits.split('\n').filter(b => b.trim());
+          const updatedProfile = {
+            ...profile,
+            companyName: formData.companyName,
+            website: formData.website,
+            field: formData.fields[0] || '',
+            foundedYear: parseInt(formData.foundingYear) || undefined,
+            technologies: formData.technologies,
+            description: formData.description,
+            benefits: benefitsArray,
+            contactEmail: formData.contactEmail,
+            facebookUrl: formData.facebookUrl,
+            linkedlnUrl: formData.linkedinUrl,
+            xUrl: formData.xUrl,
+            // Use locationsList instead of formData.locations
+            locations: locationsList.map(loc => ({
+              province: loc.province,
+              district: loc.district,
+              detailedAddress: loc.detailedAddress,
+              isHeadquarters: loc.isHeadquarters
+            }))
+          };
+          
+          // In dev mode, just update local state
+          if (process.env.NODE_ENV === 'development') {
+            // Trigger re-render by updating formData
+            setFormData({...formData});
+          }
+          
+          setShowConfirmModal(false);
+          setShowSuccessModal(true);
         }}
       />
       {/* Success Modal */}

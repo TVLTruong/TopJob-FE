@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { EmployerProfileProvider } from '@/contexts/EmployerProfileContext';
 import Header from '@/app/components/companyProfile/Header';
 import CompanyHeader from '@/app/components/companyProfile/CompanyHeader';
 import CompanyInfo from '@/app/components/companyProfile/CompanyInfo';
@@ -22,6 +23,12 @@ export default function CompanyProfilePage() {
     const checkAccess = async () => {
       // Wait for auth to load
       if (authLoading) return;
+
+      // 🔥 DEV MODE: Skip all checks and load profile
+      if (process.env.NODE_ENV === 'development') {
+        setChecking(false);
+        return;
+      }
 
       // Check if user is logged in and is employer
       if (!user) {
@@ -65,24 +72,25 @@ export default function CompanyProfilePage() {
     checkAccess();
   }, [user, authLoading, router]);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const data = await getMyEmployerProfile();
-        setProfile(data);
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-      } finally {
-        setLoadingProfile(false);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchProfile = async () => {
+  //     try {
+  //       const data = await getMyEmployerProfile();
+  //       setProfile(data);
+  //     } catch (error) {
+  //       console.error('Error fetching profile:', error);
+  //     } finally {
+  //       setLoadingProfile(false);
+  //     }
+  //   };
 
-    if (!checking && user) {
-      fetchProfile();
-    }
-  }, [checking, user]);
+  //   if (!checking && user) {
+  //     fetchProfile();
+  //   }
+  // }, [checking, user]);
 
-  if (authLoading || checking || loadingProfile) {
+  // if (authLoading || checking || loadingProfile) {
+  if (authLoading || checking) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
@@ -94,21 +102,23 @@ export default function CompanyProfilePage() {
   const benefitsText = profile?.benefits?.join('/n') || '';
 
   return (
-    <div className="min-h-screen">
-      <Header />
-      <div className="p-8">
-        <CompanyHeader />
-        <div className="grid grid-cols-3 gap-6">
-          <div className="col-span-2">
-            <CompanyInfo />
-            <Benefits benefitsText={benefitsText} canEddit />
-            <Contact canEdit={true} />
-          </div>
-          <div className="col-span-1">
-            <JobListings />
+    <EmployerProfileProvider>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div>
+          <CompanyHeader />
+          <div className="grid grid-cols-[2fr_1fr]">
+            <div>
+              <CompanyInfo />
+              <Benefits benefitsText={benefitsText} canEddit />
+              <Contact canEdit={true} />
+            </div>
+            <div>
+              <JobListings />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </EmployerProfileProvider>
   );
 }

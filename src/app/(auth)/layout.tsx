@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import DevToolbar from "@/components/common/DevToolbar";
 
 export const metadata: Metadata = {
   title: "TopJob - Đăng nhập/Đăng ký",
@@ -18,6 +19,7 @@ export default function AuthLayout({
       <main className="min-h-screen">
         {children}
       </main>
+      <DevToolbar />
     </AuthProvider>
   );
 }

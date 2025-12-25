@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import Link from 'next/link';
 
 export default function JobListings() {
   const jobs = [
@@ -10,19 +11,20 @@ export default function JobListings() {
   ];
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
+    <div className="bg-white rounded-xl p-8 mb-3 ml-3 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold">Các vị trí đang tuyển</h2>
-        <button className="text-teal-600 hover:bg-teal-50 px-3 py-1 rounded text-sm font-medium transition">
+        <Link href="/JobList" className="text-teal-600 hover:bg-teal-50 px-3 py-1 rounded text-sm font-medium transition">
           Tất cả →
-        </button>
+        </Link>
       </div>
 
       <div className="space-y-3">
         {jobs.map((job, index) => (
-          <div
+          <Link
             key={index}
-            className="p-4 border rounded-lg hover:border-teal-300 transition cursor-pointer"
+            href="/JobList/JobDetail"
+            className="block p-4 border rounded-lg hover:border-teal-300 transition cursor-pointer"
           >
             <h3 className="font-semibold text-gray-900 text-sm mb-2">{job.title}</h3>
             <div className="flex flex-wrap gap-2">
@@ -38,7 +40,7 @@ export default function JobListings() {
                 </span>
               ))}
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
