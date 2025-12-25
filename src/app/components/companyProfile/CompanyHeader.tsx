@@ -4,6 +4,7 @@ import Image from 'next/image'
 import ConfirmModal from './ConfirmModal'
 import { Users, Globe, Edit, X, Plus } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useEmployerProfile } from '@/contexts/EmployerProfileContext'
 import locationData from "@/app/assets/danh-sach-3321-xa-phuong.json";
 
 interface LocationItem {
@@ -32,22 +33,23 @@ const techOptions = ['HTML 5', 'CSS 3', 'Javascript', 'React', 'Node.js', 'Pytho
 
 export default function CompanyHeader() {
   const { user } = useAuth()
-  const isRecruiter = user?.role === 'EMPLOYER'
+  const { profile, isLoading } = useEmployerProfile()
+  const isRecruiter = user?.role === 'employer'
   const canEdit = isRecruiter
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [formData, setFormData] = useState<CompanyBasicInfo>({
-    companyName: 'VNG',
-    website: 'https://www.vng.com.vn',
-    locations: ['Hồ Chí Minh'],
-    fields: ['Công nghệ thông tin', 'Trò chơi'],
-    province: 'Hồ Chí Minh',
-    district: 'Phường Bến Nghé',
-    streetAddress: '182 Lê Đại Hành, Phường 15',
-    foundingDay: '15',
-    foundingMonth: 'July',
-    foundingYear: '2004',
-    technologies: ['HTML 5', 'CSS 3', 'Javascript'],
-    description: 'VNG là công ty công nghệ hàng đầu Việt Nam, chuyên phát triển các sản phẩm và dịch vụ về trò chơi trực tuyến, điện toán đám mây, thanh toán điện tử và mạng xã hội. Được thành lập từ năm 2004, VNG đã khẳng định vị thế của mình trong ngành công nghiệp game và công nghệ.'
+    companyName: '',
+    website: '',
+    locations: [],
+    fields: [],
+    province: '',
+    district: '',
+    streetAddress: '',
+    foundingDay: '',
+    foundingMonth: '',
+    foundingYear: '',
+    technologies: [],
+    description: ''
   })
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   
@@ -107,6 +109,27 @@ export default function CompanyHeader() {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [showAddressForm, showFieldDropdown, showTechDropdown])
+
+  // Load data from profile into formData
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        companyName: profile.companyName || '',
+        website: profile.website || '',
+        locations: profile.locations?.map(loc => loc.province) || [],
+        fields: profile.field ? [profile.field] : [],
+        province: profile.locations?.[0]?.province || '',
+        district: profile.locations?.[0]?.district || '',
+        streetAddress: profile.locations?.[0]?.detailedAddress || '',
+        foundingDay: '',
+        foundingMonth: '',
+        foundingYear: profile.foundedYear ? profile.foundedYear.toString() : '',
+        technologies: profile.technologies || [],
+        description: profile.description || ''
+      });
+      setLogoPreview(profile.logoUrl || null);
+    }
+  }, [profile]);
 
   // Load danh sách tỉnh/thành phố từ JSON
   useEffect(() => {
@@ -228,44 +251,76 @@ export default function CompanyHeader() {
   return (
     <>
       <div className="bg-white rounded-xl p-8 mb-6 shadow-sm">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-6">
-            <div className="w-24 h-24 bg-gray-200 rounded-xl"></div>
-            <div>
-              <h1 className="text-3xl font-bold mb-2">VNG</h1>
-              <a href="https://www.vng.com.vn" className="text-teal-600 text-sm hover:underline mb-4 block">
-                https://www.vng.com.vn
-              </a>
-              <div className="flex items-center gap-8 text-sm">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-teal-600" />
-                  <div>
-                    <div className="text-xs text-gray-500">Thành lập</div>
-                    <div className="font-semibold">2004</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-teal-600" />
-                  <div>
-                    <div className="text-xs text-gray-500">Lĩnh vực</div>
-                    <div className="font-semibold">Trò chơi, Điện toán đám mây</div>
-                  </div>
+        {isLoading ? (
+          <div className="animate-pulse">
+            <div className="flex items-start gap-6">
+              <div className="w-24 h-24 bg-gray-200 rounded-xl"></div>
+              <div className="flex-1">
+                <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                <div className="flex gap-8">
+                  <div className="h-12 bg-gray-200 rounded w-24"></div>
+                  <div className="h-12 bg-gray-200 rounded w-24"></div>
                 </div>
               </div>
             </div>
           </div>
-          {canEdit && (
-          <div className="flex gap-2">
-            <button 
-              onClick={() => setIsPopupOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50 transition text-sm"
-            >
-              <Edit className="w-4 h-4" />
-              Chỉnh sửa
-            </button>
+        ) : (
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-6">
+              {logoPreview ? (
+                <Image 
+                  src={logoPreview} 
+                  alt={formData.companyName} 
+                  width={96} 
+                  height={96}
+                  className="w-24 h-24 rounded-xl object-cover"
+                />
+              ) : (
+                <div className="w-24 h-24 bg-gray-200 rounded-xl"></div>
+              )}
+              <div>
+                <h1 className="text-3xl font-bold mb-2">{formData.companyName || 'Tên công ty'}</h1>
+                {formData.website && (
+                  <a href={formData.website} target="_blank" rel="noopener noreferrer" className="text-teal-600 text-sm hover:underline mb-4 block">
+                    {formData.website}
+                  </a>
+                )}
+                <div className="flex items-center gap-8 text-sm">
+                  {formData.foundingYear && (
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-teal-600" />
+                      <div>
+                        <div className="text-xs text-gray-500">Thành lập</div>
+                        <div className="font-semibold">{formData.foundingYear}</div>
+                      </div>
+                    </div>
+                  )}
+                  {formData.fields.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-teal-600" />
+                      <div>
+                        <div className="text-xs text-gray-500">Lĩnh vực</div>
+                        <div className="font-semibold">{formData.fields.join(', ')}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            {canEdit && (
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setIsPopupOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50 transition text-sm"
+                >
+                  <Edit className="w-4 h-4" />
+                  Chỉnh sửa
+                </button>
+              </div>
+            )}
           </div>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Popup Overlay */}

@@ -1,9 +1,10 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Edit, X } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEmployerProfile } from '@/contexts/EmployerProfileContext';
 
 type ContactLink = {
   url: string;
@@ -24,16 +25,31 @@ type ContactProps = {
 
 export default function Contact({ canEdit = false, onSave }: ContactProps) {
   const { user } = useAuth();
+  const { profile } = useEmployerProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [contactData, setContactData] = useState<ContactData>({
-    x: { url: 'https://twitter.com/vngcorporation', logoUrl: '' },
-    facebook: { url: 'https://facebook.com/VNGCorporation', logoUrl: '' },
-    linkedin: { url: 'https://linkedin.com/company/vng', logoUrl: '' },
+    x: { url: '', logoUrl: '' },
+    facebook: { url: '', logoUrl: '' },
+    linkedin: { url: '', logoUrl: '' },
     email: { url: '', logoUrl: '' },
   });
   const [editingData, setEditingData] = useState<ContactData>(contactData);
+
+  // Load data from profile
+  useEffect(() => {
+    if (profile) {
+      const data: ContactData = {
+        x: { url: profile.xUrl || '', logoUrl: '' },
+        facebook: { url: profile.facebookUrl || '', logoUrl: '' },
+        linkedin: { url: profile.linkedlnUrl || '', logoUrl: '' },
+        email: { url: profile.contactEmail || '', logoUrl: '' },
+      };
+      setContactData(data);
+      setEditingData(data);
+    }
+  }, [profile]);
 
   const handleSave = () => {
     setContactData(editingData);
@@ -89,7 +105,7 @@ export default function Contact({ canEdit = false, onSave }: ContactProps) {
     ([, link]) => link.url && link.url.trim().length > 0
   ) as Array<[keyof ContactData, ContactLink]>;
   
-  const isRecruiter = user?.role === 'EMPLOYER';
+  const isRecruiter = user?.role === 'employer';
   const canShowEdit = isRecruiter && canEdit;
 
   return (

@@ -15,6 +15,8 @@ export default function CompanyProfilePage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const [checking, setChecking] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -27,10 +29,8 @@ export default function CompanyProfilePage() {
         return;
       }
 
-      // Normalize role to uppercase for comparison (case-insensitive)
-      const userRole = (user.role || '').toString().toUpperCase();
-      
-      if (userRole !== 'EMPLOYER') {
+      // Check role directly (backend returns lowercase)
+      if (user.role !== 'employer') {
         router.push('/login');
         return;
       }
@@ -39,7 +39,7 @@ export default function CompanyProfilePage() {
       try {
         const profile = await getMyEmployerProfile();
         
-        // Normalize status to uppercase for comparison (case-insensitive)
+        // Normalize status to uppercase for comparison
         const profileStatus = (profile.status || '').toString().toUpperCase();
         
         // If status is PENDING_APPROVAL, redirect to pending page
@@ -65,13 +65,33 @@ export default function CompanyProfilePage() {
     checkAccess();
   }, [user, authLoading, router]);
 
-  if (authLoading || checking) {
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await getMyEmployerProfile();
+        setProfile(data);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    if (!checking && user) {
+      fetchProfile();
+    }
+  }, [checking, user]);
+
+  if (authLoading || checking || loadingProfile) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
       </div>
     );
   }
+
+  // Format benefits: API trả về array, Benefits component cần string format "/n" separated
+  const benefitsText = profile?.benefits?.join('/n') || '';
 
   return (
     <div className="min-h-screen">
@@ -81,7 +101,7 @@ export default function CompanyProfilePage() {
         <div className="grid grid-cols-3 gap-6">
           <div className="col-span-2">
             <CompanyInfo />
-            <Benefits benefitsText="" canEddit />
+            <Benefits benefitsText={benefitsText} canEddit />
             <Contact canEdit={true} />
           </div>
           <div className="col-span-1">

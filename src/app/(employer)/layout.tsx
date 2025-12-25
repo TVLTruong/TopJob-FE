@@ -3,6 +3,7 @@
 
 import "@/app/globals.css";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { EmployerProfileProvider } from "@/contexts/EmployerProfileContext";
 import Sidebar from '@/app/components/companyProfile/Sidebar';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
@@ -17,8 +18,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     return <div>Loading...</div>;
   }
 
-  const isRecruiter = user?.role === 'EMPLOYER';
-  const isCandidate = user?.role === 'CANDIDATE';
+  const isRecruiter = user?.role === 'employer';
+  const isCandidate = user?.role === 'candidate';
   
   // Pages that should not have sidebar (profile completion flow)
   const isProfileCompletionPage = pathname?.includes('/completeProfile') || pathname?.includes('/profile-completion-success');
@@ -39,12 +40,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   // Layout cho RECRUITER: Sidebar + Content (except profile completion pages)
   if (isRecruiter && !isProfileCompletionPage) {
     return (
-      <div className="flex max-w-7xl mx-auto">
-        <Sidebar />
-        <main className="flex-1">
-          {children}
-        </main>
-      </div>
+      <EmployerProfileProvider>
+        <div className="flex max-w-7xl mx-auto">
+          <Sidebar />
+          <main className="flex-1">
+            {children}
+          </main>
+        </div>
+      </EmployerProfileProvider>
     );
   }
 

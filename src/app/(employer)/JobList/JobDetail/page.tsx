@@ -9,8 +9,8 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function JobDetailPage() {
   const { user } = useAuth();
-  const isRecruiter = user?.role === 'EMPLOYER';
-  const isCandidate = user?.role === 'CANDIDATE';
+  const isRecruiter = user?.role === 'employer';
+  const isCandidate = user?.role === 'candidate';
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);

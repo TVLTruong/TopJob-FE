@@ -12,7 +12,7 @@ export default function PendingApprovalPage() {
   useEffect(() => {
     if (!isLoading) {
       // Redirect nếu không phải EMPLOYER hoặc chưa login
-      if (!user || user.role !== 'EMPLOYER') {
+      if (!user || user.role !== 'employer') {
         router.push('/login');
         return;
       }

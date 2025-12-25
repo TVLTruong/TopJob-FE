@@ -93,15 +93,15 @@ function LoginContent() {
       // Lưu token vào context (sẽ tự động lưu vào localStorage)
       login(token);
 
-      // Normalize role để so sánh (case-insensitive)
-      const userRole = (decoded.role || '').toString().toUpperCase();
+      // Lấy role trực tiếp từ backend (lowercase)
+      const userRole = decoded.role;
 
-      // UC-ADMIN: Kiểm tra role ADMIN và redirect đến employer approval
-      if (userRole === 'ADMIN') {
+      // UC-ADMIN: Kiểm tra role admin và redirect đến employer approval
+      if (userRole === 'admin') {
         router.push('/employer-approval');
       }
       // UC-EMP-01: Kiểm tra status và redirect
-      else if (userRole === 'EMPLOYER') {
+      else if (userRole === 'employer') {
         const userStatus = (decoded.status || '').toString().toUpperCase();
         
         if (userStatus === 'PENDING_PROFILE_COMPLETION') {
@@ -113,7 +113,7 @@ function LoginContent() {
         } else {
           router.push('/');
         }
-      } else if (userRole === 'CANDIDATE') {
+      } else if (userRole === 'candidate') {
         router.push('/');
       } else {
         router.push('/');

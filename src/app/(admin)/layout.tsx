@@ -36,7 +36,7 @@ export default function AdminLayout({
 
     try {
       const decoded = jwtDecode<DecodedToken>(token)
-      const userRole = (decoded.role || '').toString().toUpperCase()
+      const userRole = decoded.role // Backend returns lowercase
       
       // Check if token is expired
       if (decoded.exp * 1000 < Date.now()) {
@@ -46,7 +46,7 @@ export default function AdminLayout({
       }
 
       // Check if user is admin
-      if (userRole !== 'ADMIN') {
+      if (userRole !== 'admin') {
         router.push('/')
         return
       }

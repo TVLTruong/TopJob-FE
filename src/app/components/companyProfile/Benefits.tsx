@@ -31,7 +31,7 @@ export default function Benefits({ benefitsText, canEddit, canEdit, onSave }: Be
       .filter((s) => s.length > 0);
   }, [text]);
 
-  const isRecruiter = user?.role === 'EMPLOYER';
+  const isRecruiter = user?.role === 'employer';
   const canShowEdit = isRecruiter && Boolean(canEddit || canEdit);
 
   return (

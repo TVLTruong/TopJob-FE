@@ -38,10 +38,8 @@ export default function CompleteProfilePage() {
         return;
       }
       
-      // Normalize role để so sánh (case-insensitive)
-      const userRole = (user.role || '').toString().toUpperCase();
-      
-      if (userRole !== 'EMPLOYER') {
+      // Check role directly (backend returns lowercase)
+      if (user.role !== 'employer') {
         router.push('/login');
         return;
       }

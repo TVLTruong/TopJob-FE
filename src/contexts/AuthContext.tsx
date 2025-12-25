@@ -95,7 +95,7 @@ import { jwtDecode } from 'jwt-decode';
 interface UserPayload {
   sub: string;
   email: string;
-  role: 'CANDIDATE' | 'EMPLOYER' | 'ADMIN';
+  role: 'candidate' | 'employer' | 'admin';
   status?: string; // Thêm status để check redirect
   iat: number;
   exp: number;
@@ -246,7 +246,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const mockUser: UserPayload = {
       sub: 'dev-employer-123',
       email: 'employer@dev.com',
-      role: 'EMPLOYER',
+      role: 'employer',
       status: 'APPROVED',
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + 86400 // 24h
@@ -275,7 +275,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const mockUser: UserPayload = {
       sub: 'dev-candidate-456',
       email: 'candidate@dev.com',
-      role: 'CANDIDATE',
+      role: 'candidate',
       status: 'APPROVED',
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + 86400
