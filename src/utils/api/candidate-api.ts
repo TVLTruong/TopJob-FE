@@ -294,6 +294,42 @@ export const CandidateApi = {
     return handleResponse<{ message: string }>(response);
   },
 
+  /**
+   * Tải xuống CV
+   * GET /candidates/me/cvs/:cvId/download
+   */
+  downloadCv: async (
+    token: string,
+    cvId: string,
+    fileName: string = 'CV.pdf'
+  ): Promise<void> => {
+    const response = await fetch(
+      `${API_BASE_URL}/candidates/me/cvs/${cvId}/download`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Không thể tải xuống CV');
+    }
+
+    // Tạo blob từ response
+    const blob = await response.blob();
+    
+    // Tạo URL và trigger download
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
   // ============= SAVED JOBS ENDPOINTS =============
   
   /**
