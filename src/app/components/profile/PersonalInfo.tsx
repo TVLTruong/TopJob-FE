@@ -47,7 +47,7 @@ export default function PersonalInfo({ avatar, fileInputRef, handleAvatarClick, 
 
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-1">{profile.name}</h1>
-            <p className="text-gray-400 italic">{profile.title || "Cập nhật chức danh của bạn"}</p>
+            {/* <p className="text-gray-400 italic">{profile.title || "Cập nhật chức danh của bạn"}</p> */}
           </div>
         </div>
 
