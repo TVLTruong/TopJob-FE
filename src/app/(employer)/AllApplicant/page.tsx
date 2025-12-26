@@ -3,7 +3,7 @@ import ApplicantsTab from '@/app/components/job/Applicant';
 
 export default function ApplicantsPage() {
   return (
-    <div className="p-8">
+    <div className="p-0">
       {/* Applicants Table Component */}
       <ApplicantsTab />
     </div>

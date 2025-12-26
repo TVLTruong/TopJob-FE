@@ -35,21 +35,9 @@ export default function Benefits({ benefitsText, canEddit, canEdit, onSave }: Be
   const canShowEdit = isRecruiter && Boolean(canEddit || canEdit);
 
   return (
-    <div className="bg-white rounded-xl p-8 mb-6 shadow-sm">
+    <div className="bg-white rounded-xl p-8 mb-3 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold">Phúc lợi & Đãi ngộ</h2>
-        {canShowEdit && (
-          <button
-            onClick={() => {
-              setEditingText(text.replace(/\s*\/n\s*/g, '\n'));
-              setIsEditing(true);
-            }}
-            className="px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50 inline-flex items-center gap-2"
-          >
-            <Edit className="w-4 h-4" />
-            Chỉnh sửa
-          </button>
-        )}
       </div>
       <p className="text-gray-600 text-sm mb-6">
         Công việc này đi kèm với nhiều phúc lợi và đãi ngộ hấp dẫn

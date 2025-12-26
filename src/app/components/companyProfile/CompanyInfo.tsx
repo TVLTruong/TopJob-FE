@@ -22,15 +22,15 @@ export default function CompanyInfo() {
   }
 
   return (
-    <div className="bg-white rounded-xl p-8 mb-6 shadow-sm">
+    <div className="bg-white rounded-xl p-8 mb-3 shadow-sm">
       <h2 className="text-xl font-bold mb-6">Thông tin công ty</h2>
-      <p className="text-gray-700 leading-relaxed mb-6">
+      <p className="text-gray-700 leading-relaxed mb-8">
         {profile?.description || 'Chưa có mô tả công ty'}
       </p>
-      <div className="border-t pt-6 mb-6">
+      <div className="border-t pt-8 mb-8">
         <TechStack />
       </div>
-      <div className="border-t pt-6">
+      <div className="border-t pt-8">
         <OfficeLocations />
       </div>
     </div>

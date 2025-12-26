@@ -110,21 +110,9 @@ export default function Contact({ canEdit = false, onSave }: ContactProps) {
 
   return (
     <>
-      <div className="bg-white rounded-xl p-8 shadow-sm">
+      <div className="bg-white rounded-xl p-8 mb-3 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold">Liên hệ</h2>
-          {canShowEdit  && (
-            <button
-              onClick={() => {
-                setEditingData(contactData);
-                setIsEditing(true);
-              }}
-              className="px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50 inline-flex items-center gap-2"
-            >
-              <Edit className="w-4 h-4" />
-              Chỉnh sửa
-            </button>
-          )}
         </div>
         {visibleLinks.length > 0 ? (
           <div className="space-y-3">

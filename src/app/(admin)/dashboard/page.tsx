@@ -1,11 +1,7 @@
 'use client'
 
 import React from 'react';
-<<<<<<< HEAD
 import { Users, Briefcase, FileCheck, Clock, TrendingUp } from 'lucide-react';
-=======
-import { Users, Briefcase, AlertCircle } from 'lucide-react';
->>>>>>> a931796255441e7503347d473bceb04523c27092
 import Link from 'next/link';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart } from 'recharts';
 

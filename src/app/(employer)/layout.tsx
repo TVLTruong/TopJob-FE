@@ -41,7 +41,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   if (isRecruiter && !isProfileCompletionPage) {
     return (
       <EmployerProfileProvider>
-        <div className="flex max-w-7xl mx-auto">
+        <div className="flex min-h-screen">
           <Sidebar />
           <main className="flex-1">
             {children}

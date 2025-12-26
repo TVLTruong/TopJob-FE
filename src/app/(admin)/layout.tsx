@@ -26,6 +26,12 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (!isClient) return
+    
+    // 🔥 DEV MODE: Skip all checks
+    if (process.env.NODE_ENV === 'development') {
+      return;
+    }
+    
     // Check if user is authenticated and is admin
     const token = localStorage.getItem('accessToken')
     

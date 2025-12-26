@@ -50,10 +50,10 @@ export default function Header() {
                 className="rounded-lg object-cover"
               />
             ) : (
-              <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs">Logo</div>
+              <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center text-xs">Logo</div>
             )}
             <div>
-              <div className="font-semibold">Company</div>
+    
               <div className="text-sm font-semibold text-gray-600">
                 {profile?.companyName || 'Loading...'}
               </div>
