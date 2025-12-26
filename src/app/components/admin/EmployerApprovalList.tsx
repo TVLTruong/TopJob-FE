@@ -52,7 +52,7 @@ interface EmployerProfile {
 
 export default function EmployerApprovalList() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -70,25 +70,29 @@ export default function EmployerApprovalList() {
     try {
       setLoading(true);
       setError(null);
-      const status = statusFilter !== 'all' ? statusFilter : undefined;
-      const response = await getEmployersForApproval(status, currentPage, 10);
+      
+      let response;
+      // Xử lý filter 'pending' để lấy cả PENDING_APPROVAL và PENDING_EDIT_APPROVAL
+      if (statusFilter === 'pending') {
+        // Gọi API không có status filter để lấy tất cả, sau đó filter ở client
+        response = await getEmployersForApproval(undefined, currentPage, 10);
+      } else {
+        const status = statusFilter !== 'all' ? statusFilter : undefined;
+        response = await getEmployersForApproval(status, currentPage, 10);
+      }
       
       // Map BE data to FE format
       const mappedEmployers = response.data.map((emp: EmployerProfileAPI) => {
         // Convert BE status to FE status
-        let feStatus: 'pending_new' | 'pending_edit' | 'approved' | 'rejected';
-        // Check both status and profileStatus for accurate mapping
-        if (emp.status === 'PENDING_APPROVAL') {
-          feStatus = 'pending_new';
-        } else if (emp.status === 'ACTIVE' && emp.profileStatus === 'PENDING_EDIT_APPROVAL') {
-          feStatus = 'pending_edit';
-        } else if (emp.status === 'ACTIVE') {
-          feStatus = 'approved';
-        } else if (emp.status === 'REJECTED') {
-          feStatus = 'rejected';
-        } else {
-          feStatus = 'pending_new';
-        }
+        type FEStatus = 'pending_new' | 'pending_edit';
+
+        const feStatus: FEStatus | null = (() => {
+          if (emp.status.toLowerCase() === 'pending_approval') return 'pending_new';
+          if (emp.status.toLowerCase() === 'active' && emp.profileStatus?.toLowerCase() === 'pending_edit_approval') return 'pending_edit';
+          return null;
+        })();
+
+        if (!feStatus) return '';
         
         return {
           id: parseInt(emp.id, 10),
@@ -110,8 +114,16 @@ export default function EmployerApprovalList() {
         };
       });
       
-      setEmployers(mappedEmployers);
-      setTotalCount(response.meta?.total || response.data.length);
+      // Filter cho status 'pending' ở client-side để chỉ hiển thị hồ sơ cần duyệt
+      let filteredData = mappedEmployers;
+      if (statusFilter === 'pending') {
+        filteredData = mappedEmployers.filter((emp: EmployerProfile) => 
+          emp.status === 'pending_new' || emp.status === 'pending_edit'
+        );
+      }
+      
+      setEmployers(filteredData);
+      setTotalCount(statusFilter === 'pending' ? filteredData.length : (response.meta?.total || response.data.length));
     } catch (err) {
       console.error('Error fetching employers:', err);
       setError(err instanceof Error ? err.message : 'Không thể tải danh sách nhà tuyển dụng');
@@ -132,11 +144,9 @@ export default function EmployerApprovalList() {
   };
 
   const filterOptions = [
-    { value: 'all', label: 'Tất cả', count: totalCount },
+    { value: 'pending', label: 'Tất cả', count: employers.filter(e => e.status === 'pending_new' || e.status === 'pending_edit').length },
     { value: 'PENDING_APPROVAL', label: 'Chờ duyệt (Mới)', count: employers.filter(e => e.status === 'pending_new').length },
     { value: 'PENDING_EDIT_APPROVAL', label: 'Chờ duyệt (Sửa đổi)', count: employers.filter(e => e.status === 'pending_edit').length },
-    { value: 'ACTIVE', label: 'Đã duyệt', count: employers.filter(e => e.status === 'approved').length },
-    { value: 'REJECTED', label: 'Từ chối', count: employers.filter(e => e.status === 'rejected').length },
   ];
 
   const filteredEmployers = useMemo(() => {
