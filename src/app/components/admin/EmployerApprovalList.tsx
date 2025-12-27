@@ -6,6 +6,7 @@ import RejectModal from './RejectModal';
 import ApproveModal from './ApproveModal';
 import EmployerDetailModal from './EmployerDetailModal';
 import { getEmployersForApproval, approveEmployer, rejectEmployer, getEmployerProfile } from '@/utils/api/admin-api';
+import Toast from '@/app/components/profile/Toast';
 
 interface EmployerProfileAPI {
   id: string;
@@ -63,6 +64,15 @@ export default function EmployerApprovalList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
+  
+  // Toast state
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  // Show toast helper
+  const showToast = (message: string, type: 'error' | 'success' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Fetch employers from API
   const fetchEmployers = React.useCallback(async () => {
@@ -204,7 +214,7 @@ export default function EmployerApprovalList() {
       setShowDetailModal(true);
     } catch (err) {
       console.error('Error fetching employer detail:', err);
-      alert('Không thể tải chi tiết nhà tuyển dụng');
+      showToast('Không thể tải chi tiết nhà tuyển dụng', 'error');
     }
   };
 
@@ -220,10 +230,10 @@ export default function EmployerApprovalList() {
       await approveEmployer(selectedEmployer.id.toString());
       setShowApproveModal(false);
       fetchEmployers(); // Refresh list
-      alert('Đã duyệt nhà tuyển dụng thành công');
+      showToast('Đã duyệt nhà tuyển dụng thành công', 'success');
     } catch (err) {
       console.error('Error approving employer:', err);
-      alert(err instanceof Error ? err.message : 'Không thể duyệt nhà tuyển dụng');
+      showToast(err instanceof Error ? err.message : 'Không thể duyệt nhà tuyển dụng', 'error');
     }
   };
 
@@ -239,10 +249,10 @@ export default function EmployerApprovalList() {
       await rejectEmployer(selectedEmployer.id.toString(), reason);
       setShowRejectModal(false);
       fetchEmployers(); // Refresh list
-      alert('Đã từ chối nhà tuyển dụng');
+      showToast('Đã từ chối nhà tuyển dụng', 'success');
     } catch (err) {
       console.error('Error rejecting employer:', err);
-      alert(err instanceof Error ? err.message : 'Không thể từ chối nhà tuyển dụng');
+      showToast(err instanceof Error ? err.message : 'Không thể từ chối nhà tuyển dụng', 'error');
     }
   };
 
@@ -543,6 +553,15 @@ export default function EmployerApprovalList() {
           onClose={() => setShowRejectModal(false)}
           onConfirm={handleReject}
           employerName={selectedEmployer.companyName}
+        />
+      )}
+      
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
         />
       )}
     </div>

@@ -59,6 +59,13 @@ const CloseIcon = () => (
   </svg>
 );
 
+const EyeIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+  </svg>
+);
+
 export default function CVManagementPage() {
   const [cvList, setCvList] = useState<CandidateCV[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +73,7 @@ export default function CVManagementPage() {
   const [dragActive, setDragActive] = useState<boolean>(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string>("");
+  const [previewCV, setPreviewCV] = useState<CandidateCV | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   
   // Toast state
@@ -195,15 +203,15 @@ export default function CVManagementPage() {
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) {
-        alert('Vui lòng đăng nhập để tải CV');
+        showToast('Vui lòng đăng nhập để tải CV', 'error');
         return;
       }
       
       await CandidateApi.downloadCv(token, cvId, fileName);
-      
+      showToast('Tải CV thành công', 'success');
     } catch (error) {
       console.error('Download failed:', error);
-      alert('Không thể tải xuống CV');
+      showToast('Không thể tải xuống CV', 'error');
     }
   };
 
@@ -279,6 +287,54 @@ export default function CVManagementPage() {
           <div className="bg-white rounded-lg p-6 flex items-center space-x-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
             <span className="text-gray-700">Đang upload CV...</span>
+          </div>
+        </div>
+      )}
+      
+      {/* CV Preview Modal */}
+      {previewCV && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <div className="flex-1">
+                <h2 className="text-xl font-bold text-gray-900">{previewCV.fileName}</h2>
+                <p className="text-sm text-gray-500">Xem trước CV</p>
+              </div>
+              <button
+                onClick={() => setPreviewCV(null)}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Đóng"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+            
+            {/* PDF Viewer */}
+            <div className="flex-1 overflow-hidden">
+              <iframe
+                src={previewCV.fileUrl}
+                className="w-full h-full border-0"
+                title={`Xem trước ${previewCV.fileName}`}
+              />
+            </div>
+            
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-gray-50">
+              <button
+                onClick={() => handleDownloadCV(previewCV.id, previewCV.fileName)}
+                className="flex items-center gap-2 px-4 py-2 text-emerald-600 bg-white border border-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors"
+              >
+                <DownloadIcon />
+                Tải xuống
+              </button>
+              <button
+                onClick={() => setPreviewCV(null)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -418,6 +474,14 @@ export default function CVManagementPage() {
                           <StarIcon />
                         </button>
                       )}
+                      
+                      <button
+                        onClick={() => setPreviewCV(cv)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Xem CV"
+                      >
+                        <EyeIcon />
+                      </button>
                       
                       <button
                         onClick={() => handleDownloadCV(cv.id, cv.fileName)}

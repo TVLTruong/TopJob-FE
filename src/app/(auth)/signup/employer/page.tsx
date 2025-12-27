@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { AuthApi } from "@/utils/api/auth-api";
 import OtpModal from "@/app/components/common/OtpModal";
+import Toast from "@/app/components/profile/Toast";
 
 interface VerifyEmailResponse {
   verified: boolean;
@@ -32,6 +33,15 @@ export default function EmployerSignUpPage() {
   // OTP states
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
+  
+  // Toast state
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  // Show toast helper
+  const showToast = (message: string, type: 'error' | 'success' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const router = useRouter();
 
@@ -141,10 +151,12 @@ export default function EmployerSignUpPage() {
         console.log('Email verified successfully! Redirecting to login...');
         
         // Hiển thị thông báo thành công
-        alert('Xác thực email thành công! Vui lòng đăng nhập để hoàn tất hồ sơ công ty.');
+        showToast('Xác thực email thành công! Vui lòng đăng nhập để hoàn tất hồ sơ công ty.', 'success');
         
         // Chuyển hướng về trang đăng nhập với query param
-        router.push('/login?verified=true&email=' + encodeURIComponent(registeredEmail));
+        setTimeout(() => {
+          router.push('/login?verified=true&email=' + encodeURIComponent(registeredEmail));
+        }, 1500);
         return true;
       }
       
@@ -458,6 +470,15 @@ export default function EmployerSignUpPage() {
         resendLabel="Gửi lại mã"
         secondsBeforeResend={60}
       />
+      
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }
