@@ -22,9 +22,9 @@ export type JobDetailData = {
 export default function JobDetailContent({ job }: { job: JobDetailData }) {
   const progress = job.targetCount > 0 ? (job.applicantsCount / job.targetCount) * 100 : 0;
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
       {/* Main Content */}
-      <div className="lg:col-span-2 space-y-6">
+      <div className="lg:col-span-2 space-y-3">
         {/* Job Description */}
         <div className="bg-white rounded-xl p-8 shadow-sm">
 
@@ -70,10 +70,10 @@ export default function JobDetailContent({ job }: { job: JobDetailData }) {
       </div>
 
       {/* Sidebar */}
-      <div className="space-y-6">
+      <div className="space-y-3">
         {/* Job Info */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
-          <h3 className="font-bold text-xl text-gray-900 mb-4">Mô tả công việc</h3>
+          <h3 className="font-bold text-xl text-gray-900 mb-4">Thông tin công việc</h3>
           
           {/* Progress Bar */}
           <div className="mb-6">

@@ -12,7 +12,7 @@ interface LocationItem {
 
 interface BasicInfo {
   name: string;
-  title: string;
+  // title: string;
   email: string;
   phone: string;
   dateOfBirth: string;
@@ -111,7 +111,7 @@ export default function BasicInfoModal({
           </div>
 
           {/* Title */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Chức danh
             </label>
@@ -122,7 +122,7 @@ export default function BasicInfoModal({
               placeholder="Chức danh của bạn"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
-          </div>
+          </div> */}
 
           {/* Email and Phone */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

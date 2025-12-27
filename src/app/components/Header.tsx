@@ -54,7 +54,7 @@ function UserDropdown({ onLogout }: { onLogout: () => void }) {
           sessionStorage.removeItem('candidateAvatar');
           sessionStorage.removeItem('avatarUserId');
         }
-      } catch (error) {
+      } catch {
         setAvatarUrl(null);
         sessionStorage.removeItem('candidateAvatar');
         sessionStorage.removeItem('avatarUserId');
@@ -64,7 +64,7 @@ function UserDropdown({ onLogout }: { onLogout: () => void }) {
     // Reset avatar immediately when user changes
     setAvatarUrl(null);
     fetchAvatar();
-  }, [user?.sub]);
+  }, [user?.sub, user]);
 
   // Listen for avatar updates from profile page
   useEffect(() => {
@@ -94,7 +94,7 @@ function UserDropdown({ onLogout }: { onLogout: () => void }) {
 
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-2 py-1 bg-[#8FD9C4] bg-emerald-500 rounded-full hover:bg-emerald-600 transition-colors"
+        className="flex items-center space-x-2 px-2 py-1 bg-emerald-500 rounded-full hover:bg-emerald-600 transition-colors"
       >
         {/* Avatar Image */}
         <div className="w-8 h-8 rounded-full overflow-hidden">

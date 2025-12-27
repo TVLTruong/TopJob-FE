@@ -2,7 +2,6 @@
 
 import { useState, useRef, ChangeEvent, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { jwtDecode } from "jwt-decode";
 import PersonalInfo from "../../components/profile/PersonalInfo";
 import AboutSection from "../../components/profile/AboutSection";
 import EducationSection from "../../components/profile/EducationSection";
@@ -54,7 +53,7 @@ export default function CandidateProfilePage() {
 
   const [tempBasicInfo, setTempBasicInfo] = useState({
     name: "",
-    title: "",
+    // title: "",
     email: "",
     phone: "",
     dateOfBirth: "",
@@ -279,7 +278,7 @@ export default function CandidateProfilePage() {
   const openBasicInfoModal = () => {
     setTempBasicInfo({
       name: profile.name,
-      title: profile.title,
+      // title: profile.title,
       email: profile.email,
       phone: profile.phone,
       dateOfBirth: profile.dateOfBirth,
@@ -340,14 +339,14 @@ export default function CandidateProfilePage() {
         addressCity: tempBasicInfo.province || undefined,
         addressDistrict: tempBasicInfo.district || undefined,
         addressStreet: tempBasicInfo.address || undefined,
-        title: tempBasicInfo.title || undefined,
+        // title: tempBasicInfo.title || undefined,
         personalUrl: tempBasicInfo.personalLink || undefined,
       });
 
       setProfile(prev => ({
         ...prev,
         name: tempBasicInfo.name,
-        title: tempBasicInfo.title,
+        // title: tempBasicInfo.title,
         email: tempBasicInfo.email,
         phone: tempBasicInfo.phone,
         dateOfBirth: tempBasicInfo.dateOfBirth,

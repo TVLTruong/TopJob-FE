@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import DevToolbar from "@/components/common/DevToolbar";
 
 export const metadata: Metadata = {
   title: "TopJob - Đăng nhập/Đăng ký",
@@ -13,15 +14,12 @@ export default function AuthLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
-      <body className="bg-gray-50">
-        <AuthProvider>
-          {/* Layout đơn giản cho auth - không có Header/Footer */}
-          <main className="min-h-screen">
-            {children}
-          </main>
-        </AuthProvider>
-      </body>
-    </html>
+    <AuthProvider>
+      {/* Layout đơn giản cho auth - không có Header/Footer */}
+      <main className="min-h-screen">
+        {children}
+      </main>
+      <DevToolbar />
+    </AuthProvider>
   );
 }

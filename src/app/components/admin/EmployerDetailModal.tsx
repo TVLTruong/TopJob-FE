@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import { X, Plus, Minus } from 'lucide-react';
+import Image from 'next/image';
 
 interface EmployerProfile {
   id: number;
@@ -8,13 +9,21 @@ interface EmployerProfile {
   companyLogo: string;
   email: string;
   phone: string;
-  taxCode: string;
   status: 'pending_new' | 'pending_edit' | 'approved' | 'rejected';
   createdDate: string;
   registrationType?: 'new' | 'edit';
   description?: string;
   address?: string;
   website?: string;
+  technologies?: string[];
+  benefits?: string[];
+  locations?: Array<{
+    id?: string;
+    province: string;
+    district: string;
+    detailedAddress: string;
+    isHeadquarters: boolean;
+  }>;
   oldData?: Partial<EmployerProfile>;
 }
 
@@ -84,9 +93,11 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
           <div className="flex items-start gap-4 pb-6 border-b border-gray-200">
             <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
               {employer.companyLogo ? (
-                <img
+                <Image
                   src={employer.companyLogo}
                   alt={employer.companyName}
+                  width={80}
+                  height={80}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -101,9 +112,6 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
                 <p className="text-sm text-gray-600">
                   <span className="font-medium">Ngày đăng ký:</span> {employer.createdDate}
                 </p>
-                {employer.taxCode && (
-                  <InfoField label="Mã số thuế" value={employer.taxCode} oldValue={employer.oldData?.taxCode} />
-                )}
               </div>
             </div>
             <div>
@@ -160,23 +168,73 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
           )}
 
           {/* Additional Information */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <h4 className="text-sm font-semibold text-gray-900 mb-2">Địa điểm</h4>
-              <p className="text-sm text-gray-600">{employer.address || 'Chưa cập nhật'}</p>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <h4 className="text-sm font-semibold text-gray-900 mb-2">Website</h4>
-              <p className="text-sm text-gray-600">{employer.website || 'Chưa cập nhật'}</p>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <h4 className="text-sm font-semibold text-gray-900 mb-2">Công nghệ</h4>
-              <p className="text-sm text-gray-600">Chưa cập nhật</p>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <h4 className="text-sm font-semibold text-gray-900 mb-2">Phúc lợi</h4>
-              <p className="text-sm text-gray-600">Chưa cập nhật</p>
-            </div>
+          <div className="space-y-4">
+            {/* Locations */}
+            {employer.locations && employer.locations.length > 0 && (
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Địa điểm văn phòng</h4>
+                <div className="space-y-2">
+                  {employer.locations.map((location, index) => (
+                    <div key={index} className="text-sm text-gray-600">
+                      <span className="font-medium">
+                        {location.isHeadquarters && '🏢 '}
+                        {location.province} - {location.district}
+                      </span>
+                      {location.detailedAddress && (
+                        <p className="text-xs text-gray-500 mt-1">{location.detailedAddress}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Website */}
+            {employer.website && (
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">Website</h4>
+                <a 
+                  href={employer.website} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  {employer.website}
+                </a>
+              </div>
+            )}
+
+            {/* Technologies */}
+            {employer.technologies && employer.technologies.length > 0 && (
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Công nghệ</h4>
+                <div className="flex flex-wrap gap-2">
+                  {employer.technologies.map((tech, index) => (
+                    <span 
+                      key={index}
+                      className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full"
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Benefits */}
+            {employer.benefits && employer.benefits.length > 0 && (
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Phúc lợi</h4>
+                <ul className="space-y-2">
+                  {employer.benefits.map((benefit, index) => (
+                    <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                      <span className="text-green-600 mt-0.5">✓</span>
+                      <span>{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
 

@@ -9,8 +9,8 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function JobDetailPage() {
   const { user } = useAuth();
-  const isRecruiter = user?.role === 'EMPLOYER';
-  const isCandidate = user?.role === 'CANDIDATE';
+  const isRecruiter = user?.role === 'employer';
+  const isCandidate = user?.role === 'candidate';
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -158,10 +158,10 @@ export default function JobDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <div>
         {/* Header */}
-        <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+        <div className="bg-white rounded-xl p-6 mb-3 shadow-sm">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-4">
               <button 

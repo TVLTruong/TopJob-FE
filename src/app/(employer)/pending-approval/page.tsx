@@ -11,8 +11,13 @@ export default function PendingApprovalPage() {
 
   useEffect(() => {
     if (!isLoading) {
+      // 🔥 DEV MODE: Skip all checks
+      if (process.env.NODE_ENV === 'development') {
+        return;
+      }
+      
       // Redirect nếu không phải EMPLOYER hoặc chưa login
-      if (!user || user.role !== 'EMPLOYER') {
+      if (!user || user.role !== 'employer') {
         router.push('/login');
         return;
       }

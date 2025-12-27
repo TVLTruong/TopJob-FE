@@ -271,6 +271,12 @@ export const AuthApi = {
     website: string;
     description: string;
     benefits: string[];
+    technologies?: string[];
+    contactEmail?: string;
+    contactPhone?: string;
+    facebookUrl?: string;
+    linkedlnUrl?: string;
+    xUrl?: string;
     logoUrl: string;
     locations: Array<{
       province: string;

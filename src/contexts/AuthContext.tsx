@@ -95,7 +95,7 @@ import { jwtDecode } from 'jwt-decode';
 interface UserPayload {
   sub: string;
   email: string;
-  role: 'CANDIDATE' | 'EMPLOYER';
+  role: 'candidate' | 'employer' | 'admin';
   status?: string; // Thêm status để check redirect
   iat: number;
   exp: number;
@@ -107,6 +107,10 @@ interface AuthContextType {
   login: (token: string) => void;
   logout: () => void;
   isLoading: boolean;
+  // 🔥 Helper for DEV: Quick role mock
+  mockEmployer: () => void;
+  mockCandidate: () => void;
+  mockAdmin: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -166,8 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         sessionStorage.removeItem('lastUserId');
       }
-    } catch (error) {
-
+    } catch {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('userStatus');
     }
@@ -220,7 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (decodedUser.status) {
         localStorage.setItem('userStatus', decodedUser.status);
       }
-    } catch (error) {
+    } catch {
        // Silent error - no logging in production
     }
   };
@@ -239,8 +242,95 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = '/';
   };
 
+  // 🔥 DEV HELPER: Quick mock EMPLOYER
+  const mockEmployer = () => {
+    const mockUser: UserPayload = {
+      sub: 'dev-employer-123',
+      email: 'employer@dev.com',
+      role: 'employer',
+      status: 'APPROVED',
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 86400 // 24h
+    };
+    
+    const mockToken = btoa(JSON.stringify(mockUser));
+    
+    // Clear old session
+    sessionStorage.clear();
+    
+    // Set new token and user
+    localStorage.setItem('accessToken', mockToken);
+    localStorage.setItem('userStatus', 'APPROVED');
+    sessionStorage.setItem('lastUserId', mockUser.sub);
+    
+    setToken(mockToken);
+    setUser(mockUser);
+    
+    // Dispatch event và reload
+    window.dispatchEvent(new CustomEvent('avatarCleared'));
+    setTimeout(() => window.location.reload(), 100);
+  };
+
+  // 🔥 DEV HELPER: Quick mock CANDIDATE
+  const mockCandidate = () => {
+    const mockUser: UserPayload = {
+      sub: 'dev-candidate-456',
+      email: 'candidate@dev.com',
+      role: 'candidate',
+      status: 'APPROVED',
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 86400
+    };
+    
+    const mockToken = btoa(JSON.stringify(mockUser));
+    
+    // Clear old session
+    sessionStorage.clear();
+    
+    // Set new token and user
+    localStorage.setItem('accessToken', mockToken);
+    localStorage.setItem('userStatus', 'APPROVED');
+    sessionStorage.setItem('lastUserId', mockUser.sub);
+    
+    setToken(mockToken);
+    setUser(mockUser);
+    
+    // Dispatch event và reload
+    window.dispatchEvent(new CustomEvent('avatarCleared'));
+    setTimeout(() => window.location.reload(), 100);
+  };
+
+  // 🔥 DEV HELPER: Quick mock ADMIN
+  const mockAdmin = () => {
+    const mockUser: UserPayload = {
+      sub: 'dev-admin-789',
+      email: 'admin@dev.com',
+      role: 'admin',
+      status: 'APPROVED',
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 86400
+    };
+    
+    const mockToken = btoa(JSON.stringify(mockUser));
+    
+    // Clear old session
+    sessionStorage.clear();
+    
+    // Set new token and user
+    localStorage.setItem('accessToken', mockToken);
+    localStorage.setItem('userStatus', 'APPROVED');
+    sessionStorage.setItem('lastUserId', mockUser.sub);
+    
+    setToken(mockToken);
+    setUser(mockUser);
+    
+    // Dispatch event và reload
+    window.dispatchEvent(new CustomEvent('avatarCleared'));
+    setTimeout(() => window.location.reload(), 100);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isLoading, mockEmployer, mockCandidate, mockAdmin }}>
       {children}
     </AuthContext.Provider>
   );

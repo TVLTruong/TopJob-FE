@@ -42,9 +42,7 @@ function LoginContent() {
     const verified = searchParams.get('verified');
     const emailParam = searchParams.get('email');
     
-    if (verified === 'true') {
-      setSuccessMessage('✅ Email đã được xác thực thành công! Vui lòng đăng nhập để hoàn tất hồ sơ công ty.');
-      
+    if (verified === 'true') {      
       // Pre-fill email nếu có
       if (emailParam) {
         setEmail(decodeURIComponent(emailParam));
@@ -93,11 +91,15 @@ function LoginContent() {
       // Lưu token vào context (sẽ tự động lưu vào localStorage)
       login(token);
 
-      // Normalize role để so sánh (case-insensitive)
-      const userRole = (decoded.role || '').toString().toUpperCase();
+      // Lấy role trực tiếp từ backend (lowercase)
+      const userRole = decoded.role;
 
+      // UC-ADMIN: Kiểm tra role admin và redirect đến employer approval
+      if (userRole === 'admin') {
+        router.push('/employer-approval');
+      }
       // UC-EMP-01: Kiểm tra status và redirect
-      if (userRole === 'EMPLOYER') {
+      else if (userRole === 'employer') {
         const userStatus = (decoded.status || '').toString().toUpperCase();
         
         if (userStatus === 'PENDING_PROFILE_COMPLETION') {
@@ -105,11 +107,11 @@ function LoginContent() {
         } else if (userStatus === 'PENDING_APPROVAL') {
           router.push('/pending-approval');
         } else if (userStatus === 'ACTIVE') {
-          router.push('/employer/dashboard');
+          router.push('/companyProfilePage');
         } else {
           router.push('/');
         }
-      } else if (userRole === 'CANDIDATE') {
+      } else if (userRole === 'candidate') {
         router.push('/');
       } else {
         router.push('/');

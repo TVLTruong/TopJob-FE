@@ -191,8 +191,20 @@ export default function CVManagementPage() {
     fileInputRef.current?.click();
   };
 
-  const handleDownload = (cv: CandidateCV) => {
-    window.open(cv.fileUrl, '_blank');
+  const handleDownloadCV = async (cvId: string, fileName: string) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        alert('Vui lòng đăng nhập để tải CV');
+        return;
+      }
+      
+      await CandidateApi.downloadCv(token, cvId, fileName);
+      
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Không thể tải xuống CV');
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -408,7 +420,7 @@ export default function CVManagementPage() {
                       )}
                       
                       <button
-                        onClick={() => handleDownload(cv)}
+                        onClick={() => handleDownloadCV(cv.id, cv.fileName)}
                         className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                         title="Tải xuống"
                       >
