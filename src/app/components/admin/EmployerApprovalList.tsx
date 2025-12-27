@@ -211,6 +211,8 @@ export default function EmployerApprovalList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
@@ -221,65 +223,89 @@ export default function EmployerApprovalList() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // Fetch employers from API (using mock data for now)
+  // Fetch employers from mock data
   const fetchEmployers = React.useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      let response;
-      // Xử lý filter 'pending' để lấy cả PENDING_APPROVAL và PENDING_EDIT_APPROVAL
-      if (statusFilter === 'pending') {
-        // Gọi API không có status filter để lấy tất cả, sau đó filter ở client
-        response = await getEmployersForApproval(undefined, currentPage, 10);
-      } else {
-        const status = statusFilter !== 'all' ? statusFilter : undefined;
-        response = await getEmployersForApproval(status, currentPage, 10);
-      }
+      // === USING MOCK DATA ===
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Map BE data to FE format
-      const mappedEmployers = response.data.map((emp: EmployerProfileAPI) => {
-        // Convert BE status to FE status
-        type FEStatus = 'pending_new' | 'pending_edit';
-
-        const feStatus: FEStatus | null = (() => {
-          if (emp.status.toLowerCase() === 'pending_approval') return 'pending_new';
-          if (emp.status.toLowerCase() === 'active' && emp.profileStatus?.toLowerCase() === 'pending_edit_approval') return 'pending_edit';
-          return null;
-        })();
-
-        if (!feStatus) return '';
-        
-        return {
-          id: parseInt(emp.id, 10),
-          companyName: emp.companyName,
-          companyLogo: emp.logoUrl || '',
-          email: emp.contactEmail || emp.user?.email || '',
-          phone: emp.contactPhone || '',
-          taxCode: emp.taxCode || '',
-          status: feStatus,
-          createdDate: new Date(emp.createdAt as string).toLocaleDateString('vi-VN'),
-          // Determine registration type based on both status and profileStatus
-          registrationType: (emp.status === 'PENDING_APPROVAL' || 
-                            (emp.status === 'ACTIVE' && emp.profileStatus !== 'PENDING_EDIT_APPROVAL'))
-                            ? 'new' 
-                            : 'edit',
-          description: emp.description,
-          address: emp.address,
-          website: emp.website,
-        };
-      });
+      // Use mock data
+      let filteredData = MOCK_EMPLOYERS;
       
-      // Filter cho status 'pending' ở client-side để chỉ hiển thị hồ sơ cần duyệt
-      let filteredData = mappedEmployers;
+      // Filter theo status
       if (statusFilter === 'pending') {
-        filteredData = mappedEmployers.filter((emp: EmployerProfile) => 
+        filteredData = MOCK_EMPLOYERS.filter(emp => 
           emp.status === 'pending_new' || emp.status === 'pending_edit'
         );
+      } else if (statusFilter === 'PENDING_APPROVAL') {
+        filteredData = MOCK_EMPLOYERS.filter(emp => emp.status === 'pending_new');
+      } else if (statusFilter === 'PENDING_EDIT_APPROVAL') {
+        filteredData = MOCK_EMPLOYERS.filter(emp => emp.status === 'pending_edit');
+      } else if (statusFilter !== 'all') {
+        filteredData = MOCK_EMPLOYERS.filter(emp => emp.status === statusFilter);
       }
       
       setEmployers(filteredData);
-      setTotalCount(statusFilter === 'pending' ? filteredData.length : (response.meta?.total || response.data.length));
+      setTotalCount(filteredData.length);
+
+      // === API VERSION (COMMENTED) ===
+      // let response;
+      // // Xử lý filter 'pending' để lấy cả PENDING_APPROVAL và PENDING_EDIT_APPROVAL
+      // if (statusFilter === 'pending') {
+      //   // Gọi API không có status filter để lấy tất cả, sau đó filter ở client
+      //   response = await getEmployersForApproval(undefined, currentPage, 10);
+      // } else {
+      //   const status = statusFilter !== 'all' ? statusFilter : undefined;
+      //   response = await getEmployersForApproval(status, currentPage, 10);
+      // }
+      // 
+      // // Map BE data to FE format
+      // const mappedEmployers = response.data.map((emp: EmployerProfileAPI) => {
+      //   // Convert BE status to FE status
+      //   type FEStatus = 'pending_new' | 'pending_edit';
+      //
+      //   const feStatus: FEStatus | null = (() => {
+      //     if (emp.status.toLowerCase() === 'pending_approval') return 'pending_new';
+      //     if (emp.status.toLowerCase() === 'active' && emp.profileStatus?.toLowerCase() === 'pending_edit_approval') return 'pending_edit';
+      //     return null;
+      //   })();
+      //
+      //   if (!feStatus) return '';
+      //   
+      //   return {
+      //     id: parseInt(emp.id, 10),
+      //     companyName: emp.companyName,
+      //     companyLogo: emp.logoUrl || '',
+      //     email: emp.contactEmail || emp.user?.email || '',
+      //     phone: emp.contactPhone || '',
+      //     taxCode: emp.taxCode || '',
+      //     status: feStatus,
+      //     createdDate: new Date(emp.createdAt as string).toLocaleDateString('vi-VN'),
+      //     // Determine registration type based on both status and profileStatus
+      //     registrationType: (emp.status === 'PENDING_APPROVAL' || 
+      //                       (emp.status === 'ACTIVE' && emp.profileStatus !== 'PENDING_EDIT_APPROVAL'))
+      //                       ? 'new' 
+      //                       : 'edit',
+      //     description: emp.description,
+      //     address: emp.address,
+      //     website: emp.website,
+      //   };
+      // });
+      // 
+      // // Filter cho status 'pending' ở client-side để chỉ hiển thị hồ sơ cần duyệt
+      // let filteredData = mappedEmployers;
+      // if (statusFilter === 'pending') {
+      //   filteredData = mappedEmployers.filter((emp: EmployerProfile) => 
+      //     emp.status === 'pending_new' || emp.status === 'pending_edit'
+      //   );
+      // }
+      // 
+      // setEmployers(filteredData);
+      // setTotalCount(statusFilter === 'pending' ? filteredData.length : (response.meta?.total || response.data.length));
     } catch (err) {
       console.error('Error fetching employers:', err);
       setError(err instanceof Error ? err.message : 'Không thể tải danh sách nhà tuyển dụng');
