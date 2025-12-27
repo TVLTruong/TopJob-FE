@@ -3,6 +3,7 @@
 import { useState, useRef, DragEvent, ChangeEvent, useEffect } from "react";
 import { CandidateApi } from "@/utils/api/candidate-api";
 import type { CandidateCV } from "@/utils/api/candidate-api";
+import Toast from "@/app/components/profile/Toast";
 
 // Icons
 const UploadIcon = () => (
@@ -66,6 +67,15 @@ export default function CVManagementPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  
+  // Toast state
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  // Show toast helper
+  const showToast = (message: string, type: 'error' | 'success' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Load CVs on mount
   useEffect(() => {
@@ -77,14 +87,14 @@ export default function CVManagementPage() {
       setLoading(true);
       const token = localStorage.getItem('accessToken');
       if (!token) {
-        alert('Vui lòng đăng nhập để xem CV');
+        showToast('Vui lòng đăng nhập để xem CV', 'error');
         return;
       }
       const cvs = await CandidateApi.getMyCvs(token);
       setCvList(cvs);
     } catch (error) {
       console.error('Error loading CVs:', error);
-      alert('Không thể tải danh sách CV');
+      showToast('Không thể tải danh sách CV', 'error');
     } finally {
       setLoading(false);
     }
@@ -123,12 +133,12 @@ export default function CVManagementPage() {
     Array.from(files).forEach(async (file: File) => {
       // Chỉ chấp nhận PDF
       if (file.type !== 'application/pdf') {
-        alert('Chỉ chấp nhận file PDF');
+        showToast('Chỉ chấp nhận file PDF', 'error');
         return;
       }
 
       if (file.size > 10 * 1024 * 1024) { // 10MB
-        alert('File không được vượt quá 10MB');
+        showToast('File không được vượt quá 10MB', 'error');
         return;
       }
 
@@ -136,7 +146,7 @@ export default function CVManagementPage() {
         setUploading(true);
         const token = localStorage.getItem('accessToken');
         if (!token) {
-          alert('Vui lòng đăng nhập để upload CV');
+          showToast('Vui lòng đăng nhập để upload CV', 'error');
           return;
         }
 
@@ -167,10 +177,10 @@ export default function CVManagementPage() {
 
         // Reload CVs
         await loadCVs();
-        alert('Upload CV thành công');
+        showToast('Upload CV thành công', 'success');
       } catch (error) {
         console.error('Error uploading CV:', error);
-        alert('Không thể upload CV');
+        showToast('Không thể upload CV', 'error');
       } finally {
         setUploading(false);
       }
@@ -191,16 +201,16 @@ export default function CVManagementPage() {
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) {
-        alert('Vui lòng đăng nhập để xóa CV');
+        showToast('Vui lòng đăng nhập để xóa CV', 'error');
         return;
       }
 
       await CandidateApi.deleteCv(token, id);
       await loadCVs();
-      alert('Xóa CV thành công');
+      showToast('Xóa CV thành công', 'success');
     } catch (error) {
       console.error('Error deleting CV:', error);
-      alert('Không thể xóa CV');
+      showToast('Không thể xóa CV', 'error');
     }
   };
 
@@ -208,16 +218,16 @@ export default function CVManagementPage() {
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) {
-        alert('Vui lòng đăng nhập');
+        showToast('Vui lòng đăng nhập', 'error');
         return;
       }
 
       await CandidateApi.setDefaultCv(token, id);
       await loadCVs();
-      alert('Đặt CV mặc định thành công');
+      showToast('Đặt CV mặc định thành công', 'success');
     } catch (error) {
       console.error('Error setting default CV:', error);
-      alert('Không thể đặt CV mặc định');
+      showToast('Không thể đặt CV mặc định', 'error');
     }
   };
 
@@ -429,6 +439,15 @@ export default function CVManagementPage() {
         </div>
 
       </div>
+      
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

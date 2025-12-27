@@ -266,6 +266,7 @@ export default function JobDetailPage() {
           </div>
 
           {/* Tabs */}
+          {isRecruiter && (
           <div className="flex gap-6 border-b">
             <button 
               onClick={() => setActiveTab('detail')}
@@ -277,7 +278,6 @@ export default function JobDetailPage() {
             >
               Chi tiết công việc
             </button>
-            {isRecruiter && (
             <button 
               onClick={() => setActiveTab('applicants')}
               className={`pb-3 font-medium ${
@@ -288,8 +288,8 @@ export default function JobDetailPage() {
             >
               Ứng viên
             </button>
-            )}
           </div>
+          )}
         </div>
 
         {/* Tab Content */}
