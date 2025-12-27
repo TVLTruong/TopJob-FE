@@ -42,9 +42,7 @@ function LoginContent() {
     const verified = searchParams.get('verified');
     const emailParam = searchParams.get('email');
     
-    if (verified === 'true') {
-      setSuccessMessage('✅ Email đã được xác thực thành công! Vui lòng đăng nhập để hoàn tất hồ sơ công ty.');
-      
+    if (verified === 'true') {      
       // Pre-fill email nếu có
       if (emailParam) {
         setEmail(decodeURIComponent(emailParam));

@@ -33,7 +33,7 @@ export interface EmployerProfile {
   companyLogo: string;
   email: string;
   phone: string;
-  status: 'PENDING_APPROVAL' | 'PENDING_EDIT_APPROVAL' | 'ACTIVE' | 'REJECTED';
+  status: 'PENDING_APPROVAL' | 'PENDING_EDIT_APPROVAL';
   createdDate: string;
   taxCode?: string;
   description?: string;
@@ -62,6 +62,8 @@ export const getEmployersForApproval = async (
     if (status) params.append('status', status);
     params.append('page', page.toString());
     params.append('limit', limit.toString());
+
+    // console.log(getAuthHeaders());
 
     const response = await axios.get(
       `${API_BASE_URL}/admin/employer-approval?${params.toString()}`,

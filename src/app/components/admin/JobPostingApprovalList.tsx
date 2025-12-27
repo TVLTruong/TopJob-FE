@@ -5,6 +5,7 @@ import ApproveModal from './ApproveModal';
 import RejectModal from './RejectModal';
 import JobDetailModal from './JobDetailModal';
 import { getJobsForApproval, approveJob, rejectJob, getJobDetail } from '@/utils/api/admin-api';
+import Toast from '@/app/components/profile/Toast';
 
 interface JobPostingAPI {
   id: string;
@@ -47,6 +48,15 @@ export default function JobPostingApprovalList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
+  
+  // Toast state
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  // Show toast helper
+  const showToast = (message: string, type: 'error' | 'success' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Fetch jobs from API
   const fetchJobs = React.useCallback(async () => {
@@ -150,7 +160,7 @@ export default function JobPostingApprovalList() {
       setShowDetailModal(true);
     } catch (err) {
       console.error('Error fetching job detail:', err);
-      alert('Không thể tải chi tiết tin tuyển dụng');
+      showToast('Không thể tải chi tiết tin tuyển dụng', 'error');
     }
   };
 
@@ -166,10 +176,10 @@ export default function JobPostingApprovalList() {
       await approveJob(selectedJob.id.toString());
       setShowApproveModal(false);
       fetchJobs(); // Refresh list
-      alert('Đã duyệt tin tuyển dụng thành công');
+      showToast('Đã duyệt tin tuyển dụng thành công', 'success');
     } catch (err) {
       console.error('Error approving job:', err);
-      alert(err instanceof Error ? err.message : 'Không thể duyệt tin tuyển dụng');
+      showToast(err instanceof Error ? err.message : 'Không thể duyệt tin tuyển dụng', 'error');
     }
   };
 
@@ -185,10 +195,10 @@ export default function JobPostingApprovalList() {
       await rejectJob(selectedJob.id.toString(), reason);
       setShowRejectModal(false);
       fetchJobs(); // Refresh list
-      alert('Đã từ chối tin tuyển dụng');
+      showToast('Đã từ chối tin tuyển dụng', 'success');
     } catch (err) {
       console.error('Error rejecting job:', err);
-      alert(err instanceof Error ? err.message : 'Không thể từ chối tin tuyển dụng');
+      showToast(err instanceof Error ? err.message : 'Không thể từ chối tin tuyển dụng', 'error');
     }
   };
 
@@ -474,6 +484,15 @@ export default function JobPostingApprovalList() {
           onClose={() => setShowRejectModal(false)}
           onConfirm={handleReject}
           employerName={selectedJob.jobTitle}
+        />
+      )}
+      
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
         />
       )}
     </div>

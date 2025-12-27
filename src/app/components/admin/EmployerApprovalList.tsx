@@ -6,6 +6,7 @@ import RejectModal from './RejectModal';
 import ApproveModal from './ApproveModal';
 import EmployerDetailModal from './EmployerDetailModal';
 import { getEmployersForApproval, approveEmployer, rejectEmployer, getEmployerProfile } from '@/utils/api/admin-api';
+import Toast from '@/app/components/profile/Toast';
 
 interface EmployerProfileAPI {
   id: string;
@@ -199,7 +200,7 @@ const MOCK_EMPLOYERS: EmployerProfile[] = [
 
 export default function EmployerApprovalList() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -210,8 +211,15 @@ export default function EmployerApprovalList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
-  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  
+  // Toast state
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  // Show toast helper
+  const showToast = (message: string, type: 'error' | 'success' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Fetch employers from API (using mock data for now)
   const fetchEmployers = React.useCallback(async () => {
@@ -219,28 +227,59 @@ export default function EmployerApprovalList() {
       setLoading(true);
       setError(null);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      let response;
+      // Xử lý filter 'pending' để lấy cả PENDING_APPROVAL và PENDING_EDIT_APPROVAL
+      if (statusFilter === 'pending') {
+        // Gọi API không có status filter để lấy tất cả, sau đó filter ở client
+        response = await getEmployersForApproval(undefined, currentPage, 10);
+      } else {
+        const status = statusFilter !== 'all' ? statusFilter : undefined;
+        response = await getEmployersForApproval(status, currentPage, 10);
+      }
       
-      // Use mock data
-      let filteredData = [...MOCK_EMPLOYERS];
-      
-      // Filter by status
-      if (statusFilter !== 'all') {
-        const statusMap: Record<string, 'pending_new' | 'pending_edit' | 'approved' | 'rejected'> = {
-          'PENDING_APPROVAL': 'pending_new',
-          'PENDING_EDIT_APPROVAL': 'pending_edit',
-          'ACTIVE': 'approved',
-          'REJECTED': 'rejected'
+      // Map BE data to FE format
+      const mappedEmployers = response.data.map((emp: EmployerProfileAPI) => {
+        // Convert BE status to FE status
+        type FEStatus = 'pending_new' | 'pending_edit';
+
+        const feStatus: FEStatus | null = (() => {
+          if (emp.status.toLowerCase() === 'pending_approval') return 'pending_new';
+          if (emp.status.toLowerCase() === 'active' && emp.profileStatus?.toLowerCase() === 'pending_edit_approval') return 'pending_edit';
+          return null;
+        })();
+
+        if (!feStatus) return '';
+        
+        return {
+          id: parseInt(emp.id, 10),
+          companyName: emp.companyName,
+          companyLogo: emp.logoUrl || '',
+          email: emp.contactEmail || emp.user?.email || '',
+          phone: emp.contactPhone || '',
+          taxCode: emp.taxCode || '',
+          status: feStatus,
+          createdDate: new Date(emp.createdAt as string).toLocaleDateString('vi-VN'),
+          // Determine registration type based on both status and profileStatus
+          registrationType: (emp.status === 'PENDING_APPROVAL' || 
+                            (emp.status === 'ACTIVE' && emp.profileStatus !== 'PENDING_EDIT_APPROVAL'))
+                            ? 'new' 
+                            : 'edit',
+          description: emp.description,
+          address: emp.address,
+          website: emp.website,
         };
-        const feStatus = statusMap[statusFilter];
-        if (feStatus) {
-          filteredData = filteredData.filter(e => e.status === feStatus);
-        }
+      });
+      
+      // Filter cho status 'pending' ở client-side để chỉ hiển thị hồ sơ cần duyệt
+      let filteredData = mappedEmployers;
+      if (statusFilter === 'pending') {
+        filteredData = mappedEmployers.filter((emp: EmployerProfile) => 
+          emp.status === 'pending_new' || emp.status === 'pending_edit'
+        );
       }
       
       setEmployers(filteredData);
-      setTotalCount(filteredData.length);
+      setTotalCount(statusFilter === 'pending' ? filteredData.length : (response.meta?.total || response.data.length));
     } catch (err) {
       console.error('Error fetching employers:', err);
       setError(err instanceof Error ? err.message : 'Không thể tải danh sách nhà tuyển dụng');
@@ -261,11 +300,9 @@ export default function EmployerApprovalList() {
   };
 
   const filterOptions = [
-    { value: 'all', label: 'Tất cả', count: totalCount },
+    { value: 'pending', label: 'Tất cả', count: employers.filter(e => e.status === 'pending_new' || e.status === 'pending_edit').length },
     { value: 'PENDING_APPROVAL', label: 'Chờ duyệt (Mới)', count: employers.filter(e => e.status === 'pending_new').length },
     { value: 'PENDING_EDIT_APPROVAL', label: 'Chờ duyệt (Sửa đổi)', count: employers.filter(e => e.status === 'pending_edit').length },
-    { value: 'ACTIVE', label: 'Đã duyệt', count: employers.filter(e => e.status === 'approved').length },
-    { value: 'REJECTED', label: 'Từ chối', count: employers.filter(e => e.status === 'rejected').length },
   ];
 
   const filteredEmployers = useMemo(() => {
@@ -306,7 +343,7 @@ export default function EmployerApprovalList() {
       setShowDetailModal(true);
     } catch (err) {
       console.error('Error fetching employer detail:', err);
-      alert('Không thể tải chi tiết nhà tuyển dụng');
+      showToast('Không thể tải chi tiết nhà tuyển dụng', 'error');
     }
   };
 
@@ -338,13 +375,10 @@ export default function EmployerApprovalList() {
       }, 3000);
       
       fetchEmployers(); // Refresh list
+      showToast('Đã duyệt nhà tuyển dụng thành công', 'success');
     } catch (err) {
       console.error('Error approving employer:', err);
-      setSuccessMessage(err instanceof Error ? err.message : 'Không thể duyệt nhà tuyển dụng');
-      setShowSuccessNotification(true);
-      setTimeout(() => {
-        setShowSuccessNotification(false);
-      }, 3000);
+      showToast(err instanceof Error ? err.message : 'Không thể duyệt nhà tuyển dụng', 'error');
     }
   };
 
@@ -376,13 +410,10 @@ export default function EmployerApprovalList() {
       }, 3000);
       
       fetchEmployers(); // Refresh list
+      showToast('Đã từ chối nhà tuyển dụng', 'success');
     } catch (err) {
       console.error('Error rejecting employer:', err);
-      setSuccessMessage(err instanceof Error ? err.message : 'Không thể từ chối nhà tuyển dụng');
-      setShowSuccessNotification(true);
-      setTimeout(() => {
-        setShowSuccessNotification(false);
-      }, 3000);
+      showToast(err instanceof Error ? err.message : 'Không thể từ chối nhà tuyển dụng', 'error');
     }
   };
 
@@ -685,34 +716,14 @@ export default function EmployerApprovalList() {
           employerName={selectedEmployer.companyName}
         />
       )}
-
-      {/* Success Notification */}
-      {showSuccessNotification && (
-        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
-          <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-4 min-w-[320px] max-w-md">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">Thành công!</h3>
-                <p className="text-sm text-gray-600">{successMessage}</p>
-              </div>
-              <button
-                onClick={() => setShowSuccessNotification(false)}
-                className="flex-shrink-0 text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
+      
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );
