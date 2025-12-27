@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, MoreVertical, Trash2, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import { Search, MoreVertical, Trash2, ChevronLeft, ChevronRight, Filter, X, AlertCircle } from 'lucide-react';
 
 interface Applicant {
   id: number;
@@ -12,6 +12,12 @@ interface Applicant {
   appliedDate: string;
 }
 
+type StatusChangeModalType = {
+  applicantId: number;
+  currentStatus: 'pending' | 'approved' | 'passed' | 'rejected';
+  applicantName: string;
+} | null;
+
 export default function ApplicantsTab() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,6 +26,15 @@ export default function ApplicantsTab() {
   const [currentPage, setCurrentPage] = useState(1);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [statusChangeModal, setStatusChangeModal] = useState<StatusChangeModalType>(null);
+  const [confirmationModal, setConfirmationModal] = useState<{
+    applicantId: number;
+    applicantName: string;
+    currentStatus: 'pending' | 'approved' | 'passed' | 'rejected';
+    newStatus: 'pending' | 'approved' | 'passed' | 'rejected';
+  } | null>(null);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
   const [applicants, setApplicants] = useState<Applicant[]>([
     { id: 1, name: 'Jake Gyll', avatar: '👨', position: 'Senior Product Designer', status: 'pending', appliedDate: '24/05/2025' },
     { id: 2, name: 'Guy Hawkins', avatar: '👨‍🦰', position: 'UI/UX Researcher', status: 'pending', appliedDate: '24/05/2025' },
@@ -105,6 +120,75 @@ export default function ApplicantsTab() {
   const handleOpenJobDetail = () => {
     router.push('/JobList/JobDetail');
   };
+
+  // Logic for status change
+  const getAvailableStatuses = (currentStatus: 'pending' | 'approved' | 'passed' | 'rejected') => {
+    switch (currentStatus) {
+      case 'pending':
+        return [{ value: 'approved', label: 'Đã duyệt' }];
+      case 'approved':
+        return [
+          { value: 'passed', label: 'Đã đậu' },
+          { value: 'rejected', label: 'Từ chối' }
+        ];
+      case 'passed':
+      case 'rejected':
+        return [];
+      default:
+        return [];
+    }
+  };
+
+  const handleStatusChangeClick = (applicant: Applicant) => {
+    const availableStatuses = getAvailableStatuses(applicant.status);
+    
+    if (availableStatuses.length === 0) {
+      setNotificationMessage(`Không thể thay đổi trạng thái "${statusConfig[applicant.status].label}"`);
+      setShowNotificationModal(true);
+      return;
+    }
+
+    setStatusChangeModal({
+      applicantId: applicant.id,
+      currentStatus: applicant.status,
+      applicantName: applicant.name
+    });
+  };
+
+  const handleSelectNewStatus = (newStatus: 'pending' | 'approved' | 'passed' | 'rejected') => {
+    if (!statusChangeModal) return;
+
+    setConfirmationModal({
+      applicantId: statusChangeModal.applicantId,
+      applicantName: statusChangeModal.applicantName,
+      currentStatus: statusChangeModal.currentStatus,
+      newStatus: newStatus
+    });
+    setStatusChangeModal(null);
+  };
+
+  const handleConfirmStatusChange = () => {
+    if (!confirmationModal) return;
+
+    setApplicants(prev =>
+      prev.map(applicant =>
+        applicant.id === confirmationModal.applicantId
+          ? { ...applicant, status: confirmationModal.newStatus }
+          : applicant
+      )
+    );
+
+    setConfirmationModal(null);
+  };
+
+  const handleCancelStatusChange = () => {
+    setStatusChangeModal(null);
+  };
+
+  const handleCancelConfirmation = () => {
+    setConfirmationModal(null);
+  };
+
 
   return (
     <div className="bg-white rounded-xl shadow-sm">
@@ -363,7 +447,10 @@ export default function ApplicantsTab() {
                 {applicant.appliedDate}
               </div>
               <div className="flex items-center gap-2">
-                <button className="min-w-[120px] px-4 py-1.5 border border-blue-600 text-blue-600 rounded-lg text-sm hover:bg-blue-50 whitespace-nowrap">
+                <button 
+                  onClick={() => handleStatusChangeClick(applicant)}
+                  className="min-w-[120px] px-4 py-1.5 border border-blue-600 text-blue-600 rounded-lg text-sm hover:bg-blue-50 whitespace-nowrap"
+                >
                   Đổi trạng thái
                 </button>
                 <div className="relative">
@@ -443,6 +530,150 @@ export default function ApplicantsTab() {
                 className="px-6 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
               >
                 Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Status Change Confirmation Modal */}
+      {statusChangeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-bold text-gray-900">Đổi trạng thái</h3>
+                <button
+                  onClick={handleCancelStatusChange}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-gray-600 mb-2">
+                  Ứng viên: <span className="font-semibold text-gray-900">{statusChangeModal.applicantName}</span>
+                </p>
+                <p className="text-sm text-gray-500">
+                  Trạng thái hiện tại: <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${statusConfig[statusChangeModal.currentStatus].color}`}>
+                    {statusConfig[statusChangeModal.currentStatus].label}
+                  </span>
+                </p>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-sm font-medium text-gray-700 mb-3">Chọn trạng thái mới:</p>
+                <div className="space-y-2">
+                  {getAvailableStatuses(statusChangeModal.currentStatus).map((status) => (
+                    <button
+                      key={status.value}
+                      onClick={() => handleSelectNewStatus(status.value as 'pending' | 'approved' | 'passed' | 'rejected')}
+                      className={`w-full px-4 py-3 rounded-lg border-2 text-left font-medium transition-all hover:shadow-md ${
+                        status.value === 'passed' 
+                          ? 'border-blue-500 text-blue-700 hover:bg-blue-50' 
+                          : status.value === 'rejected'
+                          ? 'border-red-500 text-red-700 hover:bg-red-50'
+                          : 'border-green-500 text-green-700 hover:bg-green-50'
+                      }`}
+                    >
+                      {status.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={handleCancelStatusChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Final Confirmation Modal */}
+      {confirmationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-bold text-gray-900">Xác nhận đổi trạng thái</h3>
+                <button
+                  onClick={handleCancelConfirmation}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-gray-600 mb-4">
+                  Bạn có chắc chắn muốn đổi trạng thái của ứng viên <span className="font-semibold text-gray-900">{confirmationModal.applicantName}</span>?
+                </p>
+                
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Từ:</span>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${statusConfig[confirmationModal.currentStatus].color}`}>
+                      {statusConfig[confirmationModal.currentStatus].label}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Sang:</span>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${statusConfig[confirmationModal.newStatus].color}`}>
+                      {statusConfig[confirmationModal.newStatus].label}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCancelConfirmation}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleConfirmStatusChange}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                >
+                  Xác nhận
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Modal */}
+      {showNotificationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="flex-shrink-0">
+                  <AlertCircle className="w-8 h-8 text-yellow-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Thông báo</h3>
+                  <p className="text-gray-600">{notificationMessage}</p>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => setShowNotificationModal(false)}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+              >
+                Đã hiểu
               </button>
             </div>
           </div>

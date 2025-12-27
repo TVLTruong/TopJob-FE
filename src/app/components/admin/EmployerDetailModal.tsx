@@ -15,8 +15,14 @@ interface EmployerProfile {
   description?: string;
   address?: string;
   website?: string;
+  foundingDate?: string;
+  industries?: string[];
   technologies?: string[];
   benefits?: string[];
+  contactEmail?: string;
+  facebookUrl?: string;
+  linkedlnUrl?: string;
+  xUrl?: string;
   locations?: Array<{
     id?: string;
     province: string;
@@ -109,6 +115,29 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
               <div className="space-y-2">
                 <InfoField label="Email" value={employer.email} oldValue={employer.oldData?.email} />
                 <InfoField label="Số điện thoại" value={employer.phone} oldValue={employer.oldData?.phone} />
+                {employer.website && (
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">Website:</span>{' '}
+                    <a 
+                      href={employer.website} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {employer.website}
+                    </a>
+                  </p>
+                )}
+                {employer.foundingDate && (
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">Ngày thành lập:</span>{' '}
+                    {new Date(employer.foundingDate).toLocaleDateString('vi-VN', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                )}
                 <p className="text-sm text-gray-600">
                   <span className="font-medium">Ngày đăng ký:</span> {employer.createdDate}
                 </p>
@@ -142,8 +171,8 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
 
           {/* Company Description */}
           {employer.description && (
-            <div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-3">Giới thiệu công ty</h4>
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Giới thiệu công ty</h4>
               {isEditType && employer.oldData?.description && employer.oldData.description !== employer.description ? (
                 <div className="space-y-2">
                   <div className="p-4 bg-red-50 rounded-lg border border-red-200">
@@ -160,68 +189,75 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
                   </div>
                 </div>
               ) : (
-                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-sm text-gray-700 leading-relaxed">{employer.description}</p>
-                </div>
+                <p className="text-sm text-gray-700 leading-relaxed">{employer.description}</p>
               )}
+            </div>
+          )}
+
+          {/* Industries */}
+          {employer.industries && employer.industries.length > 0 && (
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Lĩnh vực</h4>
+              <div className="flex flex-wrap gap-2">
+                {employer.industries.map((industry, index) => (
+                  <span 
+                    key={index}
+                    className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full"
+                  >
+                    {industry}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Technologies */}
+          {employer.technologies && employer.technologies.length > 0 && (
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Công nghệ</h4>
+              <div className="flex flex-wrap gap-2">
+                {employer.technologies.map((tech, index) => (
+                  <span 
+                    key={index}
+                    className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full"
+                  >
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Locations */}
+          {employer.locations && employer.locations.length > 0 && (
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Địa điểm văn phòng</h4>
+              <div className="space-y-3">
+                {employer.locations.map((location, index) => (
+                  <div key={index} className="flex items-start gap-2 text-sm">
+                    <svg className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-gray-600">
+                          {location.detailedAddress}, {location.district}, {location.province}
+                        </span>
+                        {location.isHeadquarters && (
+                          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded">
+                            Trụ sở chính
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
           {/* Additional Information */}
           <div className="space-y-4">
-            {/* Locations */}
-            {employer.locations && employer.locations.length > 0 && (
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <h4 className="text-sm font-semibold text-gray-900 mb-3">Địa điểm văn phòng</h4>
-                <div className="space-y-2">
-                  {employer.locations.map((location, index) => (
-                    <div key={index} className="text-sm text-gray-600">
-                      <span className="font-medium">
-                        {location.isHeadquarters && '🏢 '}
-                        {location.province} - {location.district}
-                      </span>
-                      {location.detailedAddress && (
-                        <p className="text-xs text-gray-500 mt-1">{location.detailedAddress}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Website */}
-            {employer.website && (
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <h4 className="text-sm font-semibold text-gray-900 mb-2">Website</h4>
-                <a 
-                  href={employer.website} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  {employer.website}
-                </a>
-              </div>
-            )}
-
-            {/* Technologies */}
-            {employer.technologies && employer.technologies.length > 0 && (
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <h4 className="text-sm font-semibold text-gray-900 mb-3">Công nghệ</h4>
-                <div className="flex flex-wrap gap-2">
-                  {employer.technologies.map((tech, index) => (
-                    <span 
-                      key={index}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Benefits */}
             {employer.benefits && employer.benefits.length > 0 && (
               <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">Phúc lợi</h4>
@@ -233,6 +269,47 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {/* Contact Information */}
+            {(employer.contactEmail || employer.facebookUrl || employer.linkedlnUrl || employer.xUrl) && (
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Thông tin liên hệ</h4>
+                <div className="space-y-2">
+                  {employer.contactEmail && (
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Email:</span>{' '}
+                      <a href={`mailto:${employer.contactEmail}`} className="text-blue-600 hover:underline">
+                        {employer.contactEmail}
+                      </a>
+                    </p>
+                  )}
+                  {employer.facebookUrl && (
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Facebook:</span>{' '}
+                      <a href={employer.facebookUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {employer.facebookUrl}
+                      </a>
+                    </p>
+                  )}
+                  {employer.linkedlnUrl && (
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">LinkedIn:</span>{' '}
+                      <a href={employer.linkedlnUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {employer.linkedlnUrl}
+                      </a>
+                    </p>
+                  )}
+                  {employer.xUrl && (
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">X (Twitter):</span>{' '}
+                      <a href={employer.xUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {employer.xUrl}
+                      </a>
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </div>

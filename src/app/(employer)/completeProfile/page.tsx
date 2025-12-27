@@ -62,6 +62,12 @@ export default function CompleteProfilePage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState("");
   const [website, setWebsite] = useState("");
+  const [foundingDay, setFoundingDay] = useState("");
+  const [foundingMonth, setFoundingMonth] = useState("");
+  const [foundingYear, setFoundingYear] = useState("");
+  const [industries, setIndustries] = useState<string[]>([]);
+  const [showIndustryDropdown, setShowIndustryDropdown] = useState(false);
+  const industryDropdownRef = useRef<HTMLDivElement | null>(null);
   const [description, setDescription] = useState("");
   const [benefits, setBenefits] = useState("");
   const [technologies, setTechnologies] = useState<string[]>([]);
@@ -69,12 +75,39 @@ export default function CompleteProfilePage() {
   const techDropdownRef = useRef<HTMLDivElement | null>(null);
   const [contacts, setContacts] = useState({
     email: "",
-    phone: "",
     facebook: "",
     linkedin: "",
     twitter: "",
   });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const availableIndustries = [
+    "Công nghệ thông tin",
+    "Phần mềm",
+    "Thương mại điện tử",
+    "Tài chính - Ngân hàng",
+    "Bảo hiểm",
+    "Viễn thông",
+    "Y tế - Chăm sóc sức khỏe",
+    "Giáo dục - Đào tạo",
+    "Du lịch - Khách sạn",
+    "Bất động sản",
+    "Xây dựng",
+    "Sản xuất",
+    "Logistics - Vận tải",
+    "Marketing - Quảng cáo",
+    "Truyền thông - Media",
+    "Dịch vụ khách hàng",
+    "Nhân sự",
+    "Kế toán - Kiểm toán",
+    "Pháp lý",
+    "Năng lượng",
+    "Nông nghiệp",
+    "Thời trang",
+    "Thực phẩm - Đồ uống",
+    "Game",
+    "Blockchain - Crypto",
+  ];
 
   const availableTechnologies = [
     "HTML 5",
@@ -122,6 +155,9 @@ export default function CompleteProfilePage() {
       const target = event.target as Node;
       if (!techDropdownRef.current?.contains(target)) {
         setShowTechDropdown(false);
+      }
+      if (!industryDropdownRef.current?.contains(target)) {
+        setShowIndustryDropdown(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -228,6 +264,22 @@ export default function CompleteProfilePage() {
       setValidationError("Vui lòng nhập Website.");
       return false;
     }
+    if (!foundingDay || !foundingMonth || !foundingYear) {
+      setValidationError("Vui lòng chọn đầy đủ ngày thành lập.");
+      return false;
+    }
+    const day = parseInt(foundingDay);
+    const month = parseInt(foundingMonth);
+    const year = parseInt(foundingYear);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    if (day < 1 || day > daysInMonth) {
+      setValidationError("Ngày thành lập không hợp lệ.");
+      return false;
+    }
+    if (industries.length === 0) {
+      setValidationError("Vui lòng chọn ít nhất 1 lĩnh vực.");
+      return false;
+    }
     if (!description.trim()) {
       setValidationError("Vui lòng nhập Giới thiệu công ty.");
       return false;
@@ -313,14 +365,16 @@ export default function CompleteProfilePage() {
 
       // Step 2: Submit profile với logoUrl
       setValidationError("Đang gửi hồ sơ...");
+      const foundingDate = `${foundingYear}-${foundingMonth.padStart(2, '0')}-${foundingDay.padStart(2, '0')}`;
       await AuthApi.completeEmployerProfile(token, {
         companyName: companyName.trim(),
         website: website.trim(),
+        foundingDate: foundingDate,
+        industries: industries,
         description: description.trim(),
         benefits: benefits.trim().split('\n').filter(b => b.trim()),
         technologies: technologies,
         contactEmail: contacts.email.trim() || undefined,
-        contactPhone: contacts.phone.trim() || undefined,
         facebookUrl: contacts.facebook.trim() || undefined,
         linkedlnUrl: contacts.linkedin.trim() || undefined,
         xUrl: contacts.twitter.trim() || undefined,
@@ -527,6 +581,105 @@ export default function CompleteProfilePage() {
                     />
                   </div>
 
+                  {/* Founding Date */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Ngày thành lập <span className="text-red-600">*</span>
+                    </label>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <select
+                          value={foundingDay}
+                          onChange={(e) => { setFoundingDay(e.target.value); setValidationError(null); }}
+                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        >
+                          <option value="">Ngày</option>
+                          {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                            <option key={day} value={day}>{day}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <select
+                          value={foundingMonth}
+                          onChange={(e) => { setFoundingMonth(e.target.value); setValidationError(null); }}
+                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        >
+                          <option value="">Tháng</option>
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                            <option key={month} value={month}>Tháng {month}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <select
+                          value={foundingYear}
+                          onChange={(e) => { setFoundingYear(e.target.value); setValidationError(null); }}
+                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        >
+                          <option value="">Năm</option>
+                          {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Industries */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Lĩnh vực <span className="text-red-600">*</span>
+                    </label>
+                    <div className="relative" ref={industryDropdownRef}>
+                      <div className="flex flex-wrap gap-2 p-2 border border-gray-300 rounded-lg min-h-[42px]">
+                        {industries.map((industry) => (
+                          <span key={industry} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                            {industry}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIndustries(industries.filter((i) => i !== industry));
+                                setValidationError(null);
+                              }}
+                              className="hover:text-blue-900"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setShowIndustryDropdown(!showIndustryDropdown)}
+                          className="ml-auto text-gray-400 hover:text-gray-600"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                        </button>
+                      </div>
+                      {showIndustryDropdown && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          {availableIndustries
+                            .filter((industry) => !industries.includes(industry))
+                            .map((industry) => (
+                              <div
+                                key={industry}
+                                onClick={() => {
+                                  setIndustries([...industries, industry]);
+                                  setShowIndustryDropdown(false);
+                                  setValidationError(null);
+                                }}
+                                className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm"
+                              >
+                                {industry}
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Description */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -627,19 +780,6 @@ export default function CompleteProfilePage() {
                             setValidationError(null);
                           }}
                           placeholder="example@company.com"
-                          className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Số điện thoại</label>
-                        <input
-                          type="tel"
-                          value={contacts.phone}
-                          onChange={(e) => {
-                            setContacts({ ...contacts, phone: e.target.value });
-                            setValidationError(null);
-                          }}
-                          placeholder="0123456789"
                           className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         />
                       </div>
@@ -896,26 +1036,34 @@ export default function CompleteProfilePage() {
                           <span className="font-medium">{website}</span>
                         </div>
                         <div>
-                          <span className="text-gray-600">Giới thiệu:</span>{" "}
-                          <span className="font-medium">{description.substring(0, 100)}...</span>
+                          <span className="text-gray-600">Ngày thành lập:</span>{" "}
+                          <span className="font-medium">{foundingDay}/{foundingMonth}/{foundingYear}</span>
                         </div>
-                        {benefits && (
-                          <div>
-                            <span className="text-gray-600 mb-2 block">Phúc lợi:</span>
-                            <ul className="list-disc list-inside space-y-1 ml-2">
-                              {benefits
-                                .split("\n")
-                                .filter((b) => b.trim().length > 0)
-                                .map((benefit, index) => (
-                                  <li key={index} className="text-gray-800">
-                                    {benefit.trim()}
-                                  </li>
-                                ))}
-                            </ul>
-                          </div>
-                        )}
                       </div>
                     </div>
+
+                    {/* Description Review */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-900 mb-3">Giới thiệu công ty</h3>
+                      <p className="text-sm text-gray-800">{description}</p>
+                    </div>
+
+                    {/* Benefits Review */}
+                    {benefits && (
+                      <div className="border border-gray-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900 mb-3">Phúc lợi</h3>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          {benefits
+                            .split("\n")
+                            .filter((b) => b.trim().length > 0)
+                            .map((benefit, index) => (
+                              <li key={index} className="text-gray-800">
+                                {benefit.trim()}
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
 
                     {/* Locations Review */}
                     <div className="border border-gray-200 rounded-lg p-4">
@@ -935,6 +1083,20 @@ export default function CompleteProfilePage() {
                         ))}
                       </div>
                     </div>
+
+                    {/* Industries Review */}
+                    {industries.length > 0 && (
+                      <div className="border border-gray-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900 mb-3">Lĩnh vực</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {industries.map((industry) => (
+                            <span key={industry} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                              {industry}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Technologies Review */}
                     {technologies.length > 0 && (

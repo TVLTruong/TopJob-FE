@@ -131,8 +131,37 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto p-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Settings</h1>
+      <div className="max-w-6xl mx-auto px-8 pb-8">
+        {/* Container for Title and Tabs */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-[3px]">
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">Cài đặt</h1>
+
+          {/* Tabs */}
+          <div className="border-b border-gray-200">
+            <div className="flex gap-8">
+              <button
+                onClick={() => setActiveTab('account')}
+                className={`pb-4 px-1 text-sm font-medium transition border-b-2 ${
+                  activeTab === 'account'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Thông tin tài khoản
+              </button>
+              <button
+                onClick={() => setActiveTab('password')}
+                className={`pb-4 px-1 text-sm font-medium transition border-b-2 ${
+                  activeTab === 'password'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Đổi mật khẩu
+              </button>
+            </div>
+          </div>
+        </div>
 
         {successMessage && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 flex items-center gap-2">
@@ -142,32 +171,6 @@ export default function SettingsPage() {
             {successMessage}
           </div>
         )}
-
-        {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <div className="flex gap-8">
-            <button
-              onClick={() => setActiveTab('account')}
-              className={`pb-4 px-1 text-sm font-medium transition border-b-2 ${
-                activeTab === 'account'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Thông tin tài khoản
-            </button>
-            <button
-              onClick={() => setActiveTab('password')}
-              className={`pb-4 px-1 text-sm font-medium transition border-b-2 ${
-                activeTab === 'password'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Đổi mật khẩu
-            </button>
-          </div>
-        </div>
 
         {/* Tab Content */}
         {activeTab === 'account' && (

@@ -38,8 +38,14 @@ interface EmployerProfile {
   description?: string;
   address?: string;
   website?: string;
+  foundingDate?: string;
+  industries?: string[];
   technologies?: string[];
   benefits?: string[];
+  contactEmail?: string;
+  facebookUrl?: string;
+  linkedlnUrl?: string;
+  xUrl?: string;
   locations?: Array<{
     id?: string;
     province: string;
@@ -49,6 +55,147 @@ interface EmployerProfile {
   }>;
   oldData?: Partial<EmployerProfile>;
 }
+
+// Mock data
+const MOCK_EMPLOYERS: EmployerProfile[] = [
+  {
+    id: 1,
+    companyName: 'Công ty TNHH Công nghệ ABC',
+    companyLogo: '',
+    email: 'hr@abc.com',
+    phone: '0901234567',
+    taxCode: '0123456789',
+    status: 'pending_new',
+    createdDate: '26/12/2025',
+    registrationType: 'new',
+    description: 'Công ty chuyên về phát triển phần mềm và giải pháp công nghệ cho doanh nghiệp. Chúng tôi có đội ngũ kỹ sư giàu kinh nghiệm và cam kết mang đến những sản phẩm chất lượng cao.',
+    website: 'https://abc-tech.com',
+    foundingDate: '2020-01-15',
+    industries: ['Công nghệ thông tin', 'Phần mềm', 'Thương mại điện tử'],
+    technologies: ['React', 'Node.js', 'TypeScript', 'PostgreSQL', 'AWS', 'Docker'],
+    benefits: [
+      'Lương thưởng cạnh tranh theo năng lực',
+      'Thưởng hiệu suất hàng quý',
+      'Bảo hiểm sức khỏe cao cấp',
+      'Du lịch hàng năm',
+      'Team building định kỳ',
+      'Môi trường làm việc trẻ trung, năng động'
+    ],
+    contactEmail: 'contact@abc.com',
+    facebookUrl: 'https://facebook.com/abctech',
+    linkedlnUrl: 'https://linkedin.com/company/abc-tech',
+    xUrl: 'https://x.com/abctech',
+    locations: [
+      {
+        province: 'Hồ Chí Minh',
+        district: 'Quận 1',
+        detailedAddress: '123 Đường Nguyễn Huệ',
+        isHeadquarters: true
+      },
+      {
+        province: 'Hà Nội',
+        district: 'Quận Hoàn Kiếm',
+        detailedAddress: '456 Phố Tràng Tiền',
+        isHeadquarters: false
+      }
+    ]
+  },
+  {
+    id: 2,
+    companyName: 'Tập đoàn XYZ Việt Nam',
+    companyLogo: '',
+    email: 'recruit@xyz.vn',
+    phone: '0912345678',
+    taxCode: '9876543210',
+    status: 'pending_edit',
+    createdDate: '25/12/2025',
+    registrationType: 'edit',
+    description: 'Tập đoàn đa quốc gia chuyên về tài chính và ngân hàng số. Chúng tôi đang tìm kiếm những tài năng trẻ để cùng phát triển trong kỷ nguyên chuyển đổi số.',
+    website: 'https://xyz-group.vn',
+    foundingDate: '2015-06-20',
+    industries: ['Tài chính - Ngân hàng', 'Công nghệ thông tin', 'Fintech'],
+    technologies: ['Java', 'Spring Boot', 'Angular', 'MongoDB', 'Kubernetes', 'Azure'],
+    benefits: [
+      'Lương gross lên đến 3000$',
+      'Thưởng 13-16 tháng lương',
+      'Bảo hiểm PVI cao cấp',
+      'Nghỉ phép năm 15 ngày',
+      'Đào tạo nâng cao kỹ năng'
+    ],
+    contactEmail: 'hr@xyz.vn',
+    facebookUrl: 'https://facebook.com/xyzgroup',
+    linkedlnUrl: 'https://linkedin.com/company/xyz-group',
+    locations: [
+      {
+        province: 'Hồ Chí Minh',
+        district: 'Quận 7',
+        detailedAddress: '789 Đường Nguyễn Văn Linh',
+        isHeadquarters: true
+      }
+    ]
+  },
+  {
+    id: 3,
+    companyName: 'Công ty Giải pháp DEF',
+    companyLogo: '',
+    email: 'jobs@def.com',
+    phone: '0923456789',
+    taxCode: '5555666677',
+    status: 'approved',
+    createdDate: '20/12/2025',
+    registrationType: 'new',
+    description: 'Chuyên cung cấp giải pháp Marketing và Quảng cáo số cho các doanh nghiệp lớn tại Việt Nam và khu vực.',
+    website: 'https://def-solutions.com',
+    foundingDate: '2018-03-10',
+    industries: ['Marketing - Quảng cáo', 'Truyền thông - Media'],
+    technologies: ['Python', 'Django', 'React', 'MySQL', 'Docker'],
+    benefits: [
+      'Lương cạnh tranh',
+      'Thưởng theo dự án',
+      'Team building hàng quý'
+    ],
+    contactEmail: 'info@def.com',
+    locations: [
+      {
+        province: 'Hà Nội',
+        district: 'Quận Cầu Giấy',
+        detailedAddress: '101 Phố Duy Tân',
+        isHeadquarters: true
+      }
+    ]
+  },
+  {
+    id: 4,
+    companyName: 'Startup GHI Technology',
+    companyLogo: '',
+    email: 'hello@ghi.tech',
+    phone: '0934567890',
+    taxCode: '7777888899',
+    status: 'rejected',
+    createdDate: '15/12/2025',
+    registrationType: 'new',
+    description: 'Startup về AI và Machine Learning, chuyên phát triển các sản phẩm thông minh cho ngành giáo dục.',
+    website: 'https://ghi.tech',
+    foundingDate: '2023-09-01',
+    industries: ['Công nghệ thông tin', 'AI & Machine Learning', 'Giáo dục - Đào tạo'],
+    technologies: ['Python', 'TensorFlow', 'Next.js', 'PostgreSQL', 'AWS'],
+    benefits: [
+      'Cổ phiếu startup',
+      'Làm việc linh hoạt',
+      'Môi trường sáng tạo'
+    ],
+    contactEmail: 'careers@ghi.tech',
+    xUrl: 'https://x.com/ghitech',
+    locations: [
+      {
+        province: 'Đà Nẵng',
+        district: 'Quận Hải Châu',
+        detailedAddress: '55 Đường Bạch Đằng',
+        isHeadquarters: true
+      }
+    ]
+  }
+];
 
 export default function EmployerApprovalList() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,55 +210,37 @@ export default function EmployerApprovalList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
-  // Fetch employers from API
+  // Fetch employers from API (using mock data for now)
   const fetchEmployers = React.useCallback(async () => {
-
     try {
       setLoading(true);
       setError(null);
-      const status = statusFilter !== 'all' ? statusFilter : undefined;
-      const response = await getEmployersForApproval(status, currentPage, 10);
       
-      // Map BE data to FE format
-      const mappedEmployers = response.data.map((emp: EmployerProfileAPI) => {
-        // Convert BE status to FE status
-        let feStatus: 'pending_new' | 'pending_edit' | 'approved' | 'rejected';
-        // Check both status and profileStatus for accurate mapping
-        if (emp.status === 'PENDING_APPROVAL') {
-          feStatus = 'pending_new';
-        } else if (emp.status === 'ACTIVE' && emp.profileStatus === 'PENDING_EDIT_APPROVAL') {
-          feStatus = 'pending_edit';
-        } else if (emp.status === 'ACTIVE') {
-          feStatus = 'approved';
-        } else if (emp.status === 'REJECTED') {
-          feStatus = 'rejected';
-        } else {
-          feStatus = 'pending_new';
-        }
-        
-        return {
-          id: parseInt(emp.id, 10),
-          companyName: emp.companyName,
-          companyLogo: emp.logoUrl || '',
-          email: emp.contactEmail || emp.user?.email || '',
-          phone: emp.contactPhone || '',
-          taxCode: emp.taxCode || '',
-          status: feStatus,
-          createdDate: new Date(emp.createdAt as string).toLocaleDateString('vi-VN'),
-          // Determine registration type based on both status and profileStatus
-          registrationType: (emp.status === 'PENDING_APPROVAL' || 
-                            (emp.status === 'ACTIVE' && emp.profileStatus !== 'PENDING_EDIT_APPROVAL'))
-                            ? 'new' 
-                            : 'edit',
-          description: emp.description,
-          address: emp.address,
-          website: emp.website,
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Use mock data
+      let filteredData = [...MOCK_EMPLOYERS];
+      
+      // Filter by status
+      if (statusFilter !== 'all') {
+        const statusMap: Record<string, 'pending_new' | 'pending_edit' | 'approved' | 'rejected'> = {
+          'PENDING_APPROVAL': 'pending_new',
+          'PENDING_EDIT_APPROVAL': 'pending_edit',
+          'ACTIVE': 'approved',
+          'REJECTED': 'rejected'
         };
-      });
+        const feStatus = statusMap[statusFilter];
+        if (feStatus) {
+          filteredData = filteredData.filter(e => e.status === feStatus);
+        }
+      }
       
-      setEmployers(mappedEmployers);
-      setTotalCount(response.meta?.total || response.data.length);
+      setEmployers(filteredData);
+      setTotalCount(filteredData.length);
     } catch (err) {
       console.error('Error fetching employers:', err);
       setError(err instanceof Error ? err.message : 'Không thể tải danh sách nhà tuyển dụng');
@@ -165,32 +294,15 @@ export default function EmployerApprovalList() {
 
   const handleViewDetails = async (employer: EmployerProfile) => {
     try {
-      const response = await getEmployerProfile(employer.id.toString());
-      console.log('Full API Response:', response);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Backend returns { employer, user, pendingEdits, hasPendingEdits } directly
-      const detail = response.employer || {};
-      console.log('Employer detail:', detail);
+      // Use mock data - find the full employer data
+      const fullEmployer = MOCK_EMPLOYERS.find(e => e.id === employer.id) || employer;
       
-      // Determine correct registration type from detail
-      const registrationType: 'new' | 'edit' = 
-        (detail.status === 'ACTIVE' && detail.profileStatus === 'PENDING_EDIT_APPROVAL')
-          ? 'edit'
-          : 'new';
+      console.log('Employer detail (mock):', fullEmployer);
       
-      // Map backend response to frontend interface
-      const mappedEmployer = {
-        ...employer,
-        registrationType: registrationType,
-        description: detail.description || employer.description,
-        website: detail.website || employer.website,
-        technologies: detail.technologies || [],
-        benefits: detail.benefits || [],
-        locations: detail.locations || [],
-      };
-      console.log('Mapped employer:', mappedEmployer);
-      
-      setSelectedEmployer(mappedEmployer);
+      setSelectedEmployer(fullEmployer);
       setShowDetailModal(true);
     } catch (err) {
       console.error('Error fetching employer detail:', err);
@@ -206,14 +318,33 @@ export default function EmployerApprovalList() {
   const handleApprove = async () => {
     if (!selectedEmployer) return;
     
+    const employerName = selectedEmployer.companyName;
+    
     try {
-      await approveEmployer(selectedEmployer.id.toString());
+      // Ẩn modal xác nhận trước
       setShowApproveModal(false);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // await approveEmployer(selectedEmployer.id.toString());
+      
+      // Hiển thị thông báo thành công
+      setSuccessMessage(`Đã duyệt hồ sơ của ${employerName} thành công!`);
+      setShowSuccessNotification(true);
+      
+      // Tự động ẩn sau 3 giây
+      setTimeout(() => {
+        setShowSuccessNotification(false);
+      }, 3000);
+      
       fetchEmployers(); // Refresh list
-      alert('Đã duyệt nhà tuyển dụng thành công');
     } catch (err) {
       console.error('Error approving employer:', err);
-      alert(err instanceof Error ? err.message : 'Không thể duyệt nhà tuyển dụng');
+      setSuccessMessage(err instanceof Error ? err.message : 'Không thể duyệt nhà tuyển dụng');
+      setShowSuccessNotification(true);
+      setTimeout(() => {
+        setShowSuccessNotification(false);
+      }, 3000);
     }
   };
 
@@ -225,14 +356,33 @@ export default function EmployerApprovalList() {
   const handleReject = async (reason: string) => {
     if (!selectedEmployer) return;
     
+    const employerName = selectedEmployer.companyName;
+    
     try {
-      await rejectEmployer(selectedEmployer.id.toString(), reason);
+      // Ẩn modal xác nhận trước
       setShowRejectModal(false);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // await rejectEmployer(selectedEmployer.id.toString(), reason);
+      
+      // Hiển thị thông báo thành công
+      setSuccessMessage(`Đã từ chối hồ sơ của ${employerName}. Lý do: ${reason}`);
+      setShowSuccessNotification(true);
+      
+      // Tự động ẩn sau 3 giây
+      setTimeout(() => {
+        setShowSuccessNotification(false);
+      }, 3000);
+      
       fetchEmployers(); // Refresh list
-      alert('Đã từ chối nhà tuyển dụng');
     } catch (err) {
       console.error('Error rejecting employer:', err);
-      alert(err instanceof Error ? err.message : 'Không thể từ chối nhà tuyển dụng');
+      setSuccessMessage(err instanceof Error ? err.message : 'Không thể từ chối nhà tuyển dụng');
+      setShowSuccessNotification(true);
+      setTimeout(() => {
+        setShowSuccessNotification(false);
+      }, 3000);
     }
   };
 
@@ -534,6 +684,35 @@ export default function EmployerApprovalList() {
           onConfirm={handleReject}
           employerName={selectedEmployer.companyName}
         />
+      )}
+
+      {/* Success Notification */}
+      {showSuccessNotification && (
+        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
+          <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-4 min-w-[320px] max-w-md">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">Thành công!</h3>
+                <p className="text-sm text-gray-600">{successMessage}</p>
+              </div>
+              <button
+                onClick={() => setShowSuccessNotification(false)}
+                className="flex-shrink-0 text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

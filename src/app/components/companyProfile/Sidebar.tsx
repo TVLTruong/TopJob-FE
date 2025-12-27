@@ -36,12 +36,12 @@ export default function Sidebar() {
 
   const settingItems = [
     {
-      href: '/company/settings',
+      href: '/settings',
       icon: Settings,
       label: 'Cài đặt'
     },
     {
-      href: '/company/support',
+      href: '/contact',
       icon: HelpCircle,
       label: 'Hỗ trợ'
     }
@@ -96,7 +96,7 @@ export default function Sidebar() {
 
         {/* Settings */}
         <div className="pt-6 border-t mb-6 mt-auto">
-          <h3 className="text-xs font-semibold text-gray-500 mb-4">SETTINGS</h3>
+          <h3 className="text-xs font-semibold text-gray-500 mb-4">CÀI ĐẶT</h3>
           <nav className="space-y-2">
             {settingItems.map((item) => {
               const Icon = item.icon;
