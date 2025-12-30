@@ -13,26 +13,43 @@ export interface EmployerLocation {
 }
 
 export interface EmployerProfile {
-  id: number;
+  id: string;
+  userId: string;
+  // Contact Person Info
+  fullName: string;
+  workTitle?: string;
+  email?: string;
+  // Company Info
   companyName: string;
-  logoUrl?: string;  // Backend trả về logoUrl, không phải companyLogo
-  coverImageUrl?: string;
-  website?: string;
-  description?: string;
+  description?: string | null;
+  website?: string | null;
+  // Company Media
+  logoUrl?: string | null;
+  // Company Details
+  foundedDate?: Date | null;
+  // Contact Info
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  // Social Media
+  linkedlnUrl?: string | null;
+  facebookUrl?: string | null;
+  xUrl?: string | null;
+  // Status Fields
+  isApproved: boolean;
+  status: string;
+  profileStatus: string;
+  employerCategory?: string[];
+  // Benefits & Technologies
   benefits?: string[];
-  foundedDate?: number;
-  companySize?: string;
-  taxCode?: string;
-  field?: string;
   technologies?: string[];
+  // Locations
   locations?: EmployerLocation[];
-  facebookUrl?: string;
-  linkedlnUrl?: string;
-  xUrl?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  status?: string;
-  profileStatus?: string;
+  // Computed fields
+  companyAge?: number | null;
+  headquarters?: EmployerLocation;
+  hasCompleteProfile?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 interface EmployerProfileContextType {
@@ -51,12 +68,6 @@ export function EmployerProfileProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   const refreshProfile = async () => {
-    // 🔥 DEV MODE: Skip API call
-    if (process.env.NODE_ENV === 'development') {
-      setIsLoading(false);
-      return;
-    }
-    
     try {
       setIsLoading(true);
       setError(null);
@@ -73,31 +84,6 @@ export function EmployerProfileProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // 🔥 DEV MODE: Skip auto-load and use mock data
-    if (process.env.NODE_ENV === 'development') {
-      setProfile({
-        id: 'dev-employer-1',
-        companyName: 'VNG',
-        website: 'https://www.vng.com.vn',
-        locations: [
-          { province: 'Hồ Chí Minh', district: 'Quận 1', detailedAddress: '123 Nguyễn Huệ' },
-          { province: 'Hà Nội', district: 'Quận Ba Đình', detailedAddress: '456 Kim Mã' }
-        ],
-        field: 'Công nghệ thông tin',
-        foundedDate: 2004,
-        technologies: ['React', 'Node.js', 'Python', 'Java'],
-        description: 'VNG là công ty công nghệ hàng đầu Việt Nam, với hơn 3000 nhân viên và các sản phẩm công nghệ được sử dụng rộng rãi.',
-        benefits: ['Chế độ bảo hiểm sức khỏe mở rộng', 'Nghỉ phép linh hoạt 12 ngày', 'Lương tháng 13 và thưởng hiệu suất'],
-        contactEmail: 'contact@vng.com.vn',
-        facebookUrl: 'https://facebook.com/vng',
-        linkedlnUrl: 'https://linkedin.com/company/vng',
-        xUrl: 'https://x.com/vng',
-        logoUrl: '/logo.svg',
-        status: 'ACTIVE'
-      } as any);
-      setIsLoading(false);
-      return;
-    }
     // Auto-load profile on mount
     refreshProfile();
   }, []);
