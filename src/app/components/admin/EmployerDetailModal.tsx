@@ -18,7 +18,7 @@ interface EmployerProfile {
   foundingDate?: string;
   industries?: string[];
   technologies?: string[];
-  benefits?: string[];
+  benefits?: string | string[]; // Có thể là string (với \\n) hoặc array
   contactEmail?: string;
   facebookUrl?: string;
   linkedlnUrl?: string;
@@ -52,6 +52,14 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
   const currentStatus = statusConfig[employer.status as keyof typeof statusConfig] || {
     label: 'Không xác định',
     color: 'bg-gray-100 text-gray-600 border-gray-300'
+  };
+
+  // Helper function to normalize benefits to array
+  const normalizeBenefits = (benefits?: string | string[]): string[] => {
+    if (!benefits) return [];
+    if (Array.isArray(benefits)) return benefits;
+    // If it's a string with \\n separators, split it
+    return benefits.split('\\n').map(b => b.trim()).filter(b => b.length > 0);
   };
 
   const InfoField = ({ label, value, oldValue }: { label: string; value?: string; oldValue?: string }) => {
@@ -457,67 +465,76 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
           <LocationsDiffField />
 
           {/* Benefits */}
-          {(employer.benefits && employer.benefits.length > 0) || (isEditType && employer.oldData?.benefits && employer.oldData.benefits.length > 0) ? (
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <h4 className="text-sm font-semibold text-gray-900 mb-3">Phúc lợi</h4>
-              {isEditType && employer.oldData?.benefits && employer.benefits && JSON.stringify(employer.oldData.benefits) !== JSON.stringify(employer.benefits) ? (
-                <div className="space-y-3">
-                  {employer.oldData.benefits.filter(b => !employer.benefits?.includes(b)).length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-red-600 mb-2 flex items-center gap-2">
-                        <Minus className="w-3 h-3" /> Đã xóa
-                      </p>
-                      <ul className="space-y-2">
-                        {employer.oldData.benefits.filter(b => !employer.benefits?.includes(b)).map((benefit, index) => (
-                          <li key={index} className="text-sm text-red-700 flex items-start gap-2 line-through">
-                            <span className="mt-0.5">✗</span>
-                            <span>{benefit}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {employer.benefits?.filter(b => !employer.oldData?.benefits?.includes(b)).length && employer.benefits?.filter(b => !employer.oldData?.benefits?.includes(b)).length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-green-600 mb-2 flex items-center gap-2">
-                        <Plus className="w-3 h-3" /> Đã thêm
-                      </p>
-                      <ul className="space-y-2">
-                        {employer.benefits?.filter(b => !employer.oldData?.benefits?.includes(b)).map((benefit, index) => (
-                          <li key={index} className="text-sm text-green-700 flex items-start gap-2 font-medium">
-                            <span className="text-green-600 mt-0.5">✓</span>
-                            <span>{benefit}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {employer.benefits?.filter(b => employer.oldData?.benefits?.includes(b)).length && employer.benefits?.filter(b => employer.oldData?.benefits?.includes(b)).length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-500 mb-2">Không đổi</p>
-                      <ul className="space-y-2">
-                        {employer.benefits?.filter(b => employer.oldData?.benefits?.includes(b)).map((benefit, index) => (
-                          <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                            <span className="text-gray-600 mt-0.5">✓</span>
-                            <span>{benefit}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <ul className="space-y-2">
-                  {employer.benefits?.map((benefit, index) => (
-                    <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                      <span className="text-green-600 mt-0.5">✓</span>
-                      <span>{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ) : null}
+          {(() => {
+            const currentBenefits = normalizeBenefits(employer.benefits);
+            const oldBenefits = normalizeBenefits(employer.oldData?.benefits);
+            
+            if (currentBenefits.length === 0 && (!isEditType || oldBenefits.length === 0)) {
+              return null;
+            }
+
+            return (
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Phúc lợi</h4>
+                {isEditType && oldBenefits.length > 0 && JSON.stringify(oldBenefits) !== JSON.stringify(currentBenefits) ? (
+                  <div className="space-y-3">
+                    {oldBenefits.filter(b => !currentBenefits.includes(b)).length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-red-600 mb-2 flex items-center gap-2">
+                          <Minus className="w-3 h-3" /> Đã xóa
+                        </p>
+                        <ul className="space-y-2">
+                          {oldBenefits.filter(b => !currentBenefits.includes(b)).map((benefit, index) => (
+                            <li key={index} className="text-sm text-red-700 flex items-start gap-2 line-through">
+                              <span className="mt-0.5">✗</span>
+                              <span>{benefit}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {currentBenefits.filter(b => !oldBenefits.includes(b)).length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-green-600 mb-2 flex items-center gap-2">
+                          <Plus className="w-3 h-3" /> Đã thêm
+                        </p>
+                        <ul className="space-y-2">
+                          {currentBenefits.filter(b => !oldBenefits.includes(b)).map((benefit, index) => (
+                            <li key={index} className="text-sm text-green-700 flex items-start gap-2 font-medium">
+                              <span className="text-green-600 mt-0.5">✓</span>
+                              <span>{benefit}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {currentBenefits.filter(b => oldBenefits.includes(b)).length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 mb-2">Không đổi</p>
+                        <ul className="space-y-2">
+                          {currentBenefits.filter(b => oldBenefits.includes(b)).map((benefit, index) => (
+                            <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                              <span className="text-gray-600 mt-0.5">✓</span>
+                              <span>{benefit}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {currentBenefits.map((benefit, index) => (
+                      <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                        <span className="text-green-600 mt-0.5">✓</span>
+                        <span>{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Additional Information */}
           <div className="space-y-4">

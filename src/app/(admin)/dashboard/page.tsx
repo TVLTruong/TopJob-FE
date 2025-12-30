@@ -6,24 +6,29 @@ import Link from 'next/link';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart } from 'recharts';
 
 export default function AdminDashboard() {
-  // Dữ liệu cho biểu đồ 3 tháng gần nhất - Người dùng
+  // Dữ liệu cho biểu đồ 4 tháng gần nhất - Người dùng
   const userGrowthData = [
+    { month: 'Tháng 9', candidates: 92, employers: 28 },
     { month: 'Tháng 10', candidates: 89, employers: 24 },
     { month: 'Tháng 11', candidates: 105, employers: 31 },
     { month: 'Tháng 12', candidates: 78, employers: 22 },
   ];
 
-  // Dữ liệu cho biểu đồ 3 tháng gần nhất - Tin đăng
+  // Dữ liệu cho biểu đồ 4 tháng gần nhất - Tin đăng
   const jobPostingData = [
-    { month: 'Tháng 10', pending: 35, active: 89 },
-    { month: 'Tháng 11', pending: 42, active: 108 },
-    { month: 'Tháng 12', pending: 28, active: 95 },
+    { month: 'Tháng 9', active: 82 },
+    { month: 'Tháng 10', active: 89 },
+    { month: 'Tháng 11', active: 108 },
+    { month: 'Tháng 12', active: 95 },
   ];
 
   const totalAccounts = 122 + 458; // employers + candidates
+  const totalCandidates = 458;
   const totalEmployers = 122;
+  const newEmployersThisMonth = 22; // New employers in current month
   const pendingEmployers = 18;
   const totalJobPostings = 324;
+  const newJobPostingsThisMonth = 95; // New job postings in current month
   const pendingJobPostings = 24;
 
   const stats = [
@@ -66,7 +71,7 @@ export default function AdminDashboard() {
       return (
         <div className="bg-gray-800 text-white p-4 rounded-lg shadow-lg min-w-[140px]">
           <p className="font-semibold mb-3 text-center border-b border-gray-600 pb-2">
-            {payload[0].payload.month}
+            Tổng: {total}
           </p>
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-4">
@@ -90,25 +95,18 @@ export default function AdminDashboard() {
 
   const CustomJobTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
-      const pending = payload.find((p: any) => p.dataKey === 'pending')?.value || 0;
       const activeJobs = payload.find((p: any) => p.dataKey === 'active')?.value || 0;
       
       return (
         <div className="bg-gray-800 text-white p-4 rounded-lg shadow-lg min-w-[140px]">
           <p className="font-semibold mb-3 text-center border-b border-gray-600 pb-2">
-            {payload[0].payload.month}
+            Tổng: {activeJobs}
           </p>
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                <span className="text-sm">{activeJobs}</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                <span className="text-sm">{pending}</span>
+                <span className="text-sm">Đang hoạt động: {activeJobs}</span>
               </div>
             </div>
           </div>
@@ -129,13 +127,14 @@ export default function AdminDashboard() {
       {/* User Growth Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart */}
-        <div className="lg:col-span-2 bg-white rounded-lg shadow-sm p-6">
+        <div className="lg:col-span-2 bg-white rounded-lg shadow-sm p-6 flex flex-col">
           <div className="mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Người dùng mới (3 tháng gần nhất)</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Người dùng mới (4 tháng gần nhất)</h2>
             <p className="text-sm text-gray-600">Thống kê số lượng Ứng viên và Nhà tuyển dụng đăng ký mới</p>
           </div>
           
-          <ResponsiveContainer width="100%" height={350}>
+          <div className="flex-1 flex items-center">
+            <ResponsiveContainer width="100%" height={350}>
             <ComposedChart data={userGrowthData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis 
@@ -184,10 +183,11 @@ export default function AdminDashboard() {
               />
             </ComposedChart>
           </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Stats Cards for Users */}
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="p-3 rounded-lg bg-blue-100 text-blue-600">
@@ -195,8 +195,36 @@ export default function AdminDashboard() {
               </div>
             </div>
             <h3 className="text-gray-600 text-sm font-medium mb-2">Tổng số tài khoản</h3>
-            <p className="text-3xl font-bold text-gray-900">{totalAccounts}</p>
-            <p className="text-xs text-gray-500 mt-1">Tất cả người dùng</p>
+            <p className="text-3xl font-bold text-gray-900 mb-3">{totalAccounts}</p>
+            
+            {/* Two-color bar showing employer and candidate distribution */}
+            <div className="relative group">
+              <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden flex cursor-pointer">
+                <div 
+                  className="bg-purple-500 h-full transition-all duration-300"
+                  style={{ width: `${(totalEmployers / totalAccounts) * 100}%` }}
+                />
+                <div 
+                  className="bg-orange-400 h-full transition-all duration-300"
+                  style={{ width: `${(totalCandidates / totalAccounts) * 100}%` }}
+                />
+              </div>
+              {/* Tooltip on hover */}
+              <div className="absolute left-0 right-0 -bottom-16 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                <div className="bg-gray-800 text-white p-3 rounded-lg shadow-lg">
+                  <div className="flex justify-between gap-4 text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                      <span>Nhà tuyển dụng: {totalEmployers}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-orange-400"></div>
+                      <span>Ứng viên: {totalCandidates}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-6">
@@ -205,9 +233,9 @@ export default function AdminDashboard() {
                 <Briefcase className="w-6 h-6" />
               </div>
             </div>
-            <h3 className="text-gray-600 text-sm font-medium mb-2">Tổng số nhà tuyển dụng</h3>
-            <p className="text-3xl font-bold text-gray-900">{totalEmployers}</p>
-            <p className="text-xs text-gray-500 mt-1">Đã đăng ký</p>
+            <h3 className="text-gray-600 text-sm font-medium mb-2">Số nhà tuyển dụng mới tháng này</h3>
+            <p className="text-3xl font-bold text-gray-900">{newEmployersThisMonth}</p>
+            <p className="text-xs text-gray-500 mt-1">Đăng ký trong tháng</p>
           </div>
 
           <Link href="/employer-approval">
@@ -229,13 +257,14 @@ export default function AdminDashboard() {
       {/* Job Posting Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart */}
-        <div className="lg:col-span-2 bg-white rounded-lg shadow-sm p-6">
+        <div className="lg:col-span-2 bg-white rounded-lg shadow-sm p-6 flex flex-col">
           <div className="mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Tin đăng mới (3 tháng gần nhất)</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Tin đăng mới (4 tháng gần nhất)</h2>
             <p className="text-sm text-gray-600">Thống kê tin tuyển dụng mới theo trạng thái</p>
           </div>
           
-          <ResponsiveContainer width="100%" height={350}>
+          <div className="flex-1 flex items-center">
+            <ResponsiveContainer width="100%" height={350}>
             <ComposedChart data={jobPostingData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis 
@@ -253,41 +282,33 @@ export default function AdminDashboard() {
                 wrapperStyle={{ paddingTop: '20px' }}
                 iconType="circle"
                 payload={[
-                  { value: 'Active', type: 'square', color: '#22c55e' },
-                  { value: 'Pending', type: 'square', color: '#eab308' },
-                  { value: 'Tổng', type: 'line', color: '#3b82f6' }
+                  { value: 'Đang hoạt động', type: 'square', color: '#22c55e' },
+                  { value: 'Xu hướng', type: 'line', color: '#3b82f6' }
                 ]}
               />
               <Bar 
-                dataKey="pending" 
-                stackId="a"
-                fill="#eab308" 
-                name="Pending"
-                maxBarSize={80}
-              />
-              <Bar 
                 dataKey="active" 
-                stackId="a"
                 fill="#22c55e" 
-                name="Active"
+                name="Đang hoạt động"
                 radius={[8, 8, 0, 0]}
                 maxBarSize={80}
               />
               <Line 
                 type="monotone" 
-                dataKey={(data: any) => data.pending + data.active}
+                dataKey="active"
                 stroke="#3b82f6" 
                 strokeWidth={3}
-                name="Tổng"
+                name="Xu hướng"
                 dot={{ fill: '#3b82f6', r: 5, strokeWidth: 2, stroke: '#fff' }}
                 activeDot={{ r: 7, strokeWidth: 2 }}
               />
             </ComposedChart>
           </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Stats Cards for Job Postings */}
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="p-3 rounded-lg bg-green-100 text-green-600">
@@ -297,6 +318,17 @@ export default function AdminDashboard() {
             <h3 className="text-gray-600 text-sm font-medium mb-2">Tổng số tin tuyển dụng</h3>
             <p className="text-3xl font-bold text-gray-900">{totalJobPostings}</p>
             <p className="text-xs text-gray-500 mt-1">Tất cả tin đăng</p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 rounded-lg bg-blue-100 text-blue-600">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+            </div>
+            <h3 className="text-gray-600 text-sm font-medium mb-2">Số tin tuyển dụng mới tháng này</h3>
+            <p className="text-3xl font-bold text-gray-900">{newJobPostingsThisMonth}</p>
+            <p className="text-xs text-gray-500 mt-1">Đăng trong tháng</p>
           </div>
 
           <Link href="/job-posting-approval">

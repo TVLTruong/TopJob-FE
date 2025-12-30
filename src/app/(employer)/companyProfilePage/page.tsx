@@ -99,15 +99,17 @@ export default function CompanyProfilePage() {
     );
   }
 
-  // Format benefits: API trả về array, Benefits component cần string format "/n" separated
-  const benefitsText = profile?.benefits?.join('/n') || '';
+  // Format benefits: API trả về string hoặc array, Benefits component cần string format "\\n" separated
+  const benefitsText = Array.isArray(profile?.benefits) 
+    ? profile.benefits.join('\\n') 
+    : (profile?.benefits || '');
 
   // Handler to save benefits to API
   const handleSaveBenefits = async (newBenefitsText: string) => {
     try {
-      // Convert "/n" separated string back to array
+      // Convert "\\n" separated string back to array
       const benefitsArray = newBenefitsText
-        .split('/n')
+        .split('\\n')
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
       

@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import ConfirmModal from './ConfirmModal';
 
 type BenefitsProps = {
-  benefitsText: string; // chuỗi từ DB, phân cách dòng bằng "/n"
+  benefitsText: string; // chuỗi từ DB, phân cách dòng bằng "\\n"
   canEddit?: boolean; // theo yêu cầu (giữ đúng tên prop)
   canEdit?: boolean;  // hỗ trợ thêm để an toàn
   onSave?: (newText: string) => void; // callback khi lưu
@@ -13,20 +13,20 @@ type BenefitsProps = {
 
 export default function Benefits({ benefitsText, canEddit, canEdit, onSave }: BenefitsProps) {
   const { user } = useAuth();
-  const defaultSample = 'Chế độ bảo hiểm sức khỏe mở rộng/nNghỉ phép linh hoạt 12 ngày/nLương tháng 13 và thưởng hiệu suất/nLàm việc hybrid, hỗ trợ thiết bị/nTrợ cấp ăn trưa và gửi xe/nTeam building hàng quý, du lịch năm/nNgân sách học tập và khóa học online/nKhám sức khỏe định kỳ/nGói hỗ trợ sức khỏe tinh thần/nPhụ cấp điện thoại và Internet';
+  const defaultSample = 'Chế độ bảo hiểm sức khỏe mở rộng\\nNghỉ phép linh hoạt 12 ngày\\nLương tháng 13 và thưởng hiệu suất\\nLàm việc hybrid, hỗ trợ thiết bị\\nTrợ cấp ăn trưa và gửi xe\\nTeam building hàng quý, du lịch năm\\nNgân sách học tập và khóa học online\\nKhám sức khỏe định kỳ\\nGói hỗ trợ sức khỏe tinh thần\\nPhụ cấp điện thoại và Internet';
 
   const initialText = benefitsText && benefitsText.trim().length > 0 ? benefitsText : defaultSample;
 
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(initialText);
-  const [editingText, setEditingText] = useState(initialText.replace(/\s*\/n\s*/g, '\n'));
+  const [editingText, setEditingText] = useState(initialText.replace(/\\n/g, '\n'));
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const lines = useMemo(() => {
     return (text || '')
-      .split('/n')
+      .split('\\n')
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
   }, [text]);
@@ -108,7 +108,7 @@ export default function Benefits({ benefitsText, canEddit, canEdit, onSave }: Be
             .split('\n')
             .map((s) => s.trim())
             .filter((s) => s.length > 0)
-            .join('/n');
+            .join('\\n');
           setText(normalized);
           setShowConfirm(false);
           setShowSuccess(true);
