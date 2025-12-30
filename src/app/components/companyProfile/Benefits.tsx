@@ -1,5 +1,5 @@
 'use client';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Edit } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import ConfirmModal from './ConfirmModal';
@@ -19,14 +19,24 @@ export default function Benefits({ benefitsText, canEddit, canEdit, onSave }: Be
 
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(initialText);
-  const [editingText, setEditingText] = useState(initialText.replace(/\\n/g, '\n'));
+  // Convert both literal \n and actual newlines for textarea editing
+  const [editingText, setEditingText] = useState(
+    initialText.replace(/\\n/g, '\n').replace(/\\\\n/g, '\n')
+  );
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // Sync editingText when text changes (e.g., after saving or props update)
+  useEffect(() => {
+    // Handle both literal \n (from JSON) and \\n (escaped)
+    setEditingText(text.replace(/\\n/g, '\n').replace(/\\\\n/g, '\n'));
+  }, [text]);
+
   const lines = useMemo(() => {
+    // Split by both literal \n and \\n
     return (text || '')
-      .split('\\n')
+      .split(/\\n|\\\\n/)
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
   }, [text]);
