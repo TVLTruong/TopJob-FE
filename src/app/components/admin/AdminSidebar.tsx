@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from 'next/navigation';
-import { BarChart3, FileCheck, Briefcase, LogOut } from 'lucide-react'
+import { BarChart3, FileCheck, Briefcase, Users, LogOut } from 'lucide-react'
 import LogoutModal from '../common/LogoutModal'
 
 export default function AdminSidebar() {
@@ -27,6 +27,11 @@ export default function AdminSidebar() {
       href: '/job-posting-approval',
       icon: Briefcase,
       label: 'Duyệt tin tuyển dụng'
+    },
+    {
+      href: '/account-management',
+      icon: Users,
+      label: 'Quản lý tài khoản'
     }
   ];
 

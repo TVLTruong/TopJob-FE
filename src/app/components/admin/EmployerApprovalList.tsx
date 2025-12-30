@@ -196,13 +196,13 @@ export default function EmployerApprovalList() {
     try {
       // Fetch full employer details from API
       const response = await getEmployerProfile(employer.id.toString());
-      
       console.log('Employer detail from API:', response);
       
-      // Map API response to EmployerProfile format if needed
+      // Map API response to EmployerProfile format
       const fullEmployer: EmployerProfile = {
         ...employer,
         ...response,
+        oldData: response.oldData, // Dữ liệu cũ từ API (cho trường hợp pending_edit)
       };
       
       setSelectedEmployer(fullEmployer);
@@ -409,115 +409,113 @@ export default function EmployerApprovalList() {
         </div>
 
         {/* Table */}
-        <div className="border border-gray-200 rounded-lg bg-gray-50 overflow-hidden">
-          {/* Table Header */}
-          <div className="grid grid-cols-[1fr_2fr_1.5fr_1.5fr_1.5fr_1fr] gap-4 py-4 px-4 text-sm font-medium text-gray-600 border-b border-gray-200">
-            <div>Logo</div>
-            <div className="flex items-center gap-1">
-              Tên công ty
-              <span className="text-gray-400">⇅</span>
-            </div>
-            <div className="flex items-center gap-1">
-              Email
-              <span className="text-gray-400">⇅</span>
-            </div>
-            {/* <div className="flex items-center gap-1">
-              Mã số thuế
-              <span className="text-gray-400">⇅</span>
-            </div> */}
-            <div className="flex items-center gap-1">
-              Trạng thái
-              <span className="text-gray-400">⇅</span>
-            </div>
-            <div>Thao tác</div>
-          </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-y">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Logo
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tên công ty
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Trạng thái
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Thao tác
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {paginatedEmployers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                    Không có hồ sơ nào
+                  </td>
+                </tr>
+              ) : (
+                paginatedEmployers.map((employer) => (
+                  <tr key={employer.id} className="hover:bg-gray-50">
+                    {/* Logo */}
+                    <td className="px-6 py-4">
+                      <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                        {employer.companyLogo ? (
+                          <Image
+                            src={employer.companyLogo}
+                            alt={employer.companyName}
+                            width={48}
+                            height={48}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400"></div>
+                        )}
+                      </div>
+                    </td>
 
-          {/* Table Body */}
-          <div className="bg-white">
-            {paginatedEmployers.length === 0 ? (
-              <div className="py-12 text-center text-gray-500">
-                Không có hồ sơ nào
-              </div>
-            ) : (
-              paginatedEmployers.map((employer) => (
-                <div
-                  key={employer.id}
-                  className="grid grid-cols-[1fr_2fr_1.5fr_1.5fr_1.5fr_1fr] gap-4 py-4 px-4 border-b border-gray-200 items-center hover:bg-gray-50 transition"
-                >
-                  {/* Logo */}
-                  <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-                    {employer.companyLogo ? (
-                      <Image
-                        src={employer.companyLogo}
-                        alt={employer.companyName}
-                        width={48}
-                        height={48}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400"></div>
-                    )}
-                  </div>
+                    {/* Company Name */}
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900">{employer.companyName}</div>
+                    </td>
 
-                  {/* Company Name */}
-                  <div className="text-sm font-medium text-gray-900">{employer.companyName}</div>
+                    {/* Email */}
+                    <td className="px-6 py-4 text-sm text-gray-600">{employer.email}</td>
 
-                  {/* Email */}
-                  <div className="text-sm text-gray-600">{employer.email}</div>
+                    {/* Status */}
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+                          statusConfig[employer.status].color
+                        }`}
+                      >
+                        {statusConfig[employer.status].label}
+                      </span>
+                    </td>
 
-                  {/* Tax Code */}
-                  <div className="text-sm text-gray-600">{employer.taxCode}</div>
+                    {/* Actions */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleViewDetails(employer)}
+                          className="flex items-center gap-2 px-3 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition whitespace-nowrap"
+                          title="Chi tiết"
+                        >
+                          <span className="text-sm">Xem chi tiết</span>
+                        </button>
 
-                  {/* Status */}
-                  <div>
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
-                        statusConfig[employer.status].color
-                      }`}
-                    >
-                      {statusConfig[employer.status].label}
-                    </span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 justify-end h-10">
-                    <button
-                      onClick={() => handleViewDetails(employer)}
-                      className="flex items-center gap-2 px-3 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition whitespace-nowrap"
-                      title="Chi tiết"
-                    >
-                      <span className="text-sm">Xem chi tiết</span>
-                    </button>
-
-                    <div className="w-20 flex items-center justify-center">
-                      {employer.status === 'pending_new' || employer.status === 'pending_edit' ? (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleOpenApproveModal(employer)}
-                            className="p-2 text-white bg-green-600 hover:bg-green-700 rounded-lg transition"
-                            title="Duyệt"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleOpenRejectModal(employer)}
-                            className="p-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition"
-                            title="Từ chối"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-500 italic whitespace-nowrap">
-                          Đã xử lý
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+                        {employer.status === 'pending_new' || employer.status === 'pending_edit' ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleOpenApproveModal(employer)}
+                              className="p-2 text-white bg-green-600 hover:bg-green-700 rounded-lg transition"
+                              title="Duyệt"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleOpenRejectModal(employer)}
+                              className="p-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition"
+                              title="Từ chối"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-500 italic whitespace-nowrap">
+                            Đã xử lý
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
 
         {/* Pagination */}
