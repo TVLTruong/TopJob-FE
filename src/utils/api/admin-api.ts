@@ -2,9 +2,8 @@ import axios from 'axios';
 // import { EmployerApprovalType } from '../../components/types/employer-approval';
 export enum EmployerApprovalType {
   ALL = 'ALL',
-  PENDING = 'PENDING',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
+  NEW = 'NEW',
+  EDIT = 'EDIT',
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;// || 'http://localhost:3001/api';
