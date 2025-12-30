@@ -175,7 +175,6 @@ export default function EmployerApprovalList() {
     try {
       // Fetch full employer details from API
       const response = await getEmployerProfile(employer.id.toString());
-      
       console.log('Employer detail from API:', response);
       
       // Map API response to EmployerProfile format
@@ -445,8 +444,10 @@ export default function EmployerApprovalList() {
                     )}
                   </div>
 
-                  {/* Company Name */}
-                  <div className="text-sm font-medium text-gray-900">{employer.companyName}</div>
+                    {/* Company Name */}
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900">{employer.companyName}</div>
+                    </td>
 
                   {/* Email */}
                   <div className="text-sm text-gray-600 truncate">{employer.email}</div>
@@ -454,16 +455,16 @@ export default function EmployerApprovalList() {
                   {/* Tax Code */}
                   {/* <div className="text-sm text-gray-600">{employer.taxCode}</div> */}
 
-                  {/* Status */}
-                  <div>
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
-                        statusConfig[employer.status].color
-                      }`}
-                    >
-                      {statusConfig[employer.status].label}
-                    </span>
-                  </div>
+                    {/* Status */}
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+                          statusConfig[employer.status].color
+                        }`}
+                      >
+                        {statusConfig[employer.status].label}
+                      </span>
+                    </td>
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 justify-end">

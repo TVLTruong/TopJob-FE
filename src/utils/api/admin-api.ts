@@ -206,3 +206,88 @@ export const rejectJob = async (jobId: string, reason: string) => {
     throw error;
   }
 };
+
+// ==================== ACCOUNT MANAGEMENT APIs ====================
+
+// Get list of employer accounts
+export const getEmployerAccounts = async (
+  searchQuery?: string,
+  page: number = 1,
+  limit: number = 10
+) => {
+  try {
+    const params = new URLSearchParams();
+    if (searchQuery) params.append('search', searchQuery);
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+
+    const response = await axios.get(
+      `${API_BASE_URL}/admin/accounts/employers?${params.toString()}`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching employer accounts:', error);
+    throw error;
+  }
+};
+
+// Get list of candidate accounts
+export const getCandidateAccounts = async (
+  searchQuery?: string,
+  page: number = 1,
+  limit: number = 10
+) => {
+  try {
+    const params = new URLSearchParams();
+    if (searchQuery) params.append('search', searchQuery);
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+
+    const response = await axios.get(
+      `${API_BASE_URL}/admin/accounts/candidates?${params.toString()}`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching candidate accounts:', error);
+    throw error;
+  }
+};
+
+// Toggle account lock/unlock
+export const toggleAccountLock = async (accountId: string, accountType: 'employer' | 'candidate') => {
+  try {
+    const endpoint = accountType === 'employer' 
+      ? `${API_BASE_URL}/admin/accounts/employers/${accountId}/toggle-lock`
+      : `${API_BASE_URL}/admin/accounts/candidates/${accountId}/toggle-lock`;
+    
+    const response = await axios.post(
+      endpoint,
+      {},
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error toggling account lock:', error);
+    throw error;
+  }
+};
+
+// Delete account
+export const deleteAccount = async (accountId: string, accountType: 'employer' | 'candidate') => {
+  try {
+    const endpoint = accountType === 'employer'
+      ? `${API_BASE_URL}/admin/accounts/employers/${accountId}`
+      : `${API_BASE_URL}/admin/accounts/candidates/${accountId}`;
+    
+    const response = await axios.delete(
+      endpoint,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    throw error;
+  }
+};

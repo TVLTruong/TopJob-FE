@@ -55,7 +55,7 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
   };
 
   const InfoField = ({ label, value, oldValue }: { label: string; value?: string; oldValue?: string }) => {
-    const hasChanged = isEditType && oldValue && oldValue !== value;
+    const hasChanged = isEditType && oldValue !== undefined && oldValue !== value;
 
     if (isEditType && hasChanged) {
       return (
@@ -64,14 +64,14 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
             <Minus className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">{label} (Cũ)</p>
-              <p className="text-sm text-red-700 line-through">{oldValue}</p>
+              <p className="text-sm text-red-700 line-through">{oldValue || 'Chưa có'}</p>
             </div>
           </div>
           <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
             <Plus className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">{label} (Mới)</p>
-              <p className="text-sm text-green-700 font-medium">{value}</p>
+              <p className="text-sm text-green-700 font-medium">{value || 'Chưa có'}</p>
             </div>
           </div>
         </div>
@@ -82,6 +82,201 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
       <p className="text-sm text-gray-600">
         <span className="font-medium">{label}:</span> {value || 'Chưa cập nhật'}
       </p>
+    );
+  };
+
+  const ArrayDiffField = ({ 
+    label, 
+    newItems, 
+    oldItems, 
+    renderItem 
+  }: { 
+    label: string; 
+    newItems?: string[]; 
+    oldItems?: string[]; 
+    renderItem: (item: string, isRemoved?: boolean) => React.ReactNode;
+  }) => {
+    const hasChanged = isEditType && oldItems !== undefined && JSON.stringify(oldItems) !== JSON.stringify(newItems);
+
+    if (!hasChanged && (!newItems || newItems.length === 0)) {
+      return null;
+    }
+
+    if (isEditType && hasChanged) {
+      const removedItems = oldItems?.filter(item => !newItems?.includes(item)) || [];
+      const addedItems = newItems?.filter(item => !oldItems?.includes(item)) || [];
+      const unchangedItems = newItems?.filter(item => oldItems?.includes(item)) || [];
+
+      return (
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <h4 className="text-sm font-semibold text-gray-900 mb-3">{label}</h4>
+          <div className="space-y-3">
+            {removedItems.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-red-600 flex items-center gap-2">
+                  <Minus className="w-3 h-3" /> Đã xóa
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {removedItems.map((item, idx) => renderItem(item, true))}
+                </div>
+              </div>
+            )}
+            {addedItems.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-green-600 flex items-center gap-2">
+                  <Plus className="w-3 h-3" /> Đã thêm
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {addedItems.map((item, idx) => renderItem(item, false))}
+                </div>
+              </div>
+            )}
+            {unchangedItems.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-500">Không đổi</p>
+                <div className="flex flex-wrap gap-2">
+                  {unchangedItems.map((item, idx) => (
+                    <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <h4 className="text-sm font-semibold text-gray-900 mb-3">{label}</h4>
+        <div className="flex flex-wrap gap-2">
+          {newItems?.map((item, idx) => renderItem(item))}
+        </div>
+      </div>
+    );
+  };
+
+  const LocationsDiffField = () => {
+    const newLocations = employer.locations || [];
+    const oldLocations = employer.oldData?.locations || [];
+    const hasChanged = isEditType && oldLocations.length > 0 && JSON.stringify(oldLocations) !== JSON.stringify(newLocations);
+
+    if (!hasChanged && newLocations.length === 0) {
+      return null;
+    }
+
+    const locationToString = (loc: typeof newLocations[0]) => 
+      `${loc.detailedAddress}, ${loc.district}, ${loc.province}`;
+
+    if (isEditType && hasChanged) {
+      const removedLocations = oldLocations.filter(
+        oldLoc => !newLocations.some(newLoc => locationToString(newLoc) === locationToString(oldLoc))
+      );
+      const addedLocations = newLocations.filter(
+        newLoc => !oldLocations.some(oldLoc => locationToString(oldLoc) === locationToString(newLoc))
+      );
+      const unchangedLocations = newLocations.filter(
+        newLoc => oldLocations.some(oldLoc => locationToString(oldLoc) === locationToString(newLoc))
+      );
+
+      return (
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <h4 className="text-sm font-semibold text-gray-900 mb-3">Địa điểm văn phòng</h4>
+          <div className="space-y-3">
+            {removedLocations.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-red-600 flex items-center gap-2">
+                  <Minus className="w-3 h-3" /> Đã xóa
+                </p>
+                {removedLocations.map((location, index) => (
+                  <div key={index} className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <svg className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    <div className="flex-1">
+                      <span className="text-sm text-red-700 line-through">{locationToString(location)}</span>
+                      {location.isHeadquarters && (
+                        <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded">
+                          Trụ sở chính
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {addedLocations.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-green-600 flex items-center gap-2">
+                  <Plus className="w-3 h-3" /> Đã thêm
+                </p>
+                {addedLocations.map((location, index) => (
+                  <div key={index} className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <svg className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    <div className="flex-1">
+                      <span className="text-sm text-green-700 font-medium">{locationToString(location)}</span>
+                      {location.isHeadquarters && (
+                        <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
+                          Trụ sở chính
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {unchangedLocations.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-500">Không đổi</p>
+                {unchangedLocations.map((location, index) => (
+                  <div key={index} className="flex items-start gap-2 text-sm">
+                    <svg className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    <div className="flex-1">
+                      <span className="text-gray-600">{locationToString(location)}</span>
+                      {location.isHeadquarters && (
+                        <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+                          Trụ sở chính
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <h4 className="text-sm font-semibold text-gray-900 mb-3">Địa điểm văn phòng</h4>
+        <div className="space-y-3">
+          {newLocations.map((location, index) => (
+            <div key={index} className="flex items-start gap-2 text-sm">
+              <svg className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+              </svg>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-gray-600">{locationToString(location)}</span>
+                  {location.isHeadquarters && (
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded">
+                      Trụ sở chính
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     );
   };
 
@@ -200,120 +395,165 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
             </div>
           )}
 
-          {/* Industries */}
-          {employer.industries && employer.industries.length > 0 && (
+          {/* Address with Diff */}
+          {(employer.address || (isEditType && employer.oldData?.address)) && (
             <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <h4 className="text-sm font-semibold text-gray-900 mb-3">Lĩnh vực</h4>
-              <div className="flex flex-wrap gap-2">
-                {employer.industries.map((industry, index) => (
-                  <span 
-                    key={index}
-                    className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full"
-                  >
-                    {industry}
-                  </span>
-                ))}
-              </div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Địa chỉ</h4>
+              <InfoField 
+                label="Địa chỉ công ty" 
+                value={employer.address} 
+                oldValue={employer.oldData?.address} 
+              />
             </div>
           )}
+
+          {/* Industries */}
+          {(employer.industries && employer.industries.length > 0) || (isEditType && employer.oldData?.industries && employer.oldData.industries.length > 0) ? (
+            <ArrayDiffField
+              label="Lĩnh vực"
+              newItems={employer.industries}
+              oldItems={employer.oldData?.industries}
+              renderItem={(item, isRemoved) => (
+                <span 
+                  key={item}
+                  className={`px-3 py-1 text-xs font-medium rounded-full ${
+                    isRemoved 
+                      ? 'bg-red-100 text-red-700 line-through' 
+                      : isEditType && employer.oldData?.industries && !employer.oldData.industries.includes(item)
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-blue-100 text-blue-700'
+                  }`}
+                >
+                  {item}
+                </span>
+              )}
+            />
+          ) : null}
 
           {/* Technologies */}
-          {employer.technologies && employer.technologies.length > 0 && (
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <h4 className="text-sm font-semibold text-gray-900 mb-3">Công nghệ</h4>
-              <div className="flex flex-wrap gap-2">
-                {employer.technologies.map((tech, index) => (
-                  <span 
-                    key={index}
-                    className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full"
-                  >
-                    {tech}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          {(employer.technologies && employer.technologies.length > 0) || (isEditType && employer.oldData?.technologies && employer.oldData.technologies.length > 0) ? (
+            <ArrayDiffField
+              label="Công nghệ"
+              newItems={employer.technologies}
+              oldItems={employer.oldData?.technologies}
+              renderItem={(item, isRemoved) => (
+                <span 
+                  key={item}
+                  className={`px-3 py-1 text-xs font-medium rounded-full ${
+                    isRemoved 
+                      ? 'bg-red-100 text-red-700 line-through' 
+                      : isEditType && employer.oldData?.technologies && !employer.oldData.technologies.includes(item)
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-emerald-100 text-emerald-700'
+                  }`}
+                >
+                  {item}
+                </span>
+              )}
+            />
+          ) : null}
 
           {/* Locations */}
-          {employer.locations && employer.locations.length > 0 && (
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <h4 className="text-sm font-semibold text-gray-900 mb-3">Địa điểm văn phòng</h4>
-              <div className="space-y-3">
-                {employer.locations.map((location, index) => (
-                  <div key={index} className="flex items-start gap-2 text-sm">
-                    <svg className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                    </svg>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-gray-600">
-                          {location.detailedAddress}, {location.district}, {location.province}
-                        </span>
-                        {location.isHeadquarters && (
-                          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded">
-                            Trụ sở chính
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <LocationsDiffField />
 
-          {/* Additional Information */}
-          <div className="space-y-4">
-            {employer.benefits && employer.benefits.length > 0 && (
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <h4 className="text-sm font-semibold text-gray-900 mb-3">Phúc lợi</h4>
+          {/* Benefits */}
+          {(employer.benefits && employer.benefits.length > 0) || (isEditType && employer.oldData?.benefits && employer.oldData.benefits.length > 0) ? (
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Phúc lợi</h4>
+              {isEditType && employer.oldData?.benefits && employer.benefits && JSON.stringify(employer.oldData.benefits) !== JSON.stringify(employer.benefits) ? (
+                <div className="space-y-3">
+                  {employer.oldData.benefits.filter(b => !employer.benefits?.includes(b)).length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-red-600 mb-2 flex items-center gap-2">
+                        <Minus className="w-3 h-3" /> Đã xóa
+                      </p>
+                      <ul className="space-y-2">
+                        {employer.oldData.benefits.filter(b => !employer.benefits?.includes(b)).map((benefit, index) => (
+                          <li key={index} className="text-sm text-red-700 flex items-start gap-2 line-through">
+                            <span className="mt-0.5">✗</span>
+                            <span>{benefit}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {employer.benefits?.filter(b => !employer.oldData?.benefits?.includes(b)).length && employer.benefits?.filter(b => !employer.oldData?.benefits?.includes(b)).length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-green-600 mb-2 flex items-center gap-2">
+                        <Plus className="w-3 h-3" /> Đã thêm
+                      </p>
+                      <ul className="space-y-2">
+                        {employer.benefits?.filter(b => !employer.oldData?.benefits?.includes(b)).map((benefit, index) => (
+                          <li key={index} className="text-sm text-green-700 flex items-start gap-2 font-medium">
+                            <span className="text-green-600 mt-0.5">✓</span>
+                            <span>{benefit}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {employer.benefits?.filter(b => employer.oldData?.benefits?.includes(b)).length && employer.benefits?.filter(b => employer.oldData?.benefits?.includes(b)).length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 mb-2">Không đổi</p>
+                      <ul className="space-y-2">
+                        {employer.benefits?.filter(b => employer.oldData?.benefits?.includes(b)).map((benefit, index) => (
+                          <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                            <span className="text-gray-600 mt-0.5">✓</span>
+                            <span>{benefit}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : (
                 <ul className="space-y-2">
-                  {employer.benefits.map((benefit, index) => (
+                  {employer.benefits?.map((benefit, index) => (
                     <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
                       <span className="text-green-600 mt-0.5">✓</span>
                       <span>{benefit}</span>
                     </li>
                   ))}
                 </ul>
-              </div>
-            )}
+              )}
+            </div>
+          ) : null}
 
+          {/* Additional Information */}
+          <div className="space-y-4">
             {/* Contact Information */}
-            {(employer.contactEmail || employer.facebookUrl || employer.linkedlnUrl || employer.xUrl) && (
+            {(employer.contactEmail || employer.facebookUrl || employer.linkedlnUrl || employer.xUrl || 
+              (isEditType && (employer.oldData?.contactEmail || employer.oldData?.facebookUrl || employer.oldData?.linkedlnUrl || employer.oldData?.xUrl))) && (
               <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">Thông tin liên hệ</h4>
-                <div className="space-y-2">
-                  {employer.contactEmail && (
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium">Email:</span>{' '}
-                      <a href={`mailto:${employer.contactEmail}`} className="text-blue-600 hover:underline">
-                        {employer.contactEmail}
-                      </a>
-                    </p>
+                <div className="space-y-3">
+                  {(employer.contactEmail || employer.oldData?.contactEmail) && (
+                    <InfoField 
+                      label="Email liên hệ" 
+                      value={employer.contactEmail} 
+                      oldValue={employer.oldData?.contactEmail} 
+                    />
                   )}
-                  {employer.facebookUrl && (
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium">Facebook:</span>{' '}
-                      <a href={employer.facebookUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                        {employer.facebookUrl}
-                      </a>
-                    </p>
+                  {(employer.facebookUrl || employer.oldData?.facebookUrl) && (
+                    <InfoField 
+                      label="Facebook" 
+                      value={employer.facebookUrl} 
+                      oldValue={employer.oldData?.facebookUrl} 
+                    />
                   )}
-                  {employer.linkedlnUrl && (
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium">LinkedIn:</span>{' '}
-                      <a href={employer.linkedlnUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                        {employer.linkedlnUrl}
-                      </a>
-                    </p>
+                  {(employer.linkedlnUrl || employer.oldData?.linkedlnUrl) && (
+                    <InfoField 
+                      label="LinkedIn" 
+                      value={employer.linkedlnUrl} 
+                      oldValue={employer.oldData?.linkedlnUrl} 
+                    />
                   )}
-                  {employer.xUrl && (
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium">X (Twitter):</span>{' '}
-                      <a href={employer.xUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                        {employer.xUrl}
-                      </a>
-                    </p>
+                  {(employer.xUrl || employer.oldData?.xUrl) && (
+                    <InfoField 
+                      label="X (Twitter)" 
+                      value={employer.xUrl} 
+                      oldValue={employer.oldData?.xUrl} 
+                    />
                   )}
                 </div>
               </div>
