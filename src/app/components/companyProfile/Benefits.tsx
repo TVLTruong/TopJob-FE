@@ -13,30 +13,34 @@ type BenefitsProps = {
 
 export default function Benefits({ benefitsText, canEddit, canEdit, onSave }: BenefitsProps) {
   const { user } = useAuth();
-  const defaultSample = 'Chế độ bảo hiểm sức khỏe mở rộng\\nNghỉ phép linh hoạt 12 ngày\\nLương tháng 13 và thưởng hiệu suất\\nLàm việc hybrid, hỗ trợ thiết bị\\nTrợ cấp ăn trưa và gửi xe\\nTeam building hàng quý, du lịch năm\\nNgân sách học tập và khóa học online\\nKhám sức khỏe định kỳ\\nGói hỗ trợ sức khỏe tinh thần\\nPhụ cấp điện thoại và Internet';
+  const defaultSample = 'Chế độ bảo hiểm sức khỏe mở rộng\nNghỉ phép linh hoạt 12 ngày\nLương tháng 13 và thưởng hiệu suất\nLàm việc hybrid, hỗ trợ thiết bị\nTrợ cấp ăn trưa và gửi xe\nTeam building hàng quý, du lịch năm\nNgân sách học tập và khóa học online\nKhám sức khỏe định kỳ\nGói hỗ trợ sức khỏe tinh thần\nPhụ cấp điện thoại và Internet';
 
-  const initialText = benefitsText && benefitsText.trim().length > 0 ? benefitsText : defaultSample;
+  // Convert escaped \n to actual newlines
+  const normalizedBenefitsText = benefitsText ? benefitsText.replace(/\\n/g, '\n') : '';
+  const initialText = normalizedBenefitsText && normalizedBenefitsText.trim().length > 0 ? normalizedBenefitsText : defaultSample;
 
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(initialText);
-  // Convert both literal \n and actual newlines for textarea editing
-  const [editingText, setEditingText] = useState(
-    initialText.replace(/\\n/g, '\n').replace(/\\\\n/g, '\n')
-  );
+  const [editingText, setEditingText] = useState(initialText);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Sync editingText when text changes (e.g., after saving or props update)
   useEffect(() => {
-    // Handle both literal \n (from JSON) and \\n (escaped)
-    setEditingText(text.replace(/\\n/g, '\n').replace(/\\\\n/g, '\n'));
+    setEditingText(text);
   }, [text]);
 
+  // Update text when benefitsText prop changes
+  useEffect(() => {
+    const normalizedBenefitsText = benefitsText ? benefitsText.replace(/\\n/g, '\n') : '';
+    const newText = normalizedBenefitsText && normalizedBenefitsText.trim().length > 0 ? normalizedBenefitsText : defaultSample;
+    setText(newText);
+  }, [benefitsText, defaultSample]);
+
   const lines = useMemo(() => {
-    // Split by both literal \n and \\n
     return (text || '')
-      .split(/\\n|\\\\n/)
+      .split('\n')
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
   }, [text]);
@@ -118,7 +122,7 @@ export default function Benefits({ benefitsText, canEddit, canEdit, onSave }: Be
             .split('\n')
             .map((s) => s.trim())
             .filter((s) => s.length > 0)
-            .join('\\n');
+            .join('\n');
           setText(normalized);
           setShowConfirm(false);
           setShowSuccess(true);

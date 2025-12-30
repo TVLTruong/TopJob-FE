@@ -9,10 +9,23 @@ import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import DevToolbar from '@/components/common/DevToolbar';
 import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, mockEmployer } = useAuth();
   const pathname = usePathname();
+  
+  // 🔥 DEV MODE: Auto mock employer role if not set (only once)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && !isLoading && !user) {
+      // Kiểm tra xem đã có token trong localStorage chưa
+      const hasToken = localStorage.getItem('accessToken');
+      if (!hasToken) {
+        console.log('🔥 DEV MODE: Auto mocking employer role');
+        mockEmployer();
+      }
+    }
+  }, [isLoading]); // Chỉ chạy khi isLoading thay đổi
   
   if (isLoading) {
     return <div>Loading...</div>;

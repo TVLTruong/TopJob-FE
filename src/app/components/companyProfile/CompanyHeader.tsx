@@ -159,7 +159,9 @@ export default function CompanyHeader() {
         foundingYear,
         technologies: profile.technologies || [],
         description: profile.description || '',
-        benefits: profile.benefits?.join('\\n') || '',
+        benefits: Array.isArray(profile.benefits) 
+          ? profile.benefits.join('\n') 
+          : (profile.benefits || '').replace(/\\n/g, '\n'),
         contactEmail: profile.contactEmail || '',
         facebookUrl: profile.facebookUrl || '',
         linkedinUrl: profile.linkedlnUrl || '',
@@ -178,39 +180,6 @@ export default function CompanyHeader() {
       }
       
       setLogoPreview(profile.logoUrl || null);
-    } else if (process.env.NODE_ENV === 'development') {
-      // 🔥 DEV MODE: Mock data for UI development
-      setFormData({
-        companyName: 'VNG',
-        website: 'https://www.vng.com.vn',
-        locations: ['Hồ Chí Minh'],
-        fields: ['Công nghệ thông tin', 'Trò chơi'],
-        province: 'Hồ Chí Minh',
-        district: 'Quận 1',
-        streetAddress: '123 Nguyễn Huệ',
-        foundingDay: '1',
-        foundingMonth: 'January',
-        foundingYear: '2004',
-        technologies: ['React', 'Node.js', 'Python'],
-        description: 'VNG là công ty công nghệ hàng đầu Việt Nam',
-        benefits: 'Chế độ bảo hiểm sức khỏe mở rộng\\nNghỉ phép linh hoạt 12 ngày\\nLương tháng 13',
-        contactEmail: 'contact@vng.com.vn',
-        facebookUrl: 'https://facebook.com/vng',
-        linkedinUrl: 'https://linkedin.com/company/vng',
-        xUrl: 'https://x.com/vng'
-      });
-      
-      setLocationsList([
-        {
-          id: 'loc-1',
-          province: 'Hồ Chí Minh',
-          district: 'Quận 1',
-          detailedAddress: '123 Nguyễn Huệ',
-          isHeadquarters: true
-        }
-      ]);
-      
-      setLogoPreview('/logo.svg');
     }
   }, [profile]);
 
@@ -971,15 +940,6 @@ export default function CompanyHeader() {
             setShowConfirmModal(false);
             return;
           }
-          
-          // In dev mode, just update local state
-          // if (process.env.NODE_ENV === 'development') {
-          //   // Trigger re-render by updating formData
-          //   setFormData({...formData});
-          // }
-          
-          // setShowConfirmModal(false);
-          // setShowSuccessModal(true);
 
           updateMyEmployerProfile(updatedProfile).then(() => {
             return refreshProfile();

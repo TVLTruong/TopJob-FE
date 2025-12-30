@@ -193,7 +193,7 @@ export default function EmployerApprovalList() {
         industries: response.employer.industries || undefined,
         technologies: response.employer.technologies || undefined,
         benefits: response.employer.benefits 
-          ? response.employer.benefits.flatMap((b: string) => b.split('\\n').filter((item: string) => item.trim()))
+          ? response.employer.benefits.flatMap((b: string) => b.replace(/\\n/g, '\n').split('\n').filter((item: string) => item.trim()))
           : undefined,
         contactEmail: response.employer.contactEmail || undefined,
         facebookUrl: response.employer.facebookUrl || undefined,
@@ -244,8 +244,8 @@ export default function EmployerApprovalList() {
           } else if (fieldName === 'benefits') {
             const oldBenefits = oldValue ? JSON.parse(oldValue) : [];
             const newBenefits = newValue ? JSON.parse(newValue) : []; 
-            oldData.benefits = oldBenefits.flatMap((b: string) => b.split('\\n')).filter((item: string) => item.trim() !== '');
-            fullEmployer.benefits = newBenefits.flatMap((b: string) => b.split('\\n')).filter((item: string) => item.trim() !== '');
+            oldData.benefits = oldBenefits.flatMap((b: string) => b.replace(/\\n/g, '\n').split('\n')).filter((item: string) => item.trim() !== '');
+            fullEmployer.benefits = newBenefits.flatMap((b: string) => b.replace(/\\n/g, '\n').split('\n')).filter((item: string) => item.trim() !== '');
           } else if (fieldName === 'locations') {
             oldData.locations = oldValue ? JSON.parse(oldValue) : [];
             fullEmployer.locations = newValue ? JSON.parse(newValue) : [];

@@ -58,8 +58,8 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
   const normalizeBenefits = (benefits?: string | string[]): string[] => {
     if (!benefits) return [];
     if (Array.isArray(benefits)) return benefits;
-    // If it's a string with \\n separators, split it
-    return benefits.split('\\n').map(b => b.trim()).filter(b => b.length > 0);
+    // If it's a string with \\n separators (escaped), replace with actual newlines then split
+    return benefits.replace(/\\n/g, '\n').split('\n').map(b => b.trim()).filter(b => b.length > 0);
   };
 
   const InfoField = ({ label, value, oldValue }: { label: string; value?: string; oldValue?: string }) => {
