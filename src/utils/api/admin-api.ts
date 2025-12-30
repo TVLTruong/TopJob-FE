@@ -1,6 +1,12 @@
 import axios from 'axios';
+// import { EmployerApprovalType } from '../../components/types/employer-approval';
+export enum EmployerApprovalType {
+  ALL = 'ALL',
+  NEW = 'NEW',
+  EDIT = 'EDIT',
+}
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;// || 'http://localhost:3001/api';
 
 // Helper to get auth headers
 const getAuthHeaders = () => {
@@ -33,7 +39,7 @@ export interface EmployerProfile {
   companyLogo: string;
   email: string;
   phone: string;
-  status: 'PENDING_APPROVAL' | 'PENDING_EDIT_APPROVAL';
+  status: 'pending_new_approval' | 'pending_edit_approval';
   createdDate: string;
   taxCode?: string;
   description?: string;
@@ -53,22 +59,27 @@ export interface JobPostingApprovalPayload {
 
 // Get list of employers pending approval
 export const getEmployersForApproval = async (
-  status?: string,
+  approvalType: EmployerApprovalType = EmployerApprovalType.ALL,
   page: number = 1,
   limit: number = 10
 ) => {
   try {
     const params = new URLSearchParams();
-    if (status) params.append('status', status);
+
+    if (approvalType) {
+      params.append('approvalType', approvalType);
+    }
+
     params.append('page', page.toString());
     params.append('limit', limit.toString());
 
-    // console.log(getAuthHeaders());
-
     const response = await axios.get(
       `${API_BASE_URL}/admin/employer-approval?${params.toString()}`,
-      { headers: getAuthHeaders() }
+      {
+        headers: getAuthHeaders(),
+      },
     );
+
     return response.data;
   } catch (error) {
     console.error('Error fetching employers for approval:', error);

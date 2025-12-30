@@ -271,6 +271,8 @@ export const AuthApi = {
     website: string;
     description: string;
     benefits: string[];
+    foundedDate: string;
+    employerCategory: string[];
     technologies?: string[];
     contactEmail?: string;
     contactPhone?: string;

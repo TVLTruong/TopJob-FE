@@ -1,11 +1,11 @@
 'use client';
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { Search, ChevronLeft, ChevronRight, Filter, Eye, Check, X } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Filter, Check, X } from 'lucide-react';
 import RejectModal from './RejectModal';
 import ApproveModal from './ApproveModal';
 import EmployerDetailModal from './EmployerDetailModal';
-import { getEmployersForApproval, approveEmployer, rejectEmployer, getEmployerProfile } from '@/utils/api/admin-api';
+import { getEmployersForApproval, approveEmployer, rejectEmployer, getEmployerProfile, EmployerApprovalType } from '@/utils/api/admin-api';
 import Toast from '@/app/components/profile/Toast';
 
 interface EmployerProfileAPI {
@@ -15,14 +15,15 @@ interface EmployerProfileAPI {
   contactEmail?: string;
   contactPhone?: string;
   taxCode?: string;
-  status: 'PENDING_APPROVAL' | 'PENDING_EDIT_APPROVAL' | 'ACTIVE' | 'REJECTED';
-  profileStatus?: 'PENDING_EDIT_APPROVAL' | 'APPROVED';
+  status: 'pending_approval' | 'activate';
+  profileStatus: 'pending_new_approval' | 'pending_edit_approval' | 'approved';
   createdAt: string;
   description?: string;
   address?: string;
   website?: string;
   user?: {
     email?: string;
+    status?: string;
   };
 }
 
@@ -33,9 +34,9 @@ interface EmployerProfile {
   email: string;
   phone: string;
   taxCode: string;
-  status: 'pending_new' | 'pending_edit' | 'approved' | 'rejected';
+  status: 'pending_new' | 'pending_edit';
   createdDate: string;
-  registrationType?: 'new' | 'edit';
+  registrationType: 'new' | 'edit';
   description?: string;
   address?: string;
   website?: string;
@@ -59,7 +60,7 @@ interface EmployerProfile {
 
 export default function EmployerApprovalList() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('pending');
+  const [statusFilter, setStatusFilter] = useState<EmployerApprovalType>(EmployerApprovalType.ALL);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -70,8 +71,6 @@ export default function EmployerApprovalList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
-  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
   
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
@@ -88,30 +87,23 @@ export default function EmployerApprovalList() {
       setLoading(true);
       setError(null);
       
-      let response;
-      // Xử lý filter 'pending' để lấy cả PENDING_APPROVAL và PENDING_EDIT_APPROVAL
-      if (statusFilter === 'pending') {
-        // Gọi API không có status filter để lấy tất cả, sau đó filter ở client
-        response = await getEmployersForApproval(undefined, currentPage, 10);
-      } else {
-        const status = statusFilter !== 'all' ? statusFilter : undefined;
-        response = await getEmployersForApproval(status, currentPage, 10);
-      }
+      const response = await getEmployersForApproval(statusFilter, currentPage, 10);
       
       // Map BE data to FE format
       const mappedEmployers = response.data.map((emp: EmployerProfileAPI) => {
-        // Convert BE status to FE status
-        type FEStatus = 'pending_new' | 'pending_edit' | 'approved' | 'rejected';
-
-        const feStatus: FEStatus | null = (() => {
-          if (emp.status === 'PENDING_APPROVAL') return 'pending_new';
-          if (emp.status === 'ACTIVE' && emp.profileStatus === 'PENDING_EDIT_APPROVAL') return 'pending_edit';
-          if (emp.status === 'ACTIVE') return 'approved';
-          if (emp.status === 'REJECTED') return 'rejected';
-          return null;
-        })();
-
-        if (!feStatus) return null;
+        // Determine FE status based on profileStatus
+        let feStatus: 'pending_new' | 'pending_edit';
+        let registrationType: 'new' | 'edit';
+        
+        if (emp.profileStatus === 'pending_new_approval') {
+          feStatus = 'pending_new';
+          registrationType = 'new';
+        } else if (emp.profileStatus === 'pending_edit_approval') {
+          feStatus = 'pending_edit';
+          registrationType = 'edit';
+        } else {
+          return null; // Skip non-pending records
+        }
         
         return {
           id: parseInt(emp.id, 10),
@@ -121,31 +113,20 @@ export default function EmployerApprovalList() {
           phone: emp.contactPhone || '',
           taxCode: emp.taxCode || '',
           status: feStatus,
-          createdDate: new Date(emp.createdAt as string).toLocaleDateString('vi-VN'),
-          // Determine registration type based on both status and profileStatus
-          registrationType: (emp.status === 'PENDING_APPROVAL' || 
-                            (emp.status === 'ACTIVE' && emp.profileStatus !== 'PENDING_EDIT_APPROVAL'))
-                            ? 'new' 
-                            : 'edit',
+          createdDate: new Date(emp.createdAt).toLocaleDateString('vi-VN'),
+          registrationType,
           description: emp.description,
           address: emp.address,
           website: emp.website,
         };
       }).filter(Boolean) as EmployerProfile[];
       
-      // Filter cho status 'pending' ở client-side để chỉ hiển thị hồ sơ cần duyệt
-      let filteredData = mappedEmployers;
-      if (statusFilter === 'pending') {
-        filteredData = mappedEmployers.filter((emp: EmployerProfile) => 
-          emp.status === 'pending_new' || emp.status === 'pending_edit'
-        );
-      }
-      
-      setEmployers(filteredData);
-      setTotalCount(statusFilter === 'pending' ? filteredData.length : (response.meta?.total || response.data.length));
+      setEmployers(mappedEmployers);
+      setTotalCount(response.meta?.total || mappedEmployers.length);
     } catch (err) {
       console.error('Error fetching employers:', err);
       setError(err instanceof Error ? err.message : 'Không thể tải danh sách nhà tuyển dụng');
+      showToast('Không thể tải danh sách nhà tuyển dụng', 'error');
     } finally {
       setLoading(false);
     }
@@ -158,14 +139,12 @@ export default function EmployerApprovalList() {
   const statusConfig = {
     pending_new: { label: 'Chờ duyệt (Mới)', color: 'bg-orange-100 text-orange-600 border-orange-300' },
     pending_edit: { label: 'Chờ duyệt (Sửa đổi)', color: 'bg-yellow-100 text-yellow-600 border-yellow-300' },
-    approved: { label: 'Đã duyệt', color: 'bg-green-100 text-green-600 border-green-300' },
-    rejected: { label: 'Từ chối', color: 'bg-red-100 text-red-600 border-red-300' },
   };
 
   const filterOptions = [
-    { value: 'pending', label: 'Tất cả', count: employers.filter(e => e.status === 'pending_new' || e.status === 'pending_edit').length },
-    { value: 'PENDING_APPROVAL', label: 'Chờ duyệt (Mới)', count: employers.filter(e => e.status === 'pending_new').length },
-    { value: 'PENDING_EDIT_APPROVAL', label: 'Chờ duyệt (Sửa đổi)', count: employers.filter(e => e.status === 'pending_edit').length },
+    { value: EmployerApprovalType.ALL, label: 'Tất cả', count: totalCount },
+    { value: EmployerApprovalType.NEW, label: 'Chờ duyệt (Mới)', count: employers.filter(e => e.status === 'pending_new').length },
+    { value: EmployerApprovalType.EDIT, label: 'Chờ duyệt (Sửa đổi)', count: employers.filter(e => e.status === 'pending_edit').length },
   ];
 
   const filteredEmployers = useMemo(() => {
@@ -200,9 +179,29 @@ export default function EmployerApprovalList() {
       
       // Map API response to EmployerProfile format
       const fullEmployer: EmployerProfile = {
-        ...employer,
-        ...response,
-        oldData: response.oldData, // Dữ liệu cũ từ API (cho trường hợp pending_edit)
+        ...employer, // This already has the correct FE status ('pending_new' or 'pending_edit')
+        companyName: response.employer.companyName,
+        companyLogo: response.employer.logoUrl || '',
+        email: response.employer.contactEmail || response.user.email,
+        phone: response.employer.contactPhone || '',
+        description: response.employer.description,
+        address: response.employer.locations?.[0]?.detailedAddress,
+        website: response.employer.website,
+        foundingDate: response.employer.foundedDate?.toString(),
+        technologies: response.employer.technologies || undefined,
+        benefits: response.employer.benefits || undefined,
+        contactEmail: response.employer.contactEmail || undefined,
+        facebookUrl: response.employer.facebookUrl || undefined,
+        linkedlnUrl: response.employer.linkedlnUrl || undefined,
+        xUrl: response.employer.xUrl || undefined,
+        locations: response.employer.locations?.map((loc: any) => ({
+          id: loc.id,
+          province: loc.province,
+          district: loc.district,
+          detailedAddress: loc.detailedAddress || '',
+          isHeadquarters: loc.isHeadquarters,
+        })),
+        oldData: response.hasPendingEdits ? response.employer : undefined,
       };
       
       setSelectedEmployer(fullEmployer);
@@ -224,23 +223,16 @@ export default function EmployerApprovalList() {
     const employerName = selectedEmployer.companyName;
     
     try {
-      // Ẩn modal xác nhận trước
+      // Close modal first
       setShowApproveModal(false);
       
       // Call API to approve employer
       await approveEmployer(selectedEmployer.id.toString());
       
-      // Hiển thị thông báo thành công
-      setSuccessMessage(`Đã duyệt hồ sơ của ${employerName} thành công!`);
-      setShowSuccessNotification(true);
+      showToast(`Đã duyệt hồ sơ của ${employerName} thành công!`, 'success');
       
-      // Tự động ẩn sau 3 giây
-      setTimeout(() => {
-        setShowSuccessNotification(false);
-      }, 3000);
-      
-      fetchEmployers(); // Refresh list
-      showToast('Đã duyệt nhà tuyển dụng thành công', 'success');
+      // Refresh list
+      fetchEmployers();
     } catch (err) {
       console.error('Error approving employer:', err);
       showToast(err instanceof Error ? err.message : 'Không thể duyệt nhà tuyển dụng', 'error');
@@ -258,23 +250,16 @@ export default function EmployerApprovalList() {
     const employerName = selectedEmployer.companyName;
     
     try {
-      // Ẩn modal xác nhận trước
+      // Close modal first
       setShowRejectModal(false);
       
       // Call API to reject employer
       await rejectEmployer(selectedEmployer.id.toString(), reason);
       
-      // Hiển thị thông báo thành công
-      setSuccessMessage(`Đã từ chối hồ sơ của ${employerName}. Lý do: ${reason}`);
-      setShowSuccessNotification(true);
+      showToast(`Đã từ chối hồ sơ của ${employerName}`, 'success');
       
-      // Tự động ẩn sau 3 giây
-      setTimeout(() => {
-        setShowSuccessNotification(false);
-      }, 3000);
-      
-      fetchEmployers(); // Refresh list
-      showToast('Đã từ chối nhà tuyển dụng', 'success');
+      // Refresh list
+      fetchEmployers();
     } catch (err) {
       console.error('Error rejecting employer:', err);
       showToast(err instanceof Error ? err.message : 'Không thể từ chối nhà tuyển dụng', 'error');
@@ -287,7 +272,7 @@ export default function EmployerApprovalList() {
       <div className="p-6">
         <div>
           <h2 className="text-2xl font-bold mb-6">
-            Số hồ sơ cần duyệt: {employers.filter(e => e.status === 'pending_new' || e.status === 'pending_edit').length}
+            Số hồ sơ cần duyệt: {employers.length}
           </h2>
         </div>
 
@@ -333,7 +318,7 @@ export default function EmployerApprovalList() {
             <button
               onClick={() => setShowFilterDropdown(!showFilterDropdown)}
               className={`flex items-center justify-between gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors w-56 ${
-                statusFilter !== 'all'
+                statusFilter !== EmployerApprovalType.ALL
                   ? 'border-blue-600 text-blue-600 bg-blue-50'
                   : 'border-gray-300 text-gray-700 hover:bg-gray-50'
               }`}
@@ -344,7 +329,7 @@ export default function EmployerApprovalList() {
               </div>
               <span
                 className={`ml-1 px-2 py-0.5 rounded-full text-xs min-w-[28px] text-center ${
-                  statusFilter !== 'all'
+                  statusFilter !== EmployerApprovalType.ALL
                     ? 'bg-blue-600 text-white'
                     : 'invisible bg-blue-600 text-white'
                 }`}
@@ -389,11 +374,11 @@ export default function EmployerApprovalList() {
                       </button>
                     ))}
                   </div>
-                  {statusFilter !== 'all' && (
+                  {statusFilter !== EmployerApprovalType.ALL && (
                     <div className="border-t p-2">
                       <button
                         onClick={() => {
-                          setStatusFilter('all');
+                          setStatusFilter(EmployerApprovalType.ALL);
                           setShowFilterDropdown(false);
                         }}
                         className="w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md text-center"
@@ -409,61 +394,66 @@ export default function EmployerApprovalList() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-y">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Logo
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tên công ty
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Trạng thái
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Thao tác
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {paginatedEmployers.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                    Không có hồ sơ nào
-                  </td>
-                </tr>
-              ) : (
-                paginatedEmployers.map((employer) => (
-                  <tr key={employer.id} className="hover:bg-gray-50">
-                    {/* Logo */}
-                    <td className="px-6 py-4">
-                      <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-                        {employer.companyLogo ? (
-                          <Image
-                            src={employer.companyLogo}
-                            alt={employer.companyName}
-                            width={48}
-                            height={48}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400"></div>
-                        )}
-                      </div>
-                    </td>
+        <div className="border border-gray-200 rounded-lg bg-gray-50 overflow-hidden">
+          {/* Table Header */}
+          <div className="grid grid-cols-[1fr_2fr_2fr_1.5fr_1.5fr_1fr] gap-4 py-4 px-4 text-sm font-medium text-gray-600 border-b border-gray-200">
+            <div>Logo</div>
+            <div className="flex items-center gap-1">
+              Tên công ty
+              <span className="text-gray-400">⇅</span>
+            </div>
+            <div className="flex items-center gap-1">
+              Email
+              <span className="text-gray-400">⇅</span>
+            </div>
+            {/* <div className="flex items-center gap-1">
+              Mã số thuế
+              <span className="text-gray-400">⇅</span>
+            </div> */}
+            <div className="flex items-center gap-1">
+              Trạng thái
+              <span className="text-gray-400">⇅</span>
+            </div>
+            <div>Thao tác</div>
+          </div>
+
+          {/* Table Body */}
+          <div className="bg-white">
+            {paginatedEmployers.length === 0 ? (
+              <div className="py-12 text-center text-gray-500">
+                Không có hồ sơ nào
+              </div>
+            ) : (
+              paginatedEmployers.map((employer) => (
+                <div
+                  key={employer.id}
+                  className="grid grid-cols-[1fr_2fr_2fr_1.5fr_1.5fr_1fr] gap-4 py-4 px-4 border-b border-gray-200 items-center hover:bg-gray-50 transition"
+                >
+                  {/* Logo */}
+                  <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                    {employer.companyLogo ? (
+                      <Image
+                        src={employer.companyLogo}
+                        alt={employer.companyName}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400"></div>
+                    )}
+                  </div>
 
                     {/* Company Name */}
                     <td className="px-6 py-4">
                       <div className="font-medium text-gray-900">{employer.companyName}</div>
                     </td>
 
-                    {/* Email */}
-                    <td className="px-6 py-4 text-sm text-gray-600">{employer.email}</td>
+                  {/* Email */}
+                  <div className="text-sm text-gray-600 truncate">{employer.email}</div>
+
+                  {/* Tax Code */}
+                  {/* <div className="text-sm text-gray-600">{employer.taxCode}</div> */}
 
                     {/* Status */}
                     <td className="px-6 py-4">
@@ -476,83 +466,86 @@ export default function EmployerApprovalList() {
                       </span>
                     </td>
 
-                    {/* Actions */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleViewDetails(employer)}
-                          className="flex items-center gap-2 px-3 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition whitespace-nowrap"
-                          title="Chi tiết"
-                        >
-                          <span className="text-sm">Xem chi tiết</span>
-                        </button>
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 justify-end">
+                    <button
+                      onClick={() => handleViewDetails(employer)}
+                      className="px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition whitespace-nowrap"
+                      title="Chi tiết"
+                    >
+                      Xem chi tiết
+                    </button>
 
-                        {employer.status === 'pending_new' || employer.status === 'pending_edit' ? (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleOpenApproveModal(employer)}
-                              className="p-2 text-white bg-green-600 hover:bg-green-700 rounded-lg transition"
-                              title="Duyệt"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleOpenRejectModal(employer)}
-                              className="p-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition"
-                              title="Từ chối"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-500 italic whitespace-nowrap">
-                            Đã xử lý
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                    <button
+                      onClick={() => handleOpenApproveModal(employer)}
+                      className="p-1.5 text-white bg-green-600 hover:bg-green-700 rounded-lg transition"
+                      title="Duyệt"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleOpenRejectModal(employer)}
+                      className="p-1.5 text-white bg-red-600 hover:bg-red-700 rounded-lg transition"
+                      title="Từ chối"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between mt-6">
-          <div className="text-sm text-gray-600">
-            Trang {currentPage} của {totalPages}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6">
+            <div className="text-sm text-gray-600">
+              Trang {currentPage} của {totalPages}
+            </div>
+            <div className="flex gap-2">
               <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`px-3 py-2 rounded-lg transition ${
-                  currentPage === page
-                    ? 'bg-blue-600 text-white'
-                    : 'border border-gray-300 hover:bg-gray-50'
-                }`}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
-                {page}
+                <ChevronLeft className="w-4 h-4" />
               </button>
-            ))}
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`px-3 py-2 rounded-lg transition ${
+                      currentPage === pageNum
+                        ? 'bg-blue-600 text-white'
+                        : 'border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Modals */}

@@ -3,21 +3,22 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { EmployerProfileProvider } from '@/contexts/EmployerProfileContext';
+import { useEmployerProfile } from '@/contexts/EmployerProfileContext';
 import Header from '@/app/components/companyProfile/Header';
 import CompanyHeader from '@/app/components/companyProfile/CompanyHeader';
 import CompanyInfo from '@/app/components/companyProfile/CompanyInfo';
 import Benefits from '@/app/components/companyProfile/Benefits';
 import Contact from '@/app/components/companyProfile/Contact';
 import JobListings from '@/app/components/companyProfile/JobListings';
-import { getMyEmployerProfile } from '@/utils/api/employer-api';
+import { getMyEmployerProfile, updateMyEmployerProfile } from '@/utils/api/employer-api';
 
 export default function CompanyProfilePage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
+  const { profile, isLoading : profileLoading, refreshProfile } = useEmployerProfile();
   const [checking, setChecking] = useState(true);
-  const [profile, setProfile] = useState<any>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  // const [profile, setProfile] = useState<any>(null);
+  // const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -90,7 +91,7 @@ export default function CompanyProfilePage() {
   // }, [checking, user]);
 
   // if (authLoading || checking || loadingProfile) {
-  if (authLoading || checking) {
+  if (authLoading || checking || profileLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
@@ -101,24 +102,59 @@ export default function CompanyProfilePage() {
   // Format benefits: API trả về array, Benefits component cần string format "/n" separated
   const benefitsText = profile?.benefits?.join('/n') || '';
 
+  // Handler to save benefits to API
+  const handleSaveBenefits = async (newBenefitsText: string) => {
+    try {
+      // Convert "/n" separated string back to array
+      const benefitsArray = newBenefitsText
+        .split('/n')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+      
+      await updateMyEmployerProfile({ benefits: benefitsArray });
+      
+      // Refresh profile to get updated data
+      await refreshProfile();
+    } catch (error) {
+      console.error('Error saving benefits:', error);
+      alert('Có lỗi khi lưu phúc lợi. Vui lòng thử lại.');
+    }
+  };
+
   return (
-    <EmployerProfileProvider>
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div>
-          <CompanyHeader />
-          <div className="grid grid-cols-[2fr_1fr]">
-            <div>
-              <CompanyInfo />
-              <Benefits benefitsText={benefitsText} canEddit />
-              <Contact canEdit={true} />
-            </div>
-            <div>
-              <JobListings />
-            </div>
+    // <EmployerProfileProvider>
+    //   <div className="min-h-screen bg-gray-50">
+    //     <Header />
+    //     <div>
+    //       <CompanyHeader />
+    //       <div className="grid grid-cols-[2fr_1fr]">
+    //         <div>
+    //           <CompanyInfo />
+    //           <Benefits benefitsText={benefitsText} canEddit />
+    //           <Contact canEdit={true} />
+    //         </div>
+    //         <div>
+    //           <JobListings />
+    //         </div>
+    //       </div>
+    //     </div>
+    //   </div>
+    // </EmployerProfileProvider>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div>
+        <CompanyHeader />
+        <div className="grid grid-cols-[2fr_1fr]">
+          <div>
+            <CompanyInfo />
+            <Benefits benefitsText={benefitsText} canEddit onSave={handleSaveBenefits} />
+            <Contact canEdit={true} />
+          </div>
+          <div>
+            <JobListings />
           </div>
         </div>
       </div>
-    </EmployerProfileProvider>
+    </div>
   );
 }
