@@ -176,6 +176,8 @@ export default function EmployerApprovalList() {
       // Fetch full employer details from API
       const response = await getEmployerProfile(employer.id.toString());
       console.log('Employer detail from API:', response);
+      console.log('employer categories from API:', response.employer.employerCategory);
+      console.log('all employer fields from API:', Object.keys(response.employer));
       
       // Map API response to EmployerProfile format
       const fullEmployer: EmployerProfile = {
@@ -188,8 +190,11 @@ export default function EmployerApprovalList() {
         address: response.employer.locations?.[0]?.detailedAddress,
         website: response.employer.website,
         foundingDate: response.employer.foundedDate?.toString(),
+        industries: response.employer.industries || undefined,
         technologies: response.employer.technologies || undefined,
-        benefits: response.employer.benefits || undefined,
+        benefits: response.employer.benefits 
+          ? response.employer.benefits.flatMap((b: string) => b.split('\\n').filter((item: string) => item.trim()))
+          : undefined,
         contactEmail: response.employer.contactEmail || undefined,
         facebookUrl: response.employer.facebookUrl || undefined,
         linkedlnUrl: response.employer.linkedlnUrl || undefined,
@@ -201,8 +206,72 @@ export default function EmployerApprovalList() {
           detailedAddress: loc.detailedAddress || '',
           isHeadquarters: loc.isHeadquarters,
         })),
-        oldData: response.hasPendingEdits ? response.employer : undefined,
       };
+      
+      // Build oldData from pendingEdits if this is edit approval
+      if (response.hasPendingEdits && response.pendingEdits && response.pendingEdits.length > 0) {
+        const oldData: Partial<EmployerProfile> = {};
+        
+        response.pendingEdits.forEach((edit: any) => {
+          const fieldName = edit.fieldName;
+          const oldValue = edit.oldValue;
+          const newValue = edit.newValue;
+
+          // Parse old values based on field type
+          if (fieldName === 'companyName') {
+            oldData.companyName = oldValue;
+            fullEmployer.companyName = newValue;
+          } else if (fieldName === 'description') {
+            oldData.description = oldValue;
+            fullEmployer.description = newValue;
+          } else if (fieldName === 'website') {
+            oldData.website = oldValue;
+            fullEmployer.website = newValue;
+          } else if (fieldName === 'contactEmail') {
+            oldData.contactEmail = oldValue;
+            oldData.email = oldValue; // Also set email field
+            fullEmployer.contactEmail = newValue;
+            fullEmployer.email = newValue;
+          } else if (fieldName === 'contactPhone') {
+            oldData.phone = oldValue;
+            fullEmployer.phone = newValue;
+          } else if (fieldName === 'employerCategory') {
+            oldData.industries = oldValue ? JSON.parse(oldValue) : [];
+            fullEmployer.industries = newValue ? JSON.parse(newValue) : [];
+          } else if (fieldName === 'technologies') {
+            oldData.technologies = oldValue ? JSON.parse(oldValue) : [];
+            fullEmployer.technologies = newValue ? JSON.parse(newValue) : [];
+          } else if (fieldName === 'benefits') {
+            const oldBenefits = oldValue ? JSON.parse(oldValue) : [];
+            const newBenefits = newValue ? JSON.parse(newValue) : []; 
+            oldData.benefits = oldBenefits.flatMap((b: string) => b.split('\\n')).filter((item: string) => item.trim() !== '');
+            fullEmployer.benefits = newBenefits.flatMap((b: string) => b.split('\\n')).filter((item: string) => item.trim() !== '');
+          } else if (fieldName === 'locations') {
+            oldData.locations = oldValue ? JSON.parse(oldValue) : [];
+            fullEmployer.locations = newValue ? JSON.parse(newValue) : [];
+          } else if (fieldName === 'logoUrl') {
+            oldData.companyLogo = oldValue;
+            fullEmployer.companyLogo = newValue;
+          } else if (fieldName === 'facebookUrl') {
+            oldData.facebookUrl = oldValue;
+            fullEmployer.facebookUrl = newValue;
+          } else if (fieldName === 'linkedlnUrl') {
+            oldData.linkedlnUrl = oldValue;
+            fullEmployer.linkedlnUrl = newValue;
+          } else if (fieldName === 'xUrl') {
+            oldData.xUrl = oldValue;
+            fullEmployer.xUrl = newValue;
+          }
+        });
+        
+        fullEmployer.oldData = oldData;
+      }
+
+      console.log('Full employer with oldData:', fullEmployer);
+      console.log('Industries:', fullEmployer.industries);
+      console.log('Old industries:', fullEmployer.oldData?.industries);
+      console.log('Technologies:', fullEmployer.technologies);
+      console.log('Old technologies:', fullEmployer.oldData?.technologies);
       
       setSelectedEmployer(fullEmployer);
       setShowDetailModal(true);
@@ -445,9 +514,9 @@ export default function EmployerApprovalList() {
                   </div>
 
                     {/* Company Name */}
-                    <td className="px-6 py-4">
+                    {/* <td className="px-6 py-4"> */}
                       <div className="font-medium text-gray-900">{employer.companyName}</div>
-                    </td>
+                    {/* </td> */}
 
                   {/* Email */}
                   <div className="text-sm text-gray-600 truncate">{employer.email}</div>
@@ -456,7 +525,8 @@ export default function EmployerApprovalList() {
                   {/* <div className="text-sm text-gray-600">{employer.taxCode}</div> */}
 
                     {/* Status */}
-                    <td className="px-6 py-4">
+                    {/* <td className="px-6 py-4"> */}
+                    <div>
                       <span
                         className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
                           statusConfig[employer.status].color
@@ -464,7 +534,8 @@ export default function EmployerApprovalList() {
                       >
                         {statusConfig[employer.status].label}
                       </span>
-                    </td>
+                    </div>
+                    {/* </td> */}
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 justify-end">
