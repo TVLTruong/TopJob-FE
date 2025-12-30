@@ -96,50 +96,47 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
     oldItems?: string[]; 
     renderItem: (item: string, isRemoved?: boolean) => React.ReactNode;
   }) => {
-    const hasChanged = isEditType && oldItems !== undefined && JSON.stringify(oldItems) !== JSON.stringify(newItems);
+    const hasChanged = isEditType && oldItems !== undefined && JSON.stringify(oldItems || []) !== JSON.stringify(newItems || []);
 
+    // Show if has data in edit mode with changes, or has new items
     if (!hasChanged && (!newItems || newItems.length === 0)) {
       return null;
     }
 
     if (isEditType && hasChanged) {
-      const removedItems = oldItems?.filter(item => !newItems?.includes(item)) || [];
-      const addedItems = newItems?.filter(item => !oldItems?.includes(item)) || [];
-      const unchangedItems = newItems?.filter(item => oldItems?.includes(item)) || [];
-
       return (
         <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
           <h4 className="text-sm font-semibold text-gray-900 mb-3">{label}</h4>
-          <div className="space-y-3">
-            {removedItems.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-red-600 flex items-center gap-2">
-                  <Minus className="w-3 h-3" /> Đã xóa
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {removedItems.map((item, idx) => renderItem(item, true))}
+          <div className="space-y-2">
+            {/* Old Value - Red with strikethrough */}
+            {oldItems && oldItems.length > 0 && (
+              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <Minus className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-gray-500 mb-2">Giá trị cũ</p>
+                  <div className="flex flex-wrap gap-2">
+                    {oldItems.map((item, idx) => (
+                      <span key={idx} className="px-3 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full line-through">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
-            {addedItems.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-green-600 flex items-center gap-2">
-                  <Plus className="w-3 h-3" /> Đã thêm
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {addedItems.map((item, idx) => renderItem(item, false))}
-                </div>
-              </div>
-            )}
-            {unchangedItems.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-500">Không đổi</p>
-                <div className="flex flex-wrap gap-2">
-                  {unchangedItems.map((item, idx) => (
-                    <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
-                      {item}
-                    </span>
-                  ))}
+            {/* New Value - Green */}
+            {newItems && newItems.length > 0 && (
+              <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <Plus className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-gray-500 mb-2">Giá trị mới</p>
+                  <div className="flex flex-wrap gap-2">
+                    {newItems.map((item, idx) => (
+                      <span key={idx} className="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -171,82 +168,60 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
       `${loc.detailedAddress}, ${loc.district}, ${loc.province}`;
 
     if (isEditType && hasChanged) {
-      const removedLocations = oldLocations.filter(
-        oldLoc => !newLocations.some(newLoc => locationToString(newLoc) === locationToString(oldLoc))
-      );
-      const addedLocations = newLocations.filter(
-        newLoc => !oldLocations.some(oldLoc => locationToString(oldLoc) === locationToString(newLoc))
-      );
-      const unchangedLocations = newLocations.filter(
-        newLoc => oldLocations.some(oldLoc => locationToString(oldLoc) === locationToString(newLoc))
-      );
-
       return (
         <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
           <h4 className="text-sm font-semibold text-gray-900 mb-3">Địa điểm văn phòng</h4>
-          <div className="space-y-3">
-            {removedLocations.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-red-600 flex items-center gap-2">
-                  <Minus className="w-3 h-3" /> Đã xóa
-                </p>
-                {removedLocations.map((location, index) => (
-                  <div key={index} className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <svg className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                    </svg>
-                    <div className="flex-1">
-                      <span className="text-sm text-red-700 line-through">{locationToString(location)}</span>
-                      {location.isHeadquarters && (
-                        <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded">
-                          Trụ sở chính
-                        </span>
-                      )}
-                    </div>
+          <div className="space-y-2">
+            {/* Old Value - Red with strikethrough */}
+            {oldLocations.length > 0 && (
+              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <Minus className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-gray-500 mb-2">Giá trị cũ</p>
+                  <div className="space-y-2">
+                    {oldLocations.map((location, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <svg className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                        </svg>
+                        <div className="flex-1">
+                          <span className="text-sm text-red-700 line-through">{locationToString(location)}</span>
+                          {location.isHeadquarters && (
+                            <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded">
+                              Trụ sở chính
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
             )}
-            {addedLocations.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-green-600 flex items-center gap-2">
-                  <Plus className="w-3 h-3" /> Đã thêm
-                </p>
-                {addedLocations.map((location, index) => (
-                  <div key={index} className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <svg className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                    </svg>
-                    <div className="flex-1">
-                      <span className="text-sm text-green-700 font-medium">{locationToString(location)}</span>
-                      {location.isHeadquarters && (
-                        <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
-                          Trụ sở chính
-                        </span>
-                      )}
-                    </div>
+            {/* New Value - Green */}
+            {newLocations.length > 0 && (
+              <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <Plus className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-gray-500 mb-2">Giá trị mới</p>
+                  <div className="space-y-2">
+                    {newLocations.map((location, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <svg className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                        </svg>
+                        <div className="flex-1">
+                          <span className="text-sm text-green-700 font-medium">{locationToString(location)}</span>
+                          {location.isHeadquarters && (
+                            <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
+                              Trụ sở chính
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-            {unchangedLocations.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-500">Không đổi</p>
-                {unchangedLocations.map((location, index) => (
-                  <div key={index} className="flex items-start gap-2 text-sm">
-                    <svg className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                    </svg>
-                    <div className="flex-1">
-                      <span className="text-gray-600">{locationToString(location)}</span>
-                      {location.isHeadquarters && (
-                        <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 text-xs font-medium rounded">
-                          Trụ sở chính
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                </div>
               </div>
             )}
           </div>
@@ -298,37 +273,71 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
         <div className="p-6 space-y-6">
           {/* Company Header */}
           <div className="flex items-start gap-4 pb-6 border-b border-gray-200">
-            <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-              {employer.companyLogo ? (
-                <Image
-                  src={employer.companyLogo}
-                  alt={employer.companyName}
-                  width={80}
-                  height={80}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400"></div>
-              )}
-            </div>
+            {/* Company Logo with diff */}
+            {isEditType && employer.oldData?.companyLogo && employer.oldData.companyLogo !== employer.companyLogo ? (
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 opacity-50 border-2 border-red-300">
+                    {employer.oldData.companyLogo ? (
+                      <Image
+                        src={employer.oldData.companyLogo}
+                        alt="Logo cũ"
+                        width={80}
+                        height={80}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400"></div>
+                    )}
+                  </div>
+                  <span className="text-xs text-red-600">Cũ</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border-2 border-green-500">
+                    {employer.companyLogo ? (
+                      <Image
+                        src={employer.companyLogo}
+                        alt={employer.companyName}
+                        width={80}
+                        height={80}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400"></div>
+                    )}
+                  </div>
+                  <span className="text-xs text-green-600">Mới</span>
+                </div>
+              </div>
+            ) : (
+              <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                {employer.companyLogo ? (
+                  <Image
+                    src={employer.companyLogo}
+                    alt={employer.companyName}
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400"></div>
+                )}
+              </div>
+            )}
             <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">{employer.companyName}</h3>
+              {/* Company Name with diff */}
+              {isEditType && employer.oldData?.companyName && employer.oldData.companyName !== employer.companyName ? (
+                <div className="mb-2 space-y-1">
+                  <h3 className="text-lg text-red-700 line-through">{employer.oldData.companyName}</h3>
+                  <h3 className="text-2xl font-bold text-green-700">{employer.companyName}</h3>
+                </div>
+              ) : (
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">{employer.companyName}</h3>
+              )}
               <div className="space-y-2">
                 <InfoField label="Email" value={employer.email} oldValue={employer.oldData?.email} />
                 <InfoField label="Số điện thoại" value={employer.phone} oldValue={employer.oldData?.phone} />
-                {employer.website && (
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">Website:</span>{' '}
-                    <a 
-                      href={employer.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {employer.website}
-                    </a>
-                  </p>
-                )}
+                <InfoField label="Website" value={employer.website} oldValue={employer.oldData?.website} />
                 {employer.foundingDate && (
                   <p className="text-sm text-gray-600">
                     <span className="font-medium">Ngày thành lập:</span>{' '}
@@ -461,48 +470,39 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
             <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
               <h4 className="text-sm font-semibold text-gray-900 mb-3">Phúc lợi</h4>
               {isEditType && employer.oldData?.benefits && employer.benefits && JSON.stringify(employer.oldData.benefits) !== JSON.stringify(employer.benefits) ? (
-                <div className="space-y-3">
-                  {employer.oldData.benefits.filter(b => !employer.benefits?.includes(b)).length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-red-600 mb-2 flex items-center gap-2">
-                        <Minus className="w-3 h-3" /> Đã xóa
-                      </p>
-                      <ul className="space-y-2">
-                        {employer.oldData.benefits.filter(b => !employer.benefits?.includes(b)).map((benefit, index) => (
-                          <li key={index} className="text-sm text-red-700 flex items-start gap-2 line-through">
-                            <span className="mt-0.5">✗</span>
-                            <span>{benefit}</span>
-                          </li>
-                        ))}
-                      </ul>
+                <div className="space-y-2">
+                  {/* Old Value - Red with strikethrough */}
+                  {employer.oldData.benefits.length > 0 && (
+                    <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <Minus className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-gray-500 mb-2">Giá trị cũ</p>
+                        <ul className="space-y-2">
+                          {employer.oldData.benefits.map((benefit, index) => (
+                            <li key={index} className="text-sm text-red-700 flex items-start gap-2 line-through">
+                              <span className="mt-0.5">✗</span>
+                              <span>{benefit}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
                   )}
-                  {employer.benefits?.filter(b => !employer.oldData?.benefits?.includes(b)).length && employer.benefits?.filter(b => !employer.oldData?.benefits?.includes(b)).length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-green-600 mb-2 flex items-center gap-2">
-                        <Plus className="w-3 h-3" /> Đã thêm
-                      </p>
-                      <ul className="space-y-2">
-                        {employer.benefits?.filter(b => !employer.oldData?.benefits?.includes(b)).map((benefit, index) => (
-                          <li key={index} className="text-sm text-green-700 flex items-start gap-2 font-medium">
-                            <span className="text-green-600 mt-0.5">✓</span>
-                            <span>{benefit}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {employer.benefits?.filter(b => employer.oldData?.benefits?.includes(b)).length && employer.benefits?.filter(b => employer.oldData?.benefits?.includes(b)).length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-500 mb-2">Không đổi</p>
-                      <ul className="space-y-2">
-                        {employer.benefits?.filter(b => employer.oldData?.benefits?.includes(b)).map((benefit, index) => (
-                          <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                            <span className="text-gray-600 mt-0.5">✓</span>
-                            <span>{benefit}</span>
-                          </li>
-                        ))}
-                      </ul>
+                  {/* New Value - Green */}
+                  {employer.benefits.length > 0 && (
+                    <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <Plus className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-gray-500 mb-2">Giá trị mới</p>
+                        <ul className="space-y-2">
+                          {employer.benefits.map((benefit, index) => (
+                            <li key={index} className="text-sm text-green-700 flex items-start gap-2 font-medium">
+                              <span className="text-green-600 mt-0.5">✓</span>
+                              <span>{benefit}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
                   )}
                 </div>

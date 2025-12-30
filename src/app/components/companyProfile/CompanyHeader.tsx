@@ -884,29 +884,93 @@ export default function CompanyHeader() {
         message="Bạn có chắc muốn lưu các thay đổi vừa chỉnh sửa không?"
         onCancel={() => setShowConfirmModal(false)}
         onConfirm={() => {
-          // Update profile with form data
+          // Build update object with only changed fields
+          const updatedProfile: any = {};
+          
+          // Check each field for changes
+          if (formData.companyName !== profile?.companyName) {
+            updatedProfile.companyName = formData.companyName;
+          }
+          
+          if (formData.website !== profile?.website) {
+            updatedProfile.website = formData.website;
+          }
+          
+          // Compare arrays using JSON.stringify
+          const currentCategories = JSON.stringify(profile?.employerCategory || []);
+          const newCategories = JSON.stringify(formData.fields);
+          if (currentCategories !== newCategories) {
+            updatedProfile.employerCategory = formData.fields;
+          }
+          
+          const currentTechnologies = JSON.stringify(profile?.technologies || []);
+          const newTechnologies = JSON.stringify(formData.technologies);
+          if (currentTechnologies !== newTechnologies) {
+            updatedProfile.technologies = formData.technologies;
+          }
+          
+          if (formData.description !== profile?.description) {
+            updatedProfile.description = formData.description;
+          }
+          
+          // Check benefits
           const benefitsArray = formData.benefits.split('\n').filter(b => b.trim());
-          const updatedProfile = {
-            ...profile,
-            companyName: formData.companyName,
-            website: formData.website,
-            employerCategory: formData.fields,
-            foundedDate: parseInt(formData.foundingYear) || undefined,
-            technologies: formData.technologies,
-            description: formData.description,
-            benefits: benefitsArray,
-            contactEmail: formData.contactEmail,
-            facebookUrl: formData.facebookUrl,
-            linkedlnUrl: formData.linkedinUrl,
-            xUrl: formData.xUrl,
-            // Use locationsList instead of formData.locations
-            locations: locationsList.map(loc => ({
+          const currentBenefits = JSON.stringify(profile?.benefits || []);
+          const newBenefits = JSON.stringify(benefitsArray);
+          if (currentBenefits !== newBenefits) {
+            updatedProfile.benefits = benefitsArray;
+          }
+          
+          if (formData.contactEmail !== profile?.contactEmail) {
+            updatedProfile.contactEmail = formData.contactEmail;
+          }
+          
+          if (formData.facebookUrl !== profile?.facebookUrl) {
+            updatedProfile.facebookUrl = formData.facebookUrl;
+          }
+          
+          if (formData.linkedinUrl !== profile?.linkedlnUrl) {
+            updatedProfile.linkedlnUrl = formData.linkedinUrl;
+          }
+          
+          if (formData.xUrl !== profile?.xUrl) {
+            updatedProfile.xUrl = formData.xUrl;
+          }
+          
+          // Check foundedDate
+          if (formData.foundingYear && profile?.foundedDate) {
+            const currentYear = new Date(profile.foundedDate).getFullYear();
+            const newYear = parseInt(formData.foundingYear);
+            if (currentYear !== newYear) {
+              updatedProfile.foundedDate = new Date(newYear, 0, 1);
+            }
+          } else if (formData.foundingYear && !profile?.foundedDate) {
+            // New year being set
+            updatedProfile.foundedDate = new Date(parseInt(formData.foundingYear), 0, 1);
+          }
+          
+          // Check locations
+          const currentLocations = JSON.stringify(profile?.locations || []);
+          const newLocations = JSON.stringify(locationsList.map(loc => ({
+            province: loc.province,
+            district: loc.district,
+            detailedAddress: loc.detailedAddress,
+            isHeadquarters: loc.isHeadquarters
+          })));
+          if (currentLocations !== newLocations) {
+            updatedProfile.locations = locationsList.map(loc => ({
               province: loc.province,
               district: loc.district,
               detailedAddress: loc.detailedAddress,
               isHeadquarters: loc.isHeadquarters
-            }))
-          };
+            }));
+          }
+          
+          // If no changes, don't send request
+          if (Object.keys(updatedProfile).length === 0) {
+            setShowConfirmModal(false);
+            return;
+          }
           
           // In dev mode, just update local state
           // if (process.env.NODE_ENV === 'development') {
