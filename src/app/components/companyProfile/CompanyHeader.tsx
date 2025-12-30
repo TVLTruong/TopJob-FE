@@ -6,6 +6,7 @@ import { Users, Globe, Edit, X, Plus } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useEmployerProfile } from '@/contexts/EmployerProfileContext'
 import locationData from "@/app/assets/danh-sach-3321-xa-phuong.json";
+import { updateMyEmployerProfile } from '@/utils/api/employer-api'
 
 interface LocationItem {
   "Tên": string;
@@ -46,7 +47,7 @@ const techOptions = ['HTML 5', 'CSS 3', 'Javascript', 'React', 'Node.js', 'Pytho
 
 export default function CompanyHeader() {
   const { user } = useAuth()
-  const { profile, isLoading } = useEmployerProfile()
+  const { profile, isLoading, refreshProfile } = useEmployerProfile()
   const isRecruiter = user?.role === 'employer'
   const canEdit = isRecruiter
   const [isPopupOpen, setIsPopupOpen] = useState(false)
@@ -134,17 +135,28 @@ export default function CompanyHeader() {
   // Load data from profile into formData
   useEffect(() => {
     if (profile) {
+      // parse foundedDate into day, month, year if available
+      let foundingDay = '';
+      let foundingMonth = '';
+      let foundingYear = '';
+
+      if (profile.foundedDate) {
+        const date = new Date(profile.foundedDate);
+        foundingDay = String(date.getDate());
+        foundingMonth = date.toLocaleString('vi', { month: 'long' }); // Months are zero-based
+        foundingYear = String(date.getFullYear());
+      }
       setFormData({
         companyName: profile.companyName || '',
         website: profile.website || '',
         locations: profile.locations?.map(loc => loc.province) || [],
-        fields: profile.field ? [profile.field] : [],
+        fields: profile.employerCategory || [],
         province: profile.locations?.[0]?.province || '',
         district: profile.locations?.[0]?.district || '',
         streetAddress: profile.locations?.[0]?.detailedAddress || '',
-        foundingDay: '',
-        foundingMonth: '',
-        foundingYear: profile.foundedDate ? profile.foundedDate.toString() : '',
+        foundingDay,
+        foundingMonth,
+        foundingYear,
         technologies: profile.technologies || [],
         description: profile.description || '',
         benefits: profile.benefits?.join('\\n') || '',
@@ -396,7 +408,7 @@ export default function CompanyHeader() {
                       <Users className="w-4 h-4 text-teal-600" />
                       <div>
                         <div className="text-xs text-gray-500">Thành lập</div>
-                        <div className="font-semibold">{formData.foundingYear}</div>
+                        <div className="font-semibold">{`${formData.foundingDay} ${formData.foundingMonth} ${formData.foundingYear}`}</div>
                       </div>
                     </div>
                   )}
@@ -878,7 +890,7 @@ export default function CompanyHeader() {
             ...profile,
             companyName: formData.companyName,
             website: formData.website,
-            field: formData.fields[0] || '',
+            employerCategory: formData.fields,
             foundedDate: parseInt(formData.foundingYear) || undefined,
             technologies: formData.technologies,
             description: formData.description,
@@ -897,13 +909,25 @@ export default function CompanyHeader() {
           };
           
           // In dev mode, just update local state
-          if (process.env.NODE_ENV === 'development') {
-            // Trigger re-render by updating formData
-            setFormData({...formData});
-          }
+          // if (process.env.NODE_ENV === 'development') {
+          //   // Trigger re-render by updating formData
+          //   setFormData({...formData});
+          // }
           
-          setShowConfirmModal(false);
-          setShowSuccessModal(true);
+          // setShowConfirmModal(false);
+          // setShowSuccessModal(true);
+
+          updateMyEmployerProfile(updatedProfile).then(() => {
+            return refreshProfile();
+          })
+          .then(() => {
+            setShowConfirmModal(false);
+            setShowSuccessModal(true);
+          })
+          .catch((error) => {
+            setShowConfirmModal(false);
+          });
+
         }}
       />
       {/* Success Modal */}
