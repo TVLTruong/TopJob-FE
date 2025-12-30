@@ -15,8 +15,8 @@ interface EmployerProfileAPI {
   contactEmail?: string;
   contactPhone?: string;
   taxCode?: string;
-  status: 'PENDING_APPROVAL' | 'ACTIVE';
-  profileStatus: 'PENDING_NEW_APPROVAL' | 'PENDING_EDIT_APPROVAL' | 'APPROVED';
+  status: 'pending_approval' | 'activate';
+  profileStatus: 'pending_new_approval' | 'pending_edit_approval' | 'approved';
   createdAt: string;
   description?: string;
   address?: string;
@@ -95,10 +95,10 @@ export default function EmployerApprovalList() {
         let feStatus: 'pending_new' | 'pending_edit';
         let registrationType: 'new' | 'edit';
         
-        if (emp.profileStatus === 'PENDING_NEW_APPROVAL') {
+        if (emp.profileStatus === 'pending_new_approval') {
           feStatus = 'pending_new';
           registrationType = 'new';
-        } else if (emp.profileStatus === 'PENDING_EDIT_APPROVAL') {
+        } else if (emp.profileStatus === 'pending_edit_approval') {
           feStatus = 'pending_edit';
           registrationType = 'edit';
         } else {
@@ -142,7 +142,7 @@ export default function EmployerApprovalList() {
   };
 
   const filterOptions = [
-    { value: EmployerApprovalType.ALL, label: 'Tất cả', count: employers.length },
+    { value: EmployerApprovalType.ALL, label: 'Tất cả', count: totalCount },
     { value: EmployerApprovalType.NEW, label: 'Chờ duyệt (Mới)', count: employers.filter(e => e.status === 'pending_new').length },
     { value: EmployerApprovalType.EDIT, label: 'Chờ duyệt (Sửa đổi)', count: employers.filter(e => e.status === 'pending_edit').length },
   ];
@@ -180,8 +180,28 @@ export default function EmployerApprovalList() {
       
       // Map API response to EmployerProfile format
       const fullEmployer: EmployerProfile = {
-        ...employer,
-        ...response.employer,
+        ...employer, // This already has the correct FE status ('pending_new' or 'pending_edit')
+        companyName: response.employer.companyName,
+        companyLogo: response.employer.logoUrl || '',
+        email: response.employer.contactEmail || response.user.email,
+        phone: response.employer.contactPhone || '',
+        description: response.employer.description,
+        address: response.employer.locations?.[0]?.detailedAddress,
+        website: response.employer.website,
+        foundingDate: response.employer.foundedDate?.toString(),
+        technologies: response.employer.technologies || undefined,
+        benefits: response.employer.benefits || undefined,
+        contactEmail: response.employer.contactEmail || undefined,
+        facebookUrl: response.employer.facebookUrl || undefined,
+        linkedlnUrl: response.employer.linkedlnUrl || undefined,
+        xUrl: response.employer.xUrl || undefined,
+        locations: response.employer.locations?.map((loc: any) => ({
+          id: loc.id,
+          province: loc.province,
+          district: loc.district,
+          detailedAddress: loc.detailedAddress || '',
+          isHeadquarters: loc.isHeadquarters,
+        })),
         oldData: response.hasPendingEdits ? response.employer : undefined,
       };
       
@@ -387,10 +407,10 @@ export default function EmployerApprovalList() {
               Email
               <span className="text-gray-400">⇅</span>
             </div>
-            <div className="flex items-center gap-1">
+            {/* <div className="flex items-center gap-1">
               Mã số thuế
               <span className="text-gray-400">⇅</span>
-            </div>
+            </div> */}
             <div className="flex items-center gap-1">
               Trạng thái
               <span className="text-gray-400">⇅</span>
@@ -432,7 +452,7 @@ export default function EmployerApprovalList() {
                   <div className="text-sm text-gray-600 truncate">{employer.email}</div>
 
                   {/* Tax Code */}
-                  <div className="text-sm text-gray-600">{employer.taxCode}</div>
+                  {/* <div className="text-sm text-gray-600">{employer.taxCode}</div> */}
 
                   {/* Status */}
                   <div>
@@ -452,7 +472,7 @@ export default function EmployerApprovalList() {
                       className="px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition whitespace-nowrap"
                       title="Chi tiết"
                     >
-                      Xem
+                      Xem chi tiết
                     </button>
 
                     <button

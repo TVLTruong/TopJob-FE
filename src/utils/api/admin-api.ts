@@ -39,7 +39,7 @@ export interface EmployerProfile {
   companyLogo: string;
   email: string;
   phone: string;
-  status: 'PENDING_APPROVAL' | 'PENDING_EDIT_APPROVAL';
+  status: 'pending_new_approval' | 'pending_edit_approval';
   createdDate: string;
   taxCode?: string;
   description?: string;

@@ -48,6 +48,12 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
 
   const isEditType = employer.registrationType === 'edit';
 
+  // Safe access to statusConfig with fallback
+  const currentStatus = statusConfig[employer.status as keyof typeof statusConfig] || {
+    label: 'Không xác định',
+    color: 'bg-gray-100 text-gray-600 border-gray-300'
+  };
+
   const InfoField = ({ label, value, oldValue }: { label: string; value?: string; oldValue?: string }) => {
     const hasChanged = isEditType && oldValue && oldValue !== value;
 
@@ -146,10 +152,10 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
             <div>
               <span
                 className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
-                  statusConfig[employer.status].color
+                  currentStatus.color
                 }`}
               >
-                {statusConfig[employer.status].label}
+                {currentStatus.label}
               </span>
             </div>
           </div>
