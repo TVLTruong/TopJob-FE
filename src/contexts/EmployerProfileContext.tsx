@@ -20,7 +20,7 @@ export interface EmployerProfile {
   website?: string;
   description?: string;
   benefits?: string[];
-  foundedYear?: number;
+  foundedDate?: number;
   companySize?: string;
   taxCode?: string;
   field?: string;
@@ -84,7 +84,7 @@ export function EmployerProfileProvider({ children }: { children: ReactNode }) {
           { province: 'Hà Nội', district: 'Quận Ba Đình', detailedAddress: '456 Kim Mã' }
         ],
         field: 'Công nghệ thông tin',
-        foundedYear: 2004,
+        foundedDate: 2004,
         technologies: ['React', 'Node.js', 'Python', 'Java'],
         description: 'VNG là công ty công nghệ hàng đầu Việt Nam, với hơn 3000 nhân viên và các sản phẩm công nghệ được sử dụng rộng rãi.',
         benefits: ['Chế độ bảo hiểm sức khỏe mở rộng', 'Nghỉ phép linh hoạt 12 ngày', 'Lương tháng 13 và thưởng hiệu suất'],

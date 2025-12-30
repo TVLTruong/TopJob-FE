@@ -369,8 +369,8 @@ export default function CompleteProfilePage() {
       await AuthApi.completeEmployerProfile(token, {
         companyName: companyName.trim(),
         website: website.trim(),
-        foundingDate: foundingDate,
-        industries: industries,
+        foundedDate: foundingDate,
+        employerCategory: industries,
         description: description.trim(),
         benefits: benefits.trim().split('\n').filter(b => b.trim()),
         technologies: technologies,

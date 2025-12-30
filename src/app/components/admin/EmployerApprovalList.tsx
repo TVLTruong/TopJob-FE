@@ -101,13 +101,13 @@ export default function EmployerApprovalList() {
       // Map BE data to FE format
       const mappedEmployers = response.data.map((emp: EmployerProfileAPI) => {
         // Convert BE status to FE status
-        type FEStatus = 'pending_new' | 'pending_edit' | 'approved' | 'rejected';
+        type FEStatus = 'pending_new' | 'pending_edit';
 
         const feStatus: FEStatus | null = (() => {
           if (emp.status === 'PENDING_APPROVAL') return 'pending_new';
           if (emp.status === 'ACTIVE' && emp.profileStatus === 'PENDING_EDIT_APPROVAL') return 'pending_edit';
-          if (emp.status === 'ACTIVE') return 'approved';
-          if (emp.status === 'REJECTED') return 'rejected';
+          // if (emp.status === 'ACTIVE') return 'approved';
+          // if (emp.status === 'REJECTED') return 'rejected';
           return null;
         })();
 
@@ -158,8 +158,8 @@ export default function EmployerApprovalList() {
   const statusConfig = {
     pending_new: { label: 'Chờ duyệt (Mới)', color: 'bg-orange-100 text-orange-600 border-orange-300' },
     pending_edit: { label: 'Chờ duyệt (Sửa đổi)', color: 'bg-yellow-100 text-yellow-600 border-yellow-300' },
-    approved: { label: 'Đã duyệt', color: 'bg-green-100 text-green-600 border-green-300' },
-    rejected: { label: 'Từ chối', color: 'bg-red-100 text-red-600 border-red-300' },
+    // approved: { label: 'Đã duyệt', color: 'bg-green-100 text-green-600 border-green-300' },
+    // rejected: { label: 'Từ chối', color: 'bg-red-100 text-red-600 border-red-300' },
   };
 
   const filterOptions = [
