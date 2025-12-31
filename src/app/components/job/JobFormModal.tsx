@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { X } from 'lucide-react';
 import ConfirmModal from '@/app/components/companyProfile/ConfirmModal';
 import type { JobDetailData } from '@/app/components/job/JobDetailContents';
-import { jobCategoryApi } from '@/utils/api/categories-api';
+import { JobCategory, jobCategoryApi } from '@/utils/api/categories-api';
 
 interface JobFormModalProps {
   isOpen: boolean;
@@ -25,8 +25,14 @@ export default function JobFormModal({
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [savedJobData, setSavedJobData] = useState<JobDetailData | null>(null);
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [categoriesFromApi, setCategoriesFromApi] = useState<JobCategory[]>([]);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+
+  // Lấy danh mục từ API khi component mount
+  useEffect(() => {
+    jobCategoryApi.getList().then(data => setCategoriesFromApi(data));
+  }, []);
 
   // Helpers
   const formatNumberWithDots = (value: string) => {
@@ -121,18 +127,18 @@ export default function JobFormModal({
     }
   }, [isOpen]);
 
-  const categoryOptions = [
-    'Công nghệ thông tin',
-    'Trò chơi',
-    'Điện toán đám mây',
-    'Thương mại điện tử',
-    'Fintech',
-    'AI/Machine Learning',
-    'Marketing',
-    'Design',
-    'Sản phẩm',
-    'Vận hành'
-  ];
+  // const categoryOptions = [
+  //   'Công nghệ thông tin',
+  //   'Trò chơi',
+  //   'Điện toán đám mây',
+  //   'Thương mại điện tử',
+  //   'Fintech',
+  //   'AI/Machine Learning',
+  //   'Marketing',
+  //   'Design',
+  //   'Sản phẩm',
+  //   'Vận hành'
+  // ];
 
   const positions = ['Fresher', 'Junior', 'Senior', 'Lead', 'Manager'];
 
@@ -362,70 +368,70 @@ export default function JobFormModal({
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Danh mục <span className="text-red-500">*</span>
                 </label>
-                <div className={`flex items-center gap-2 flex-wrap border rounded-lg p-2 relative ${errors.categories ? 'border-red-500' : ''}`}>
+
+                <div
+                  className={`flex items-center gap-2 flex-wrap border rounded-lg p-2 relative ${
+                    errors.categories ? 'border-red-500' : ''
+                  }`}
+                >
+                  {/* Hiển thị categories đã chọn */}
                   {form.categories.map((c, i) => (
-                    <span 
-                      key={i} 
+                    <span
+                      key={i}
                       className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium flex items-center gap-2"
                     >
                       {c}
-                      <button 
-                        onClick={() => setForm({ 
-                          ...form, 
-                          categories: form.categories.filter((_, idx) => idx !== i) 
-                        })} 
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm({
+                            ...form,
+                            categories: form.categories.filter((_, idx) => idx !== i),
+                          })
+                        }
                         className="text-gray-500 hover:text-gray-700"
                       >
                         ×
                       </button>
                     </span>
                   ))}
-                  <button 
-                    onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)} 
+
+                  {/* Button mở dropdown */}
+                  <button
+                    type="button"
+                    onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
                     className="ml-auto px-2 py-1 hover:bg-gray-100 rounded text-gray-600 hover:text-gray-800"
                   >
                     +
                   </button>
-                  
-                  {/* {isCategoryDropdownOpen && (
+
+                  {/* Dropdown */}
+                  {isCategoryDropdownOpen && (
                     <div className="absolute top-full left-0 right-0 mt-1 border rounded-lg bg-white shadow-lg max-h-48 overflow-y-auto z-10">
-                      {categoryOptions.map(opt => (
-                        <div 
-                          key={opt} 
-                          className="py-2 px-3 cursor-pointer hover:bg-gray-50" 
+                      {categoriesFromApi.map(opt => (
+                        <div
+                          key={opt.id}
+                          className="py-2 px-3 cursor-pointer hover:bg-gray-50"
                           onClick={() => {
-                            if (!form.categories.includes(opt)) {
-                              setForm({ ...form, categories: [...form.categories, opt] });
+                            if (!form.categories.includes(opt.name)) {
+                              setForm({
+                                ...form,
+                                categories: [...form.categories, opt.name],
+                              });
                             }
                             setIsCategoryDropdownOpen(false);
                           }}
                         >
-                          {opt}
+                          {opt.name}
                         </div>
                       ))}
                     </div>
-                  )} */}
-                  {categoryOptions.map(opt => (
-                    <div
-                      key={opt}
-                      className="py-2 px-3 cursor-pointer hover:bg-gray-50"
-                      onClick={() => {
-                        if (!form.categories.includes(opt)) {
-                          setForm({
-                            ...form,
-                            categories: [...form.categories, opt],
-                          });
-                        }
-                        setIsCategoryDropdownOpen(false);
-                      }}
-                    >
-                      {opt}
-                    </div>
-                  ))}
-
-
+                  )}
                 </div>
-                {errors.categories && <p className="text-red-500 text-xs mt-1">{errors.categories}</p>}
+
+                {errors.categories && (
+                  <p className="text-red-500 text-xs mt-1">{errors.categories}</p>
+                )}
               </div>
 
               <div className="md:col-span-2">

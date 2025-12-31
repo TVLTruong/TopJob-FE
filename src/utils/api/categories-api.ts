@@ -1,3 +1,4 @@
+// src/app/api/categories-api.ts
 import { axiosClient } from './axios-client';
 
 export interface JobCategory {
@@ -9,6 +10,21 @@ export interface JobCategory {
 
 export const jobCategoryApi = {
   getList(): Promise<JobCategory[]> {
-    return axiosClient.get('/job-categories');
+    return axiosClient
+      .get<JobCategory[]>('/api/categories/job')
+      .then(res => res.data);
+  },
+};
+
+export interface EmployerCategory {
+  id: string;
+  name: string;
+  slug: string;
+}
+export const employerCategoryApi = {
+  getList(): Promise<EmployerCategory[]> {
+    return axiosClient
+      .get<EmployerCategory[]>('/api/categories/employer')
+      .then(res => res.data);
   },
 };

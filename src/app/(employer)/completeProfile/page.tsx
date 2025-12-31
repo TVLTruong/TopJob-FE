@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import locationData from "@/app/assets/danh-sach-3321-xa-phuong.json";
 import { AuthApi } from "@/utils/api/auth-api";
+import { employerCategoryApi } from "@/utils/api/categories-api";
 
 interface LocationItem {
   "Tên": string;
@@ -29,6 +30,18 @@ export default function CompleteProfilePage() {
   const [step, setStep] = useState<Step>(1);
   const [submitting, setSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [availableIndustries, setAvailableIndustries] = useState<string[]>([]);
+
+  // Load employer categories as available industries
+  useEffect(() => {
+    employerCategoryApi.getList()
+      .then(categories => {
+        setAvailableIndustries(categories.map(category => category.name));
+      })
+      .catch(error => {
+        console.error("Failed to load employer categories:", error);
+      });
+  }, []);
 
   // Check authentication và redirect nếu cần
   useEffect(() => {
@@ -81,33 +94,33 @@ export default function CompleteProfilePage() {
   });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const availableIndustries = [
-    "Công nghệ thông tin",
-    "Phần mềm",
-    "Thương mại điện tử",
-    "Tài chính - Ngân hàng",
-    "Bảo hiểm",
-    "Viễn thông",
-    "Y tế - Chăm sóc sức khỏe",
-    "Giáo dục - Đào tạo",
-    "Du lịch - Khách sạn",
-    "Bất động sản",
-    "Xây dựng",
-    "Sản xuất",
-    "Logistics - Vận tải",
-    "Marketing - Quảng cáo",
-    "Truyền thông - Media",
-    "Dịch vụ khách hàng",
-    "Nhân sự",
-    "Kế toán - Kiểm toán",
-    "Pháp lý",
-    "Năng lượng",
-    "Nông nghiệp",
-    "Thời trang",
-    "Thực phẩm - Đồ uống",
-    "Game",
-    "Blockchain - Crypto",
-  ];
+  // const availableIndustries = [
+  //   "Công nghệ thông tin",
+  //   "Phần mềm",
+  //   "Thương mại điện tử",
+  //   "Tài chính - Ngân hàng",
+  //   "Bảo hiểm",
+  //   "Viễn thông",
+  //   "Y tế - Chăm sóc sức khỏe",
+  //   "Giáo dục - Đào tạo",
+  //   "Du lịch - Khách sạn",
+  //   "Bất động sản",
+  //   "Xây dựng",
+  //   "Sản xuất",
+  //   "Logistics - Vận tải",
+  //   "Marketing - Quảng cáo",
+  //   "Truyền thông - Media",
+  //   "Dịch vụ khách hàng",
+  //   "Nhân sự",
+  //   "Kế toán - Kiểm toán",
+  //   "Pháp lý",
+  //   "Năng lượng",
+  //   "Nông nghiệp",
+  //   "Thời trang",
+  //   "Thực phẩm - Đồ uống",
+  //   "Game",
+  //   "Blockchain - Crypto",
+  // ];
 
   const availableTechnologies = [
     "HTML 5",

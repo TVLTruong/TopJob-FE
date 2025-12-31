@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useEmployerProfile } from '@/contexts/EmployerProfileContext'
 import locationData from "@/app/assets/danh-sach-3321-xa-phuong.json";
 import { updateMyEmployerProfile } from '@/utils/api/employer-api'
+import { employerCategoryApi } from "@/utils/api/categories-api";
 
 interface LocationItem {
   "Tên": string;
@@ -42,7 +43,7 @@ interface CompanyBasicInfo {
   xUrl: string;
 }
 
-const fieldOptions = ['Công nghệ thông tin', 'Trò chơi', 'Điện toán đám mây', 'Thương mại điện tử', 'Fintech', 'AI/Machine Learning']
+// const fieldOptions = ['Công nghệ thông tin', 'Trò chơi', 'Điện toán đám mây', 'Thương mại điện tử', 'Fintech', 'AI/Machine Learning']
 const techOptions = ['HTML 5', 'CSS 3', 'Javascript', 'React', 'Node.js', 'Python', 'Java', 'TypeScript', 'Vue.js', 'Angular']
 
 export default function CompanyHeader() {
@@ -96,6 +97,18 @@ export default function CompanyHeader() {
   const addressFormRef = useRef<HTMLDivElement | null>(null)
   const fieldDropdownRef = useRef<HTMLDivElement | null>(null)
   const techDropdownRef = useRef<HTMLDivElement | null>(null)
+  const [fieldOptions, setFieldOptions] = useState<string[]>([])
+
+  // Load available fields from API
+  useEffect(() => {
+    employerCategoryApi.getList()
+      .then(categories => {
+        setFieldOptions(categories.map(category => category.name));
+      })
+      .catch(error => {
+        console.error("Failed to load employer categories:", error);
+      });
+  }, []);
 
   // Handle logo file change
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
