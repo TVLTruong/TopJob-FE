@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { X } from 'lucide-react';
 import ConfirmModal from '@/app/components/companyProfile/ConfirmModal';
 import type { JobDetailData } from '@/app/components/job/JobDetailContents';
+import { jobCategoryApi } from '@/utils/api/categories-api';
 
 interface JobFormModalProps {
   isOpen: boolean;
@@ -386,7 +387,7 @@ export default function JobFormModal({
                     +
                   </button>
                   
-                  {isCategoryDropdownOpen && (
+                  {/* {isCategoryDropdownOpen && (
                     <div className="absolute top-full left-0 right-0 mt-1 border rounded-lg bg-white shadow-lg max-h-48 overflow-y-auto z-10">
                       {categoryOptions.map(opt => (
                         <div 
@@ -403,7 +404,26 @@ export default function JobFormModal({
                         </div>
                       ))}
                     </div>
-                  )}
+                  )} */}
+                  {categoryOptions.map(opt => (
+                    <div
+                      key={opt}
+                      className="py-2 px-3 cursor-pointer hover:bg-gray-50"
+                      onClick={() => {
+                        if (!form.categories.includes(opt)) {
+                          setForm({
+                            ...form,
+                            categories: [...form.categories, opt],
+                          });
+                        }
+                        setIsCategoryDropdownOpen(false);
+                      }}
+                    >
+                      {opt}
+                    </div>
+                  ))}
+
+
                 </div>
                 {errors.categories && <p className="text-red-500 text-xs mt-1">{errors.categories}</p>}
               </div>
