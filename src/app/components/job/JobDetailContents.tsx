@@ -5,13 +5,16 @@ import Benefits from '@/app/components/companyProfile/Benefits';
 export type JobDetailData = {
   title: string;
   position: string;
-  jobType: 'Full-Time' | 'Part-Time' | 'Freelance';
+  jobType: 'Full-Time' | 'Part-Time' | 'Freelance' | 'Remote';
   applicantsCount: number;
   targetCount: number;
   deadline: string; // dd/MM/yyyy
   postedDate: string; // dd/MM/yyyy
-  salaryDisplay: string; // e.g. "10.000 USD/tháng"
-  experienceDisplay: string; // e.g. "Không" | "1 năm" | "2 năm"
+  // salaryDisplay: string; // e.g. "10.000 USD/tháng"
+  salaryMin: number | null;
+  salaryMax: number | null;
+  isNegotiable: boolean;
+  experienceDisplay: number | "Không"; // e.g. "Không" | "1" năm | "2" năm
   categories: string[];
   description: string;
   responsibilities: string[];
@@ -104,11 +107,11 @@ export default function JobDetailContent({ job }: { job: JobDetailData }) {
             </div>
             <div className="flex justify-between items-start">
               <span className="text-gray-600 text-sm">Lương</span>
-              <span className="text-gray-900 text-sm font-medium">{job.salaryDisplay}</span>
+              <span className="text-gray-900 text-sm font-medium">{job.salaryMin} - {job.salaryMax} VND/tháng {job.isNegotiable ? "(Thỏa thuận)" : ""}</span>
             </div>
             <div className="flex justify-between items-start">
-              <span className="text-gray-600 text-sm">Kinh nghiệm</span>
-              <span className="text-gray-900 text-sm font-medium">{job.experienceDisplay}</span>
+              <span className="text-gray-600 text-sm">Kinh nghiệm tối thiểu</span>
+              <span className="text-gray-900 text-sm font-medium">{job.experienceDisplay === "Không" ? "Không" : `${job.experienceDisplay} năm`}</span>
             </div>
             <div className="flex justify-between items-start">
               <span className="text-gray-600 text-sm">Chức vụ</span>

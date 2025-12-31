@@ -71,10 +71,13 @@ export default function JobFormModal({
         jobType: initialData.jobType,
         targetCount: String(initialData.targetCount),
         deadlineInput,
-        salaryRaw: initialData.salaryDisplay.replace(/\D/g, ''),
+        // salaryRaw: initialData.salaryDisplay.replace(/\D/g, ''),
+        salaryMin: initialData.salaryMin ?? null,
+        salaryMax: initialData.salaryMax ?? null,
+        isNegotiable: initialData.isNegotiable ?? false,
         experienceYears: initialData.experienceDisplay === 'Không' 
           ? '' 
-          : initialData.experienceDisplay.replace(/\D/g, ''),
+          : initialData.experienceDisplay,
         categories: initialData.categories,
         newCategory: '',
         description: initialData.description,
@@ -91,7 +94,10 @@ export default function JobFormModal({
       jobType: 'Full-Time' as JobDetailData['jobType'],
       targetCount: '',
       deadlineInput: todayInput,
-      salaryRaw: '',
+      // salaryRaw: '',
+      salaryMin: null,
+      salaryMax: null,
+      isNegotiable: false,
       experienceYears: '',
       categories: [] as string[],
       newCategory: '',
@@ -153,8 +159,11 @@ export default function JobFormModal({
       newErrors.targetCount = 'Vui lòng nhập chỉ tiêu hợp lệ';
     }
 
-    if (!form.salaryRaw || Number(form.salaryRaw) <= 0) {
-      newErrors.salaryRaw = 'Vui lòng nhập mức lương hợp lệ';
+    if (!form.isNegotiable && (form.salaryMin === null || form.salaryMin <= 0)) {
+      newErrors.salaryMin = 'Vui lòng nhập mức lương tối thiểu hợp lệ';
+    }
+    if (!form.isNegotiable && (form.salaryMax === null || form.salaryMax <= 0)) {
+      newErrors.salaryMax = 'Vui lòng nhập mức lương tối đa hợp lệ';
     }
 
     if (form.categories.length === 0) {
@@ -191,30 +200,36 @@ export default function JobFormModal({
     const deadlineDisplay = parts.length === 3 
       ? `${parts[2]}/${parts[1]}/${parts[0]}` 
       : formatDateDisplay(new Date());
-    
-    const salaryDisplay = form.salaryRaw 
-      ? `${formatNumberWithDots(form.salaryRaw)} USD/tháng` 
-      : '0 USD/tháng';
-    
+
+    // Xử lý salary hiển thị
+    const salaryDisplay = form.isNegotiable
+      ? 'Thỏa thuận'
+      : (form.salaryMin !== null && form.salaryMax !== null)
+        ? `${formatNumberWithDots(String(form.salaryMin))} - ${formatNumberWithDots(String(form.salaryMax))} VND/tháng`
+        : '0 VND/tháng';
+
+    // Xử lý kinh nghiệm
     const experienceDisplay = form.experienceYears 
       ? `${Number(form.experienceYears)} năm` 
       : 'Không';
-    
+
+    // Chia responsibilities, requirements, plusPoints theo dòng
     const responsibilities = form.responsibilitiesText
       .split(/\n+/)
       .map(s => s.trim())
       .filter(Boolean);
-    
+
     const requirements = form.requirementsText
       .split(/\n+/)
       .map(s => s.trim())
       .filter(Boolean);
-    
+
     const plusPoints = form.plusPointsText
       .split(/\n+/)
       .map(s => s.trim())
       .filter(Boolean);
 
+    // Build jobData
     const jobData: JobDetailData = {
       title: form.title.trim(),
       position: form.position,
@@ -223,8 +238,11 @@ export default function JobFormModal({
       targetCount: target,
       deadline: deadlineDisplay,
       postedDate: initialData?.postedDate || formatDateDisplay(new Date()),
-      salaryDisplay,
-      experienceDisplay,
+      salaryMin: form.isNegotiable ? null : form.salaryMin,
+      salaryMax: form.isNegotiable ? null : form.salaryMax,
+      isNegotiable: form.isNegotiable,
+      // salaryDisplay,
+      experienceDisplay: form.experienceYears ? Number(form.experienceYears) : 'Không',
       categories: form.categories,
       description: form.description,
       responsibilities,
@@ -234,17 +252,25 @@ export default function JobFormModal({
 
     onSave(jobData);
     setShowSaveConfirm(false);
-    
-    // Show success modal for both create and edit modes
+
+    // Show success modal
     setSavedJobData(jobData);
     setShowSuccessModal(true);
   };
 
-  const handleSalaryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleSalaryChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: 'salaryMin' | 'salaryMax'
+  ) => {
     // Chỉ lấy số từ input
     const rawValue = e.target.value.replace(/\D/g, '');
-    setForm({ ...form, salaryRaw: rawValue });
+    setForm({
+      ...form,
+      [field]: rawValue ? Number(rawValue) : null, // Lưu kiểu number hoặc null
+    });
   };
+
 
   if (!isOpen) return null;
 
@@ -334,12 +360,13 @@ export default function JobFormModal({
                   <option value="Full-Time">Full-Time</option>
                   <option value="Part-Time">Part-Time</option>
                   <option value="Freelance">Freelance</option>
+                  <option value="Remote">Remote</option>
                 </select>
               </div>
 
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Lương (USD/tháng) <span className="text-red-500">*</span>
+                  Lương (VND/tháng) <span className="text-red-500">*</span>
                 </label>
                 <input 
                   value={formatNumberWithDots(form.salaryRaw)} 
@@ -349,11 +376,11 @@ export default function JobFormModal({
                   placeholder="Mức lương"
                 />
                 {errors.salaryRaw && <p className="text-red-500 text-xs mt-1">{errors.salaryRaw}</p>}
-              </div>
+              </div> */}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Kinh nghiệm (năm)
+                  Kinh nghiệm tối thiểu (năm)
                 </label>
                 <input 
                   placeholder="Để trống = Không yêu cầu" 
@@ -363,6 +390,51 @@ export default function JobFormModal({
                   className="w-full border rounded-lg px-3 py-2" 
                 />
               </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Mức lương (VND/tháng)
+                </label>
+
+                <div className="flex items-center gap-2 w-full">
+                  <input
+                    type="text"
+                    value={form.salaryMin ?? ''}
+                    onChange={(e) => handleSalaryChange(e, 'salaryMin')}
+                    placeholder="Từ"
+                    className={`flex-1 border rounded-lg px-3 py-2 ${errors.salaryMin ? 'border-red-500' : ''}`}
+                    disabled={form.isNegotiable}
+                  />
+                  <span className="mx-1">-</span>
+                  <input
+                    type="text"
+                    value={form.salaryMax ?? ''}
+                    onChange={(e) => handleSalaryChange(e, 'salaryMax')}
+                    placeholder="Đến"
+                    className={`flex-1 border rounded-lg px-3 py-2 ${errors.salaryMax ? 'border-red-500' : ''}`}
+                    disabled={form.isNegotiable}
+                  />
+                </div>
+
+                <div className="flex items-center mt-2">
+                  <input
+                    type="checkbox"
+                    checked={form.isNegotiable}
+                    onChange={(e) =>
+                      setForm({ ...form, isNegotiable: e.target.checked, salaryMin: null, salaryMax: null })
+                    }
+                    className="mr-2"
+                  />
+                  <span>Thỏa thuận</span>
+                </div>
+
+                {(errors.salaryMin || errors.salaryMax) && (
+                  <p className="text-red-500 text-xs mt-1">{errors.salaryMin || errors.salaryMax}</p>
+                )}
+              </div>
+
+
+
 
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -478,7 +550,7 @@ export default function JobFormModal({
 
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Điểm cộng nếu có (mỗi dòng là một mục) <span className="text-red-500">*</span>
+                  Điểm cộng nếu có (mỗi dòng là một mục) {/* <span className="text-red-500">*</span> */}
                 </label>
                 <textarea 
                   value={form.plusPointsText} 
