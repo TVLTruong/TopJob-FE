@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import ConfirmModal from '@/app/components/companyProfile/ConfirmModal';
 import type { JobDetailData } from '@/app/components/job/JobDetailContents';
 import { JobCategory, jobCategoryApi } from '@/utils/api/categories-api';
+import { useEmployerProfile } from '@/contexts/EmployerProfileContext';
 
 interface JobFormModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export default function JobFormModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [categoriesFromApi, setCategoriesFromApi] = useState<JobCategory[]>([]);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const { profile } = useEmployerProfile();
 
   // Lấy danh mục từ API khi component mount
   useEffect(() => {
@@ -80,6 +82,7 @@ export default function JobFormModal({
           : initialData.experienceDisplay,
         categories: initialData.categories,
         newCategory: '',
+        location: '',
         description: initialData.description,
         responsibilitiesText: initialData.responsibilities.join('\n'),
         requirementsText: initialData.requirements.join('\n'),
@@ -101,6 +104,7 @@ export default function JobFormModal({
       experienceYears: '',
       categories: [] as string[],
       newCategory: '',
+      location: '',
       description: '',
       responsibilitiesText: '',
       requirementsText: '',
@@ -168,6 +172,10 @@ export default function JobFormModal({
 
     if (form.categories.length === 0) {
       newErrors.categories = 'Vui lòng chọn ít nhất một danh mục';
+    }
+
+    if (!form.location) {
+      newErrors.location = 'Vui lòng chọn địa điểm làm việc';
     }
 
     if (!form.description.trim()) {
@@ -435,6 +443,31 @@ export default function JobFormModal({
 
 
 
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Địa điểm làm việc <span className="text-red-500">*</span>
+                </label>
+                <select 
+                  value={form.location} 
+                  onChange={e => setForm({ ...form, location: e.target.value })} 
+                  className={`w-full border rounded-lg px-3 py-2 ${errors.location ? 'border-red-500' : ''}`}
+                >
+                  <option value="">-- Chọn địa điểm --</option>
+                  {profile?.locations?.map((loc, index) => (
+                    <option key={loc.id || index} value={loc.fullAddress || `${loc.detailedAddress}, ${loc.district}, ${loc.province}`}>
+                      {loc.fullAddress || `${loc.detailedAddress}, ${loc.district}, ${loc.province}`}
+                      {loc.isHeadquarters ? ' (Trụ sở chính)' : ''}
+                    </option>
+                  ))}
+                </select>
+                {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
+                {(!profile?.locations || profile.locations.length === 0) && (
+                  <p className="text-amber-600 text-xs mt-1">
+                    Chưa có địa điểm văn phòng. Vui lòng thêm địa điểm trong Hồ sơ công ty.
+                  </p>
+                )}
+              </div>
 
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -1,6 +1,7 @@
 'use client';
 import React, { useMemo, useState } from 'react';
 import { Search, MoreVertical, Trash2, Edit3, ChevronLeft, ChevronRight, Eye, EyeOff, X, Filter } from 'lucide-react';
+import Header from '@/app/components/companyProfile/Header';
 
 interface Job {
   id: number;
@@ -145,18 +146,32 @@ export default function JobListingsTab() {
   }, [jobs, statusFilter, searchQuery]);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm">
+    <>
+      <Header />
+      <div className="bg-white rounded-xl shadow-sm min-h-screen">
       {/* Header */}
       <div className="p-6">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <h2 className="text-2xl font-bold">
-            Tổng số công việc: {filteredJobs.length}
+        {/* Total count header */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold">Tổng số công việc: {jobs.length}</h2>
+        </div>
+
+        {/* Search & Filter controls with result count */}
+        <div className="flex items-center justify-between gap-4 mb-4">
+          {/* Result count message on left */}
+          <div className="text-sm text-gray-600 min-w-[200px]">
             {(searchQuery || statusFilter !== 'all') && (
-              <span className="ml-2 text-sm font-normal text-gray-500">
-                / {jobs.length} tổng
-              </span>
+              <>
+                {filteredJobs.length > 0 ? (
+                  <span>Đã tìm thấy <strong>{filteredJobs.length}</strong> kết quả</span>
+                ) : (
+                  <span className="text-red-600">Không tìm thấy kết quả nào</span>
+                )}
+              </>
             )}
-          </h2>
+          </div>
+          
+          {/* Search & Filter on right */}
           <div className="flex items-center gap-3">
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -252,37 +267,6 @@ export default function JobListingsTab() {
               )}
             </div>
           </div>
-        </div>
-
-        {/* Active filters */}
-        <div className="mb-6 min-h-[40px]">
-          {(searchQuery || statusFilter !== 'all') ? (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-gray-600">Đang lọc:</span>
-              {searchQuery && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                  {`Từ khóa: "${searchQuery}"`}
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="hover:text-gray-900"
-                  >
-                    ×
-                  </button>
-                </span>
-              )}
-              {statusFilter !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                  {getStatusLabel(statusFilter)}
-                  <button
-                    onClick={() => setStatusFilter('all')}
-                    className="hover:text-blue-900"
-                  >
-                    ×
-                  </button>
-                </span>
-              )}
-            </div>
-          ) : null}
         </div>
 
         {/* Table Header */}
@@ -445,5 +429,6 @@ export default function JobListingsTab() {
         </div>
       )}
     </div>
+    </>
   );
 }
