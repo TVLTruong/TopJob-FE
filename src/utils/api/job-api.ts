@@ -109,6 +109,8 @@ export interface CreateJobPayload {
   isUrgent?: boolean;
 }
 
+export type UpdateJobPayload = Partial<CreateJobPayload>;
+
 export interface JobFromAPI {
   id: string;
   title: string;
@@ -260,7 +262,8 @@ export const hideJob = async (jobId: string) => {
 };
 
 /**
- * Delete a job (soft delete - change status to REMOVED_BY_ADMIN)
+ * Delete a job (soft delete by employer)
+ * Backend will handle status change to REMOVED_BY_EMPLOYER
  */
 export const deleteJob = async (jobId: string) => {
   try {

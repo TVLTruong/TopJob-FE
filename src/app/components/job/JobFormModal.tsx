@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { X } from 'lucide-react';
 import ConfirmModal from '@/app/components/companyProfile/ConfirmModal';
+import Toast from '@/app/components/profile/Toast';
 import type { JobDetailData } from '@/app/components/job/JobDetailContents';
 import { JobCategory, jobCategoryApi } from '@/utils/api/categories-api';
 import { useEmployerProfile } from '@/contexts/EmployerProfileContext';
@@ -30,10 +31,22 @@ export default function JobFormModal({
   const [categoriesFromApi, setCategoriesFromApi] = useState<JobCategory[]>([]);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const { profile: employerProfile } = useEmployerProfile();
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  // Show toast helper
+  const showToast = (message: string, type: 'error' | 'success' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Lấy danh mục từ API khi component mount
   useEffect(() => {
-    jobCategoryApi.getList().then(data => setCategoriesFromApi(data));
+    jobCategoryApi.getList()
+      .then(data => setCategoriesFromApi(data))
+      .catch(error => {
+        console.error('Error fetching categories:', error);
+        showToast('Không thể tải danh mục. Vui lòng thử lại.', 'error');
+      });
   }, []);
 
   // Helpers
@@ -207,6 +220,12 @@ export default function JobFormModal({
   };
 
   const handleSave = () => {
+    // Check if employer has any locations
+    if (!employerProfile?.locations || employerProfile.locations.length === 0) {
+      showToast('Vui lòng thêm địa điểm văn phòng trong hồ sơ công ty trước khi tạo công việc.', 'error');
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
@@ -391,19 +410,20 @@ export default function JobFormModal({
                 </select>
               </div>
 
-              {/* <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Lương (VND/tháng) <span className="text-red-500">*</span>
+                  Hình thức làm việc <span className="text-red-500">*</span>
                 </label>
-                <input 
-                  value={formatNumberWithDots(form.salaryRaw)} 
-                  onChange={handleSalaryChange}
-                  inputMode="numeric" 
-                  className={`w-full border rounded-lg px-3 py-2 ${errors.salaryRaw ? 'border-red-500' : ''}`}
-                  placeholder="Mức lương"
-                />
-                {errors.salaryRaw && <p className="text-red-500 text-xs mt-1">{errors.salaryRaw}</p>}
-              </div> */}
+                <select 
+                  value={form.workMode} 
+                  onChange={e => setForm({ ...form, workMode: e.target.value as JobDetailData['workMode'] })} 
+                  className="w-full border rounded-lg px-3 py-2"
+                >
+                  <option value="onsite">Tại văn phòng</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="remote">Remote</option>
+                </select>
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -758,6 +778,15 @@ export default function JobFormModal({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
       )}
     </>
   );

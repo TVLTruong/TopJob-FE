@@ -3,6 +3,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { Search, MoreVertical, Trash2, Edit3, ChevronLeft, ChevronRight, Eye, EyeOff, X, Filter } from 'lucide-react';
 import { getEmployerJobs, type JobFromAPI, hideJob, unhideJob, deleteJob } from '@/utils/api/job-api';
 import { useRouter } from 'next/navigation';
+import Toast from '@/app/components/profile/Toast';
 
 interface Job {
   id: string;
@@ -31,6 +32,13 @@ export default function JobListingsTab() {
   const [error, setError] = useState<string | null>(null);
   const [totalJobs, setTotalJobs] = useState(0);
   const itemsPerPage = 10;
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  // Show toast helper
+  const showToast = (message: string, type: 'error' | 'success' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Fetch jobs from API
   useEffect(() => {
@@ -113,19 +121,19 @@ export default function JobListingsTab() {
       if (confirmAction === 'delete') {
         await deleteJob(selectedJobId);
         setJobs(prev => prev.filter(j => j.id !== selectedJobId));
-        alert('Xóa công việc thành công!');
+        showToast('Xóa công việc thành công!');
       } else if (confirmAction === 'hide') {
         await hideJob(selectedJobId);
         setJobs(prev => prev.map(j => j.id === selectedJobId ? { ...j, status: 'hidden', isHidden: true } : j));
-        alert('Ẩn công việc thành công!');
+        showToast('Ẩn công việc thành công!');
       } else if (confirmAction === 'unhide') {
         await unhideJob(selectedJobId);
         setJobs(prev => prev.map(j => j.id === selectedJobId ? { ...j, status: 'active', isHidden: false } : j));
-        alert('Hủy ẩn công việc thành công!');
+        showToast('Hủy ẩn công việc thành công!');
       }
     } catch (error: any) {
       console.error('Error performing action:', error);
-      alert(`Lỗi: ${error.response?.data?.message || error.message || 'Vui lòng thử lại'}`);
+      showToast(`Lỗi: ${error.response?.data?.message || error.message || 'Vui lòng thử lại'}`, 'error');
     } finally {
       setShowConfirmModal(false);
       setConfirmAction(null);
@@ -561,6 +569,15 @@ export default function JobListingsTab() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
       )}
     </div>
   );

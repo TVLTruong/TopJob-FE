@@ -11,14 +11,22 @@ import Benefits from '@/app/components/companyProfile/Benefits';
 import Contact from '@/app/components/companyProfile/Contact';
 import JobListings from '@/app/components/companyProfile/JobListings';
 import { getMyEmployerProfile, updateMyEmployerProfile } from '@/utils/api/employer-api';
+import Toast from '@/app/components/profile/Toast';
 
 export default function CompanyProfilePage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const { profile, isLoading : profileLoading, refreshProfile } = useEmployerProfile();
   const [checking, setChecking] = useState(true);
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   // const [profile, setProfile] = useState<any>(null);
   // const [loadingProfile, setLoadingProfile] = useState(true);
+
+  // Show toast helper
+  const showToast = (message: string, type: 'error' | 'success' = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -111,9 +119,10 @@ export default function CompanyProfilePage() {
       
       // Refresh profile to get updated data
       await refreshProfile();
+      showToast('Lưu phúc lợi thành công!', 'success');
     } catch (error) {
       console.error('Error saving benefits:', error);
-      alert('Có lỗi khi lưu phúc lợi. Vui lòng thử lại.');
+      showToast('Có lỗi khi lưu phúc lợi. Vui lòng thử lại.', 'error');
     }
   };
 
@@ -150,6 +159,15 @@ export default function CompanyProfilePage() {
             <JobListings />
           </div>
         </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
       </div>
     </div>
   );

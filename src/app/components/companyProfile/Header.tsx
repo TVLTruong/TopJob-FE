@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmployerProfile } from '@/contexts/EmployerProfileContext';
 import JobFormModal from '@/app/components/job/JobFormModal';
+import Toast from '@/app/components/profile/Toast';
 import type { JobDetailData } from '@/app/components/job/JobDetailContents';
 import { createJob } from '@/utils/api/job-api';
 import type { CreateJobPayload } from '@/utils/api/job-api';
@@ -13,6 +14,13 @@ export default function Header() {
   const { user } = useAuth();
   const { profile, isLoading } = useEmployerProfile();
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  // Show toast helper
+  const showToast = (message: string, type: 'error' | 'success' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Debug: Log profile data
   useEffect(() => {
@@ -29,22 +37,30 @@ export default function Header() {
     try {
       // Validate required fields
       if (!jobData.locationId) {
-        alert('Vui lòng chọn địa điểm làm việc');
+        showToast('Vui lòng chọn địa điểm làm việc', 'error');
         return;
       }
 
       if (!jobData.categories || jobData.categories.length === 0) {
-        alert('Vui lòng chọn ít nhất một danh mục');
+        showToast('Vui lòng chọn ít nhất một danh mục', 'error');
         return;
       }
 
       // Get all categories from API to map names to IDs
-      const allCategories = await jobCategoryApi.getList();
+      let allCategories;
+      try {
+        allCategories = await jobCategoryApi.getList();
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        showToast('Không thể tải danh mục. Vui lòng thử lại.', 'error');
+        return;
+      }
+      
       const firstCategoryName = jobData.categories[0];
       const category = allCategories.find(cat => cat.name === firstCategoryName);
       
       if (!category) {
-        alert(`Không tìm thấy danh mục: ${firstCategoryName}`);
+        showToast(`Không tìm thấy danh mục: ${firstCategoryName}`, 'error');
         return;
       }
 
@@ -82,11 +98,11 @@ export default function Header() {
       const response = await createJob(payload);
       console.log('Job created successfully:', response);
       
-      alert('Tạo tin tuyển dụng thành công!');
+      showToast('Tạo tin tuyển dụng thành công!');
       setIsCreateJobOpen(false);
     } catch (error: any) {
       console.error('Error creating job:', error);
-      alert(`Lỗi khi tạo tin tuyển dụng: ${error.response?.data?.message || error.message || 'Vui lòng thử lại'}`);
+      showToast(`Lỗi khi tạo tin tuyển dụng: ${error.response?.data?.message || error.message || 'Vui lòng thử lại'}`, 'error');
     }
   };
 
@@ -141,6 +157,15 @@ export default function Header() {
           onSave={handleCreateJob}
           onSuccess={handleViewJob}
           mode="create"
+        />
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
         />
       )}
     </>
