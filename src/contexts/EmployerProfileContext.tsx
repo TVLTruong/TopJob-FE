@@ -137,17 +137,15 @@ export function EmployerProfileProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       setError(null);
       
-      // 🔥 DEV MODE: Use mock data
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔥 DEV MODE: Using mock employer profile');
-        setProfile(MOCK_EMPLOYER_PROFILE as any);
-        setIsLoading(false);
-        return;
-      }
+      // 🔥 MOCK DATA DISABLED - Always fetch real data
+      // if (process.env.NODE_ENV === 'development') {
+      //   console.log('🔥 DEV MODE: Using mock employer profile');
+      //   setProfile(MOCK_EMPLOYER_PROFILE as any);
+      //   setIsLoading(false);
+      //   return;
+      // }
       
       const data = await getMyEmployerProfile();
-      console.log('📦 Employer Profile Data:', data);
-      console.log('🖼️ Logo URL:', data?.logoUrl);
       setProfile(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load profile');

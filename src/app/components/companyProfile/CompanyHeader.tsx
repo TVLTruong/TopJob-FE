@@ -630,7 +630,7 @@ export default function CompanyHeader() {
                       className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg text-sm text-gray-600 flex items-center justify-center gap-2 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition"
                     >
                       <Plus className="w-4 h-4" />
-                      + Thêm địa điểm
+                      Thêm địa điểm
                     </button>
                   )}
                 </div>
@@ -907,15 +907,16 @@ export default function CompanyHeader() {
             updatedProfile.contactEmail = formData.contactEmail;
           }
           
-          if (formData.facebookUrl !== profile?.facebookUrl) {
+          // Only send URL fields if they have values
+          if (formData.facebookUrl && formData.facebookUrl !== profile?.facebookUrl) {
             updatedProfile.facebookUrl = formData.facebookUrl;
           }
           
-          if (formData.linkedinUrl !== profile?.linkedlnUrl) {
+          if (formData.linkedinUrl && formData.linkedinUrl !== profile?.linkedlnUrl) {
             updatedProfile.linkedlnUrl = formData.linkedinUrl;
           }
           
-          if (formData.xUrl !== profile?.xUrl) {
+          if (formData.xUrl && formData.xUrl !== profile?.xUrl) {
             updatedProfile.xUrl = formData.xUrl;
           }
           
