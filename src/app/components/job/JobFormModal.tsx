@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import ConfirmModal from '@/app/components/companyProfile/ConfirmModal';
 import type { JobDetailData } from '@/app/components/job/JobDetailContents';
 import { JobCategory, jobCategoryApi } from '@/utils/api/categories-api';
+import { useEmployerProfile } from '@/contexts/EmployerProfileContext';
 
 interface JobFormModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export default function JobFormModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [categoriesFromApi, setCategoriesFromApi] = useState<JobCategory[]>([]);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const { profile: employerProfile } = useEmployerProfile();
 
   // Lấy danh mục từ API khi component mount
   useEffect(() => {
@@ -60,51 +62,61 @@ export default function JobFormModal({
   // Initialize form state
   const getInitialFormState = useCallback(() => {
     if (mode === 'edit' && initialData) {
-      const parts = initialData.deadline.split('/');
-      const deadlineInput = parts.length === 3 
+      const parts = initialData.expiredAt.split('/');
+      const expiredAtInput = parts.length === 3 
         ? `${parts[2]}-${parts[1]}-${parts[0]}` 
         : todayInput;
 
       return {
         title: initialData.title,
-        position: initialData.position,
-        jobType: initialData.jobType,
-        targetCount: String(initialData.targetCount),
-        deadlineInput,
-        // salaryRaw: initialData.salaryDisplay.replace(/\D/g, ''),
-        salaryMin: initialData.salaryMin ?? null,
-        salaryMax: initialData.salaryMax ?? null,
+        employmentType: initialData.employmentType,
+        workMode: initialData.workMode,
+        quantity: String(initialData.quantity),
+        expiredAtInput,
+        salaryMin: initialData.salaryMin,
+        salaryMax: initialData.salaryMax,
         isNegotiable: initialData.isNegotiable ?? false,
-        experienceYears: initialData.experienceDisplay === 'Không' 
-          ? '' 
-          : initialData.experienceDisplay,
+        isSalaryVisible: initialData.isSalaryVisible ?? true,
+        salaryCurrency: initialData.salaryCurrency ?? 'VND',
+        experienceLevel: (initialData.experienceLevel ?? '') as string,
+        experienceYearsMin: String(initialData.experienceYearsMin ?? ''),
+        locationId: initialData.locationId ?? '',
         categories: initialData.categories,
-        newCategory: '',
         description: initialData.description,
         responsibilitiesText: initialData.responsibilities.join('\n'),
         requirementsText: initialData.requirements.join('\n'),
-        plusPointsText: initialData.plusPoints.join('\n')
+        plusPointsText: initialData.plusPoints.join('\n'),
+        benefitsText: initialData.benefits?.join('\n') ?? '',
+        benefitSource: 'custom' as 'company' | 'custom',
+        isHot: initialData.isHot ?? false,
+        isUrgent: initialData.isUrgent ?? false,
       };
     }
 
     // Default state for create mode
     return {
       title: '',
-      position: 'Fresher',
-      jobType: 'Full-Time' as JobDetailData['jobType'],
-      targetCount: '',
-      deadlineInput: todayInput,
-      // salaryRaw: '',
-      salaryMin: null,
-      salaryMax: null,
+      employmentType: 'full_time' as JobDetailData['employmentType'],
+      workMode: 'onsite' as JobDetailData['workMode'],
+      quantity: '1',
+      expiredAtInput: todayInput,
+      salaryMin: null as number | null,
+      salaryMax: null as number | null,
       isNegotiable: false,
-      experienceYears: '',
+      isSalaryVisible: true,
+      salaryCurrency: 'VND',
+      experienceLevel: '' as string,
+      experienceYearsMin: '' as string,
+      locationId: employerProfile?.locations?.[0]?.id || '',
       categories: [] as string[],
-      newCategory: '',
       description: '',
       responsibilitiesText: '',
       requirementsText: '',
-      plusPointsText: ''
+      plusPointsText: '',
+      benefitsText: '',
+      benefitSource: 'company' as 'company' | 'custom',
+      isHot: false,
+      isUrgent: false,
     };
   }, [mode, initialData, todayInput]);
 
@@ -155,8 +167,8 @@ export default function JobFormModal({
       newErrors.title = 'Vui lòng nhập tên công việc';
     }
 
-    if (!form.targetCount || Number(form.targetCount) <= 0) {
-      newErrors.targetCount = 'Vui lòng nhập chỉ tiêu hợp lệ';
+    if (!form.quantity || Number(form.quantity) <= 0) {
+      newErrors.quantity = 'Vui lòng nhập số lượng tuyển hợp lệ';
     }
 
     if (!form.isNegotiable && (form.salaryMin === null || form.salaryMin <= 0)) {
@@ -164,6 +176,10 @@ export default function JobFormModal({
     }
     if (!form.isNegotiable && (form.salaryMax === null || form.salaryMax <= 0)) {
       newErrors.salaryMax = 'Vui lòng nhập mức lương tối đa hợp lệ';
+    }
+
+    if (!form.locationId) {
+      newErrors.locationId = 'Vui lòng chọn địa điểm làm việc';
     }
 
     if (form.categories.length === 0) {
@@ -195,25 +211,13 @@ export default function JobFormModal({
       return;
     }
 
-    const target = Number(form.targetCount || '0');
-    const parts = form.deadlineInput.split('-');
-    const deadlineDisplay = parts.length === 3 
+    const quantity = Number(form.quantity || '1');
+    const parts = form.expiredAtInput.split('-');
+    const expiredAtDisplay = parts.length === 3 
       ? `${parts[2]}/${parts[1]}/${parts[0]}` 
       : formatDateDisplay(new Date());
 
-    // Xử lý salary hiển thị
-    const salaryDisplay = form.isNegotiable
-      ? 'Thỏa thuận'
-      : (form.salaryMin !== null && form.salaryMax !== null)
-        ? `${formatNumberWithDots(String(form.salaryMin))} - ${formatNumberWithDots(String(form.salaryMax))} VND/tháng`
-        : '0 VND/tháng';
-
-    // Xử lý kinh nghiệm
-    const experienceDisplay = form.experienceYears 
-      ? `${Number(form.experienceYears)} năm` 
-      : 'Không';
-
-    // Chia responsibilities, requirements, plusPoints theo dòng
+    // Chia responsibilities, requirements, plusPoints, benefits theo dòng
     const responsibilities = form.responsibilitiesText
       .split(/\n+/)
       .map(s => s.trim())
@@ -229,25 +233,42 @@ export default function JobFormModal({
       .map(s => s.trim())
       .filter(Boolean);
 
+    // Determine benefits based on source
+    let benefits: string[];
+    if (form.benefitSource === 'company') {
+      benefits = employerProfile?.benefits || [];
+    } else {
+      benefits = form.benefitsText
+        .split(/\n+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
     // Build jobData
     const jobData: JobDetailData = {
       title: form.title.trim(),
-      position: form.position,
-      jobType: form.jobType,
+      employmentType: form.employmentType,
+      workMode: form.workMode,
       applicantsCount: initialData?.applicantsCount || 0,
-      targetCount: target,
-      deadline: deadlineDisplay,
+      quantity,
+      expiredAt: expiredAtDisplay,
       postedDate: initialData?.postedDate || formatDateDisplay(new Date()),
       salaryMin: form.isNegotiable ? null : form.salaryMin,
       salaryMax: form.isNegotiable ? null : form.salaryMax,
       isNegotiable: form.isNegotiable,
-      // salaryDisplay,
-      experienceDisplay: form.experienceYears ? Number(form.experienceYears) : 'Không',
+      isSalaryVisible: form.isSalaryVisible,
+      salaryCurrency: form.salaryCurrency,
+      experienceLevel: (form.experienceLevel || undefined) as JobDetailData['experienceLevel'],
+      experienceYearsMin: form.experienceYearsMin ? Number(form.experienceYearsMin) : undefined,
+      locationId: form.locationId,
       categories: form.categories,
       description: form.description,
       responsibilities,
       requirements,
-      plusPoints
+      plusPoints,
+      benefits,
+      isHot: form.isHot,
+      isUrgent: form.isUrgent,
     };
 
     onSave(jobData);
@@ -308,31 +329,36 @@ export default function JobFormModal({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Chức vụ <span className="text-red-500">*</span>
+                  Cấp độ <span className="text-red-500">*</span>
                 </label>
                 <select 
-                  value={form.position} 
-                  onChange={e => setForm({ ...form, position: e.target.value })} 
+                  value={form.experienceLevel || ''} 
+                  onChange={e => setForm({ ...form, experienceLevel: e.target.value })} 
                   className="w-full border rounded-lg px-3 py-2"
                 >
-                  {positions.map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
+                  <option value="">Chọn cấp độ</option>
+                  <option value="intern">Thực tập</option>
+                  <option value="fresher">Fresher</option>
+                  <option value="junior">Junior</option>
+                  <option value="middle">Middle</option>
+                  <option value="senior">Senior</option>
+                  <option value="lead">Lead</option>
+                  <option value="manager">Manager</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Chỉ tiêu <span className="text-red-500">*</span>
+                  Số lượng tuyển <span className="text-red-500">*</span>
                 </label>
                 <input 
-                  value={form.targetCount} 
-                  onChange={e => setForm({ ...form, targetCount: e.target.value.replace(/\D/g, '') })} 
+                  value={form.quantity} 
+                  onChange={e => setForm({ ...form, quantity: e.target.value.replace(/\D/g, '') })} 
                   inputMode="numeric" 
-                  className={`w-full border rounded-lg px-3 py-2 ${errors.targetCount ? 'border-red-500' : ''}`}
+                  className={`w-full border rounded-lg px-3 py-2 ${errors.quantity ? 'border-red-500' : ''}`}
                   placeholder="Số lượng tuyển dụng"
                 />
-                {errors.targetCount && <p className="text-red-500 text-xs mt-1">{errors.targetCount}</p>}
+                {errors.quantity && <p className="text-red-500 text-xs mt-1">{errors.quantity}</p>}
               </div>
 
               <div>
@@ -342,25 +368,26 @@ export default function JobFormModal({
                 <input 
                   type="date" 
                   min={todayInput} 
-                  value={form.deadlineInput} 
-                  onChange={e => setForm({ ...form, deadlineInput: e.target.value })} 
+                  value={form.expiredAtInput} 
+                  onChange={e => setForm({ ...form, expiredAtInput: e.target.value })} 
                   className="w-full border rounded-lg px-3 py-2" 
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Loại công việc <span className="text-red-500">*</span>
+                  Loại hình công việc <span className="text-red-500">*</span>
                 </label>
                 <select 
-                  value={form.jobType} 
-                  onChange={e => setForm({ ...form, jobType: e.target.value as JobDetailData['jobType'] })} 
+                  value={form.employmentType} 
+                  onChange={e => setForm({ ...form, employmentType: e.target.value as JobDetailData['employmentType'] })} 
                   className="w-full border rounded-lg px-3 py-2"
                 >
-                  <option value="Full-Time">Full-Time</option>
-                  <option value="Part-Time">Part-Time</option>
-                  <option value="Freelance">Freelance</option>
-                  <option value="Remote">Remote</option>
+                  <option value="full_time">Toàn thời gian</option>
+                  <option value="part_time">Bán thời gian</option>
+                  <option value="freelance">Freelance</option>
+                  <option value="internship">Thực tập</option>
+                  <option value="contract">Hợp đồng</option>
                 </select>
               </div>
 
@@ -384,13 +411,38 @@ export default function JobFormModal({
                 </label>
                 <input 
                   placeholder="Để trống = Không yêu cầu" 
-                  value={form.experienceYears} 
-                  onChange={e => setForm({ ...form, experienceYears: e.target.value.replace(/\D/g, '') })} 
+                  value={form.experienceYearsMin} 
+                  onChange={e => setForm({ ...form, experienceYearsMin: e.target.value.replace(/\D/g, '') })} 
                   inputMode="numeric" 
                   className="w-full border rounded-lg px-3 py-2" 
                 />
               </div>
-
+              
+              {/* Location Selector */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Địa điểm làm việc <span className="text-red-500">*</span>
+                </label>
+                <select 
+                  value={form.locationId} 
+                  onChange={e => setForm({ ...form, locationId: e.target.value })} 
+                  className={`w-full border rounded-lg px-3 py-2 ${errors.locationId ? 'border-red-500' : ''}`}
+                >
+                  <option value="">Chọn địa điểm</option>
+                  {employerProfile?.locations?.map((location) => (
+                    <option key={location.id} value={location.id}>
+                      {location.isHeadquarters && '🏢 '}
+                      {location.fullAddress || `${location.detailedAddress}, ${location.district}, ${location.province}`}
+                    </option>
+                  ))}
+                </select>
+                {errors.locationId && (
+                  <p className="text-red-500 text-xs mt-1">{errors.locationId}</p>
+                )}
+                {(!employerProfile?.locations || employerProfile.locations.length === 0) && (
+                  <p className="text-orange-600 text-xs mt-1">⚠️ Chưa có địa điểm văn phòng. Vui lòng thêm địa điểm trong hồ sơ công ty.</p>
+                )}
+              </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Mức lương (VND/tháng)
@@ -560,6 +612,65 @@ export default function JobFormModal({
                   placeholder="Nhập các điểm cộng, mỗi dòng một mục"
                 />
                 {errors.plusPointsText && <p className="text-red-500 text-xs mt-1">{errors.plusPointsText}</p>}
+              </div>
+
+              {/* Benefits Selection */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phúc lợi
+                </label>
+                
+                {/* Radio buttons */}
+                <div className="flex gap-6 mb-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="benefitSource"
+                      value="company"
+                      checked={form.benefitSource === 'company'}
+                      onChange={e => setForm({ ...form, benefitSource: 'company' })}
+                      className="w-4 h-4 text-teal-600"
+                    />
+                    <span className="text-sm text-gray-700">Sử dụng phúc lợi công ty</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="benefitSource"
+                      value="custom"
+                      checked={form.benefitSource === 'custom'}
+                      onChange={e => setForm({ ...form, benefitSource: 'custom' })}
+                      className="w-4 h-4 text-teal-600"
+                    />
+                    <span className="text-sm text-gray-700">Nhập riêng cho tin này</span>
+                  </label>
+                </div>
+
+                {/* Display company benefits or custom textarea */}
+                {form.benefitSource === 'company' ? (
+                  <div className="border rounded-lg p-4 bg-gray-50 max-h-60 overflow-y-auto">
+                    {employerProfile?.benefits && employerProfile.benefits.length > 0 ? (
+                      <ul className="space-y-2">
+                        {employerProfile.benefits.map((benefit: string, index: number) => (
+                          <li key={index} className="flex gap-2 text-sm text-gray-700">
+                            <span className="text-teal-600 mt-1 flex-shrink-0">✓</span>
+                            <span>{benefit}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">Chưa có phúc lợi công ty. Vui lòng cập nhật hồ sơ công ty hoặc chọn nhập riêng.</p>
+                    )}
+                  </div>
+                ) : (
+                  <textarea 
+                    value={form.benefitsText} 
+                    onChange={e => setForm({ ...form, benefitsText: e.target.value })} 
+                    rows={5} 
+                    className="w-full border rounded-lg px-3 py-2"
+                    placeholder="Nhập các phúc lợi riêng cho tin tuyển dụng này, mỗi dòng một mục&#10;Ví dụ:&#10;Bảo hiểm sức khỏe toàn diện&#10;Thưởng hiệu suất hàng quý&#10;Du lịch team building hàng năm"
+                  />
+                )}
               </div>
             </div>
 

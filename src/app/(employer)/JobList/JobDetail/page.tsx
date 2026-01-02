@@ -1,14 +1,22 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import JobDetailContent, { JobDetailData } from '@/app/components/job/JobDetailContents';
 import ApplicantsTab from '@/app/components/job/Applicant';
 import JobFormModal from '@/app/components/job/JobFormModal';
+import Toast from '@/app/components/profile/Toast';
 import { ChevronDown, Power, Edit, Eye, EyeOff, Trash2, X, Heart } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { updateJob, getEmployerJobDetail, hideJob, unhideJob, deleteJob, closeJob, type JobFromAPI } from '@/utils/api/job-api';
+import type { CreateJobPayload } from '@/utils/api/job-api';
+import { jobCategoryApi } from '@/utils/api/categories-api';
 
-export default function JobDetailPage() {
+function JobDetailContent_Inner() {
   const { user } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const jobId = searchParams.get('id');
+  
   const isRecruiter = user?.role === 'employer';
   const isCandidate = user?.role === 'candidate';
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -19,7 +27,18 @@ export default function JobDetailPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [job, setJob] = useState<JobDetailData | null>(null);
+  
+  // Toast state
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  // Show toast helper
+  const showToast = (message: string, type: 'error' | 'success' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Helpers
   const formatDateDisplay = (d: Date) => {
@@ -29,23 +48,69 @@ export default function JobDetailPage() {
     return `${dd}/${mm}/${yyyy}`;
   };
 
-  // Job state (could be fetched from API)
-  const [job, setJob] = useState<JobDetailData>({
-    title: 'Social Media Assistant',
-    position: 'Fresher',
-    jobType: 'Full-Time',
-    applicantsCount: 4,
-    targetCount: 11,
-    deadline: '28/05/2025',
-    postedDate: formatDateDisplay(new Date()),
-    salaryDisplay: '10.000 USD/tháng',
-    experienceDisplay: '1 năm',
-    categories: ['Marketing', 'Design'],
-    description: 'Mô tả công việc ...',
-    responsibilities: ['Tham gia cộng đồng', 'Tạo nội dung', 'Hỗ trợ chiến lược'],
-    requirements: ['Năng động', 'Sáng tạo'],
-    plusPoints: ['Tiếng Anh tốt']
-  });
+  // Fetch job detail from API
+  useEffect(() => {
+    const fetchJobDetail = async () => {
+      if (!jobId) {
+        setError('Không tìm thấy ID công việc');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        const apiJob: JobFromAPI = await getEmployerJobDetail(jobId);
+        
+        // Map JobFromAPI to JobDetailData
+        const mappedJob: JobDetailData = {
+          id: apiJob.id,
+          title: apiJob.title,
+          slug: apiJob.slug,
+          employmentType: apiJob.employmentType,
+          workMode: apiJob.workMode,
+          status: apiJob.status,
+          applicantsCount: apiJob.applyCount || 0,
+          quantity: apiJob.quantity,
+          expiredAt: apiJob.expiredAt ? formatDateDisplay(new Date(apiJob.expiredAt)) : 'N/A',
+          postedDate: formatDateDisplay(new Date(apiJob.createdAt)),
+          publishedAt: apiJob.publishedAt ? formatDateDisplay(new Date(apiJob.publishedAt)) : undefined,
+          salaryMin: apiJob.salaryMin,
+          salaryMax: apiJob.salaryMax,
+          isNegotiable: apiJob.isNegotiable,
+          isSalaryVisible: apiJob.isSalaryVisible,
+          salaryCurrency: apiJob.salaryCurrency,
+          experienceLevel: apiJob.experienceLevel || undefined,
+          experienceYearsMin: apiJob.experienceYearsMin || undefined,
+          locationId: apiJob.location?.id,
+          locationName: apiJob.location?.city,
+          locationAddress: apiJob.location?.address,
+          categories: apiJob.category ? [apiJob.category.name] : [],
+          description: apiJob.description || 'Chưa có mô tả',
+          responsibilities: apiJob.responsibilities || [],
+          requirements: apiJob.requirements || [],
+          plusPoints: apiJob.niceToHave || [],
+          benefits: apiJob.benefits || [],
+          isHot: apiJob.isHot,
+          isUrgent: apiJob.isUrgent,
+          viewCount: apiJob.viewCount,
+          saveCount: apiJob.saveCount,
+          companyName: apiJob.employer?.companyName,
+          companyLogo: apiJob.employer?.logoUrl || undefined,
+        };
+
+        setJob(mappedJob);
+        setIsHidden(apiJob.status === 'hidden');
+      } catch (err: any) {
+        console.error('Error fetching job detail:', err);
+        setError(err.response?.data?.message || 'Không thể tải chi tiết công việc');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobDetail();
+  }, [jobId]);
 
   const handleToggleHidden = () => {
     setConfirmAction('hide');
@@ -79,22 +144,43 @@ export default function JobDetailPage() {
     console.log(isSaved ? 'Đã bỏ lưu công việc' : 'Đã lưu công việc');
   };
 
-  const confirmHandler = () => {
-    if (confirmAction === 'hide') {
-      setIsHidden(!isHidden);
-    } else if (confirmAction === 'end') {
-      console.log('Kết thúc công việc');
-    } else if (confirmAction === 'delete') {
-      console.log('Xóa công việc');
-    } else if (confirmAction === 'apply') {
-      setHasApplied(true);
-      console.log('Đã ứng tuyển');
-    } else if (confirmAction === 'unapply') {
-      setHasApplied(false);
-      console.log('Đã hủy ứng tuyển');
+  const confirmHandler = async () => {
+    if (!jobId) return;
+
+    try {
+      if (confirmAction === 'hide') {
+        if (isHidden) {
+          await unhideJob(jobId);
+          setIsHidden(false);
+          showToast('Đã hủy ẩn công việc thành công!');
+        } else {
+          await hideJob(jobId);
+          setIsHidden(true);
+          showToast('Đã ẩn công việc thành công!');
+        }
+      } else if (confirmAction === 'end') {
+        // Close job via dedicated endpoint
+        await closeJob(jobId);
+        showToast('Đã kết thúc công việc thành công!');
+        router.push('/JobList');
+      } else if (confirmAction === 'delete') {
+        await deleteJob(jobId);
+        showToast('Đã xóa công việc thành công!');
+        router.push('/JobList');
+      } else if (confirmAction === 'apply') {
+        setHasApplied(true);
+        console.log('Đã ứng tuyển');
+      } else if (confirmAction === 'unapply') {
+        setHasApplied(false);
+        console.log('Đã hủy ứng tuyển');
+      }
+    } catch (error: any) {
+      console.error('Error performing action:', error);
+      showToast(error.response?.data?.message || error.message || 'Vui lòng thử lại', 'error');
+    } finally {
+      setShowConfirmModal(false);
+      setConfirmAction(null);
     }
-    setShowConfirmModal(false);
-    setConfirmAction(null);
   };
 
   const cancelHandler = () => {
@@ -153,9 +239,107 @@ export default function JobDetailPage() {
 
   const modalContent = getModalContent();
 
-  const handleSaveJobData = (updatedJob: JobDetailData) => {
-    setJob(updatedJob);
+  const handleSaveJobData = async (updatedJob: JobDetailData) => {
+    try {
+      // Validate required fields
+      if (!updatedJob.locationId) {
+        showToast('Vui lòng chọn địa điểm làm việc', 'error');
+        return;
+      }
+
+      if (!updatedJob.categories || updatedJob.categories.length === 0) {
+        showToast('Vui lòng chọn ít nhất một danh mục', 'error');
+        return;
+      }
+
+      // Get all categories from API to map names to IDs
+      const allCategories = await jobCategoryApi.getList();
+      const firstCategoryName = updatedJob.categories[0];
+      const category = allCategories.find(cat => cat.name === firstCategoryName);
+      
+      if (!category) {
+        showToast(`Không tìm thấy danh mục: ${firstCategoryName}`, 'error');
+        return;
+      }
+
+      // Convert expiredAt from dd/MM/yyyy to ISO date
+      const [day, month, year] = updatedJob.expiredAt.split('/');
+      const expiredAtISO = new Date(`${year}-${month}-${day}`).toISOString();
+
+      // Build API payload (only fields that can be updated)
+      const payload: Partial<CreateJobPayload> = {
+        categoryId: category.id,
+        locationId: updatedJob.locationId!,
+        title: updatedJob.title,
+        description: updatedJob.description,
+        requirements: updatedJob.requirements,
+        responsibilities: updatedJob.responsibilities,
+        niceToHave: updatedJob.plusPoints,
+        benefits: updatedJob.benefits,
+        salaryMin: updatedJob.salaryMin,
+        salaryMax: updatedJob.salaryMax,
+        isNegotiable: updatedJob.isNegotiable,
+        isSalaryVisible: updatedJob.isSalaryVisible,
+        salaryCurrency: updatedJob.salaryCurrency,
+        employmentType: updatedJob.employmentType,
+        workMode: updatedJob.workMode,
+        experienceLevel: updatedJob.experienceLevel,
+        experienceYearsMin: updatedJob.experienceYearsMin,
+        quantity: updatedJob.quantity,
+        expiredAt: expiredAtISO,
+        isHot: updatedJob.isHot,
+        isUrgent: updatedJob.isUrgent,
+      };
+
+      // Use jobId from URL params
+      if (!jobId) {
+        showToast('Không tìm thấy ID công việc', 'error');
+        return;
+      }
+      
+      console.log('Updating job with payload:', payload);
+      
+      const response = await updateJob(jobId, payload);
+      console.log('Job updated successfully:', response);
+      
+      // Update local state
+      setJob(updatedJob);
+      setIsEditOpen(false);
+      showToast('Cập nhật tin tuyển dụng thành công!');
+    } catch (error: any) {
+      console.error('Error updating job:', error);
+      showToast(error.response?.data?.message || error.message || 'Lỗi khi cập nhật tin tuyển dụng', 'error');
+    }
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mb-4"></div>
+          <p className="text-gray-600">Đang tải chi tiết công việc...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !job) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error || 'Không tìm thấy công việc'}</p>
+          <button
+            onClick={() => router.push('/JobList')}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+          >
+            Quay lại danh sách
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -173,7 +357,7 @@ export default function JobDetailPage() {
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{job.title}</h1>
                 <p className="text-gray-600 text-sm">
-                  {job.position} • {job.jobType} • {job.experienceDisplay}
+                  {job.experienceLevel ? job.experienceLevel.charAt(0).toUpperCase() + job.experienceLevel.slice(1) : 'N/A'} • {job.employmentType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} • {job.experienceYearsMin ? `${job.experienceYearsMin} năm` : 'N/A'}
                 </p>
               </div>
             </div>
@@ -339,7 +523,32 @@ export default function JobDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Toast Notification */}
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
       </div>
     </div>
+  );
+}
+
+// Wrap with Suspense to handle useSearchParams()
+export default function JobDetailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mb-4"></div>
+          <p className="text-gray-600">Đang tải...</p>
+        </div>
+      </div>
+    }>
+      <JobDetailContent_Inner />
+    </Suspense>
   );
 }

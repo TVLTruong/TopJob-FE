@@ -1,84 +1,136 @@
 'use client';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Search, MoreVertical, Trash2, Edit3, ChevronLeft, ChevronRight, Eye, EyeOff, X, Filter } from 'lucide-react';
+import { getEmployerJobs, type JobFromAPI, hideJob, unhideJob, deleteJob } from '@/utils/api/job-api';
+import { useRouter } from 'next/navigation';
 
 interface Job {
-  id: number;
+  id: string;
   title: string;
-  status: 'pending' | 'active' | 'full' | 'closed';
-  postedDate: string;
-  deadline: string;
-  type: 'fulltime' | 'freelance';
-  applicants: number;
-  totalQuantity: number;
+  status: string; // Backend: pending_approval, active, closed, expired, etc.
+  createdAt: string;
+  expiredAt: string;
+  employmentType: string; // full_time, part_time, freelance, etc.
+  applyCount?: number;
+  quantity: number;
   isHidden?: boolean;
 }
 
 export default function JobListingsTab() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'hide' | 'unhide' | 'delete' | null>(null);
-  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
-  const [jobs, setJobs] = useState<Job[]>([
-    { id: 1, title: 'Social Media Assistant', status: 'pending', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 4, totalQuantity: 20 },
-    { id: 2, title: 'Senior Designer', status: 'full', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 24, totalQuantity: 24 },
-    { id: 3, title: 'Visual Designer', status: 'pending', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'freelance', applicants: 1, totalQuantity: 20 },
-    { id: 4, title: 'Data Science', status: 'closed', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'freelance', applicants: 10, totalQuantity: 26 },
-    { id: 5, title: 'Kotlin Developer', status: 'full', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 30, totalQuantity: 30 },
-    { id: 6, title: 'React Developer', status: 'closed', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 10, totalQuantity: 14 },
-    { id: 7, title: 'C++ Developer', status: 'closed', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 20, totalQuantity: 30 },
-    { id: 8, title: 'Python Developer', status: 'closed', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 20, totalQuantity: 30 },
-    { id: 9, title: 'Java Developer', status: 'full', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 30, totalQuantity: 30 },
-    { id: 10, title: 'Rust Developer', status: 'pending', postedDate: '26/04/2025', deadline: '26/05/2025', type: 'fulltime', applicants: 5, totalQuantity: 30 },
-  ]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalJobs, setTotalJobs] = useState(0);
+  const itemsPerPage = 10;
 
-  const statusConfig = {
-    pending: { label: 'Chờ duyệt', color: 'bg-orange-100 text-orange-600 border-orange-300' },
+  // Fetch jobs from API
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await getEmployerJobs(currentPage, itemsPerPage);
+        console.log('API Response:', response); // Debug log
+        
+        // Map JobFromAPI to Job interface
+        const mappedJobs: Job[] = (response.data || []).map((apiJob: JobFromAPI) => ({
+          id: apiJob.id,
+          title: apiJob.title,
+          status: apiJob.status,
+          createdAt: new Date(apiJob.createdAt).toISOString(),
+          expiredAt: apiJob.expiredAt ? new Date(apiJob.expiredAt).toISOString() : new Date().toISOString(),
+          employmentType: apiJob.employmentType,
+          applyCount: apiJob.applyCount || 0,
+          quantity: apiJob.quantity,
+          isHidden: false, // Backend doesn't have this field yet
+        }));
+        
+        setJobs(mappedJobs);
+        setTotalJobs(response.meta?.total || 0);
+      } catch (err: any) {
+        console.error('Error fetching jobs:', err);
+        setError(err.response?.data?.message || 'Không thể tải danh sách công việc');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, [currentPage]);
+
+  const statusConfig: Record<string, { label: string; color: string }> = {
+    pending_approval: { label: 'Chờ duyệt', color: 'bg-orange-100 text-orange-600 border-orange-300' },
     active: { label: 'Đã đăng', color: 'bg-green-100 text-green-600 border-green-300' },
-    full: { label: 'Đã đủ', color: 'bg-blue-100 text-blue-600 border-blue-300' },
     closed: { label: 'Đã đóng', color: 'bg-red-100 text-red-600 border-red-300' },
+    expired: { label: 'Hết hạn', color: 'bg-gray-100 text-gray-600 border-gray-300' },
+    rejected: { label: 'Bị từ chối', color: 'bg-red-100 text-red-600 border-red-300' },
+    hidden: { label: 'Đã ẩn', color: 'bg-gray-100 text-gray-600 border-gray-300' },
+    removed_by_admin: { label: 'Đã gỡ', color: 'bg-red-100 text-red-600 border-red-300' },
+    draft: { label: 'Nháp', color: 'bg-gray-100 text-gray-600 border-gray-300' },
   };
 
-  const typeConfig = {
-    fulltime: { label: 'Fulltime', color: 'border-blue-600 text-blue-600' },
+  const typeConfig: Record<string, { label: string; color: string }> = {
+    full_time: { label: 'Full-time', color: 'border-blue-600 text-blue-600' },
+    part_time: { label: 'Part-time', color: 'border-purple-600 text-purple-600' },
     freelance: { label: 'Freelance', color: 'border-orange-500 text-orange-500' },
+    internship: { label: 'Thực tập', color: 'border-green-500 text-green-500' },
+    contract: { label: 'Hợp đồng', color: 'border-gray-600 text-gray-600' },
   };
 
-  const handleEdit = (id: number) => {
-    console.log('Chỉnh sửa công việc:', id);
+  const handleView = (id: string) => {
     setOpenDropdownId(null);
+    router.push(`/JobList/JobDetail?id=${id}`);
   };
 
-  const handleHide = (id: number) => {
+  const handleHide = (id: string) => {
     const job = jobs.find(j => j.id === id);
     setSelectedJobId(id);
-    setConfirmAction(job?.isHidden ? 'unhide' : 'hide');
+    // Check if job is currently hidden by status
+    setConfirmAction(job?.status === 'hidden' ? 'unhide' : 'hide');
     setShowConfirmModal(true);
     setOpenDropdownId(null);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     setSelectedJobId(id);
     setConfirmAction('delete');
     setShowConfirmModal(true);
     setOpenDropdownId(null);
   };
 
-  const confirmHandler = () => {
-    if (confirmAction === 'delete' && selectedJobId) {
-      setJobs(prev => prev.filter(j => j.id !== selectedJobId));
-    } else if (confirmAction === 'hide' && selectedJobId) {
-      setJobs(prev => prev.map(j => j.id === selectedJobId ? { ...j, isHidden: true } : j));
-    } else if (confirmAction === 'unhide' && selectedJobId) {
-      setJobs(prev => prev.map(j => j.id === selectedJobId ? { ...j, isHidden: false } : j));
+  const confirmHandler = async () => {
+    if (!selectedJobId) return;
+
+    try {
+      if (confirmAction === 'delete') {
+        await deleteJob(selectedJobId);
+        setJobs(prev => prev.filter(j => j.id !== selectedJobId));
+        alert('Xóa công việc thành công!');
+      } else if (confirmAction === 'hide') {
+        await hideJob(selectedJobId);
+        setJobs(prev => prev.map(j => j.id === selectedJobId ? { ...j, status: 'hidden', isHidden: true } : j));
+        alert('Ẩn công việc thành công!');
+      } else if (confirmAction === 'unhide') {
+        await unhideJob(selectedJobId);
+        setJobs(prev => prev.map(j => j.id === selectedJobId ? { ...j, status: 'active', isHidden: false } : j));
+        alert('Hủy ẩn công việc thành công!');
+      }
+    } catch (error: any) {
+      console.error('Error performing action:', error);
+      alert(`Lỗi: ${error.response?.data?.message || error.message || 'Vui lòng thử lại'}`);
+    } finally {
+      setShowConfirmModal(false);
+      setConfirmAction(null);
+      setSelectedJobId(null);
     }
-    setShowConfirmModal(false);
-    setConfirmAction(null);
-    setSelectedJobId(null);
   };
 
   const cancelHandler = () => {
@@ -124,10 +176,11 @@ export default function JobListingsTab() {
 
   const filterOptions = [
     { value: 'all', label: 'Tất cả', count: jobs.length },
-    { value: 'pending', label: 'Chờ duyệt', count: jobs.filter(j => j.status === 'pending').length },
+    { value: 'pending_approval', label: 'Chờ duyệt', count: jobs.filter(j => j.status === 'pending_approval').length },
     { value: 'active', label: 'Đã đăng', count: jobs.filter(j => j.status === 'active').length },
-    { value: 'full', label: 'Đã đủ', count: jobs.filter(j => j.status === 'full').length },
+    { value: 'hidden', label: 'Đã ẩn', count: jobs.filter(j => j.status === 'hidden').length },
     { value: 'closed', label: 'Đã đóng', count: jobs.filter(j => j.status === 'closed').length },
+    { value: 'expired', label: 'Hết hạn', count: jobs.filter(j => j.status === 'expired').length },
   ];
 
   const getStatusLabel = (value: string) => filterOptions.find(opt => opt.value === value)?.label || 'Tất cả';
@@ -311,34 +364,74 @@ export default function JobListingsTab() {
         </div>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="p-12 text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-blue-600"></div>
+          <p className="mt-4 text-gray-600">Đang tải danh sách công việc...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !loading && (
+        <div className="p-12 text-center">
+          <div className="text-red-600 mb-4">
+            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-gray-900 font-medium mb-2">Không thể tải dữ liệu</p>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
+
       {/* Table Body */}
+      {!loading && !error && (
       <div className="divide-y px-6">
-        {filteredJobs.map((job) => (
+        {filteredJobs.map((job) => {
+          const formatDate = (dateStr: string) => {
+            const date = new Date(dateStr);
+            const dd = String(date.getDate()).padStart(2, '0');
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const yyyy = date.getFullYear();
+            return `${dd}/${mm}/${yyyy}`;
+          };
+          
+          return (
           <div key={job.id} className="grid grid-cols-[2fr_1.2fr_1.2fr_1.2fr_1fr_1fr_auto] gap-4 py-4 hover:bg-gray-50 items-center">
             <div>
-              <a href={"/JobList/JobDetail"} className="font-medium text-gray-900 hover:text-blue-600 hover:underline">
+              <button 
+                onClick={() => handleView(job.id)}
+                className="font-medium text-gray-900 hover:text-blue-600 hover:underline text-left"
+              >
                 {job.title}
-              </a>
+              </button>
             </div>
             <div>
-              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${statusConfig[job.status].color}`}>
-                {statusConfig[job.status].label}
+              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${statusConfig[job.status]?.color || 'bg-gray-100 text-gray-600 border-gray-300'}`}>
+                {statusConfig[job.status]?.label || job.status}
               </span>
             </div>
             <div className="text-gray-600 text-sm">
-              {job.postedDate}
+              {formatDate(job.createdAt)}
             </div>
             <div className="text-gray-600 text-sm">
-              {job.deadline}
+              {formatDate(job.expiredAt)}
             </div>
             <div>
-              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${typeConfig[job.type].color}`}>
-                {typeConfig[job.type].label}
+              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${typeConfig[job.employmentType]?.color || 'border-gray-600 text-gray-600'}`}>
+                {typeConfig[job.employmentType]?.label || job.employmentType}
               </span>
             </div>
             <div className="text-gray-600 text-sm">
-              <span className="font-medium text-gray-900">{job.applicants}</span>
-              <span className="text-gray-400">/{job.totalQuantity}</span>
+              <span className="font-medium text-gray-900">{job.applyCount || 0}</span>
+              <span className="text-gray-400">/{job.quantity}</span>
             </div>
             <div className="w-10 flex items-center justify-center">
               <div className="relative">
@@ -351,17 +444,17 @@ export default function JobListingsTab() {
                 {openDropdownId === job.id && (
                   <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                     <button 
-                      onClick={() => handleEdit(job.id)}
+                      onClick={() => handleView(job.id)}
                       className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
                     >
                       <Edit3 className="w-4 h-4" />
-                      <span>Sửa</span>
+                      <span>Xem chi tiết</span>
                     </button>
                     <button
                       onClick={() => handleHide(job.id)}
                       className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
                     >
-                      {job.isHidden ? (
+                      {job.status === 'hidden' ? (
                         <>
                           <Eye className="w-4 h-4" />
                           <span>Hủy ẩn</span>
@@ -385,10 +478,20 @@ export default function JobListingsTab() {
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && !error && filteredJobs.length === 0 && (
+        <div className="p-12 text-center">
+          <p className="text-gray-600">Không tìm thấy công việc nào</p>
+        </div>
+      )}
 
       {/* Footer Pagination */}
+      {!loading && !error && totalJobs > 0 && (
       <div className="p-4 border-t">
         <div className="flex items-center justify-center gap-2">
           <button
@@ -398,20 +501,35 @@ export default function JobListingsTab() {
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <button className="px-4 py-2 rounded-lg bg-green-500 text-white">
-            1
-          </button>
-          <button className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
-            2
-          </button>
+          
+          {/* Page numbers */}
+          {Array.from({ length: Math.ceil(totalJobs / itemsPerPage) }, (_, i) => i + 1).map(pageNum => (
+            <button
+              key={pageNum}
+              onClick={() => setCurrentPage(pageNum)}
+              className={`px-4 py-2 rounded-lg ${
+                currentPage === pageNum
+                  ? 'bg-green-500 text-white'
+                  : 'border border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {pageNum}
+            </button>
+          ))}
+          
           <button
             onClick={() => setCurrentPage(prev => prev + 1)}
-            className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50"
+            disabled={currentPage >= Math.ceil(totalJobs / itemsPerPage)}
+            className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
+        <div className="text-center mt-2 text-sm text-gray-600">
+          Trang {currentPage} / {Math.ceil(totalJobs / itemsPerPage)} - Tổng {totalJobs} công việc
+        </div>
       </div>
+      )}
 
       {/* Confirmation Modal */}
       {showConfirmModal && (

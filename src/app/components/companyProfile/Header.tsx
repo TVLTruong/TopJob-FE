@@ -5,6 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEmployerProfile } from '@/contexts/EmployerProfileContext';
 import JobFormModal from '@/app/components/job/JobFormModal';
 import type { JobDetailData } from '@/app/components/job/JobDetailContents';
+import { createJob } from '@/utils/api/job-api';
+import type { CreateJobPayload } from '@/utils/api/job-api';
+import { jobCategoryApi } from '@/utils/api/categories-api';
 
 export default function Header() {
   const { user } = useAuth();
@@ -22,10 +25,69 @@ export default function Header() {
     }
   }, [profile]);
 
-  const handleCreateJob = (jobData: JobDetailData) => {
-    // Here you would typically send the data to your API
-    console.log('Creating new job:', jobData);
-    // You can add API call here, show success message, redirect, etc.
+  const handleCreateJob = async (jobData: JobDetailData) => {
+    try {
+      // Validate required fields
+      if (!jobData.locationId) {
+        alert('Vui lòng chọn địa điểm làm việc');
+        return;
+      }
+
+      if (!jobData.categories || jobData.categories.length === 0) {
+        alert('Vui lòng chọn ít nhất một danh mục');
+        return;
+      }
+
+      // Get all categories from API to map names to IDs
+      const allCategories = await jobCategoryApi.getList();
+      const firstCategoryName = jobData.categories[0];
+      const category = allCategories.find(cat => cat.name === firstCategoryName);
+      
+      if (!category) {
+        alert(`Không tìm thấy danh mục: ${firstCategoryName}`);
+        return;
+      }
+
+      // Convert expiredAt from dd/MM/yyyy to ISO date
+      const [day, month, year] = jobData.expiredAt.split('/');
+      const expiredAtISO = new Date(`${year}-${month}-${day}`).toISOString();
+
+      // Build API payload
+      const payload: CreateJobPayload = {
+        categoryId: category.id,
+        locationId: jobData.locationId!,
+        title: jobData.title,
+        description: jobData.description,
+        requirements: jobData.requirements,
+        responsibilities: jobData.responsibilities,
+        niceToHave: jobData.plusPoints,
+        benefits: jobData.benefits,
+        salaryMin: jobData.salaryMin,
+        salaryMax: jobData.salaryMax,
+        isNegotiable: jobData.isNegotiable,
+        isSalaryVisible: jobData.isSalaryVisible,
+        salaryCurrency: jobData.salaryCurrency,
+        employmentType: jobData.employmentType,
+        workMode: jobData.workMode,
+        experienceLevel: jobData.experienceLevel,
+        experienceYearsMin: jobData.experienceYearsMin,
+        quantity: jobData.quantity,
+        expiredAt: expiredAtISO,
+        isHot: jobData.isHot,
+        isUrgent: jobData.isUrgent,
+      };
+
+      console.log('Creating job with payload:', payload);
+      
+      const response = await createJob(payload);
+      console.log('Job created successfully:', response);
+      
+      alert('Tạo tin tuyển dụng thành công!');
+      setIsCreateJobOpen(false);
+    } catch (error: any) {
+      console.error('Error creating job:', error);
+      alert(`Lỗi khi tạo tin tuyển dụng: ${error.response?.data?.message || error.message || 'Vui lòng thử lại'}`);
+    }
   };
 
   const handleViewJob = (jobData: JobDetailData) => {
