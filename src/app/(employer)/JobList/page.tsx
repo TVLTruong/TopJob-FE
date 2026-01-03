@@ -4,6 +4,7 @@ import { Search, MoreVertical, Trash2, Edit3, ChevronLeft, ChevronRight, Eye, Ey
 import { getEmployerJobs, type JobFromAPI, hideJob, unhideJob, deleteJob } from '@/utils/api/job-api';
 import { useRouter } from 'next/navigation';
 import Toast from '@/app/components/profile/Toast';
+import Header from '@/app/components/companyProfile/Header';
 
 interface Job {
   id: string;
@@ -206,60 +207,68 @@ export default function JobListingsTab() {
   }, [jobs, statusFilter, searchQuery]);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm">
-      {/* Header */}
-      <div className="p-6">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <h2 className="text-2xl font-bold">
-            Tổng số công việc: {filteredJobs.length}
-            {(searchQuery || statusFilter !== 'all') && (
-              <span className="ml-2 text-sm font-normal text-gray-500">
-                / {jobs.length} tổng
-              </span>
-            )}
-          </h2>
-          <div className="flex items-center gap-3">
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  ×
-                </button>
+    <>
+      <Header />
+      <div className="bg-white rounded-xl shadow-sm min-h-screen">
+        {/* Header */}
+        <div className="p-6">
+          {/* Total count header */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold">Tổng số công việc: {totalJobs}</h2>
+          </div>
+
+          {/* Search & Filter controls with result count */}
+          <div className="flex items-center justify-between gap-4 mb-4">
+            {/* Result count message on left */}
+            <div className="text-sm text-gray-600 min-w-[200px]">
+              {(searchQuery || statusFilter !== 'all') && (
+                <>
+                  {filteredJobs.length > 0 ? (
+                    <span>Đã tìm thấy <strong>{filteredJobs.length}</strong> kết quả</span>
+                  ) : (
+                    <span className="text-red-600">Không tìm thấy kết quả nào</span>
+                  )}
+                </>
               )}
             </div>
-            <div className="relative">
-              <button
-                onClick={() => setShowFilterDropdown(prev => !prev)}
-                className={`flex items-center justify-between gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors w-48 ${
-                  statusFilter !== 'all'
-                    ? 'border-blue-600 text-blue-600 bg-blue-50'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <Filter className="w-4 h-4 shrink-0" />
-                  <span className="truncate">{getStatusLabel(statusFilter)}</span>
-                </div>
-                <span
-                  className={`ml-1 px-2 py-0.5 rounded-full text-xs min-w-[28px] text-center ${
+            
+            {/* Search & Filter on right */}
+            <div className="flex items-center gap-3">
+              {/* Search Input */}
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+
+              {/* Filter Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                  className={`flex items-center justify-between gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors w-48 ${
                     statusFilter !== 'all'
-                      ? 'bg-blue-600 text-white'
-                      : 'invisible bg-blue-600 text-white'
+                      ? 'border-blue-600 text-blue-600 bg-blue-50'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                   }`}
                 >
-                  {filteredJobs.length}
-                </span>
-              </button>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Filter className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{getStatusLabel(statusFilter)}</span>
+                  </div>
+                </button>
               {showFilterDropdown && (
                 <>
                   <div
@@ -313,37 +322,6 @@ export default function JobListingsTab() {
               )}
             </div>
           </div>
-        </div>
-
-        {/* Active filters */}
-        <div className="mb-6 min-h-[40px]">
-          {(searchQuery || statusFilter !== 'all') ? (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-gray-600">Đang lọc:</span>
-              {searchQuery && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                  {`Từ khóa: "${searchQuery}"`}
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="hover:text-gray-900"
-                  >
-                    ×
-                  </button>
-                </span>
-              )}
-              {statusFilter !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                  {getStatusLabel(statusFilter)}
-                  <button
-                    onClick={() => setStatusFilter('all')}
-                    className="hover:text-blue-900"
-                  >
-                    ×
-                  </button>
-                </span>
-              )}
-            </div>
-          ) : null}
         </div>
 
         {/* Table Header */}
@@ -580,5 +558,6 @@ export default function JobListingsTab() {
         />
       )}
     </div>
+    </>
   );
 }

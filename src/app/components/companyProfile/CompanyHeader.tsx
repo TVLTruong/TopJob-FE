@@ -630,7 +630,7 @@ export default function CompanyHeader() {
                       className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg text-sm text-gray-600 flex items-center justify-center gap-2 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition"
                     >
                       <Plus className="w-4 h-4" />
-                      + Thêm địa điểm
+                      Thêm địa điểm
                     </button>
                   )}
                 </div>
