@@ -1,13 +1,23 @@
 "use client";
 
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
+import Image from "next/image";
+import images from "@/app/utils/images";
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 py-16">
-        <div className="container mx-auto px-4 max-w-6xl text-center">
+      <div className="relative w-full text-white py-16">
+        <Image
+          src={images.searcherBG}
+          alt="Background"
+          layout="fill"
+          objectFit="cover"
+          objectPosition="center"
+          className="absolute inset-0 z-[-1]"
+        />
+        <div className="container mx-auto px-4 max-w-6xl text-center relative z-10">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Liên hệ với chúng tôi
           </h1>
@@ -18,7 +28,7 @@ export default function ContactPage() {
       </div>
 
       {/* Contact Content */}
-      <div className="container mx-auto px-4 max-w-6xl py-12">
+      <div className="container mx-auto px-4 max-w-6xl py-12 bg-gray-50">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Side - Contact Information */}
           <div className="space-y-6">

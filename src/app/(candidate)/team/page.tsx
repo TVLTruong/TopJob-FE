@@ -1,6 +1,8 @@
 "use client";
 
 import { Users, Award, Target, Heart } from "lucide-react";
+import Image from "next/image";
+import images from "@/app/utils/images";
 
 interface TeamMember {
   id: string;
@@ -105,10 +107,18 @@ function TeamMemberCard({ member }: { member: TeamMember }) {
 
 export default function TeamPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 py-16">
-        <div className="container mx-auto px-4 max-w-6xl text-center">
+      <div className="relative w-full text-white py-16">
+        <Image
+          src={images.searcherBG}
+          alt="Background"
+          layout="fill"
+          objectFit="cover"
+          objectPosition="center"
+          className="absolute inset-0 z-[-1]"
+        />
+        <div className="container mx-auto px-4 max-w-6xl text-center relative z-10">
           <div className="inline-block p-3 bg-white/20 rounded-full mb-4">
             <Users className="w-8 h-8 text-white" />
           </div>
@@ -122,7 +132,7 @@ export default function TeamPage() {
       </div>
 
       {/* Values Section */}
-      <div className="container mx-auto px-4 max-w-6xl py-12">
+      <div className="container mx-auto px-4 max-w-6xl py-12 bg-gray-50">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
           <div className="bg-white rounded-xl p-6 shadow-md text-center">
             <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
