@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react"; // Import ChevronDown icon
 import { CandidateApi } from "@/utils/api/candidate-api";
 
@@ -139,6 +140,10 @@ function UserDropdown({ onLogout }: { onLogout: () => void }) {
 
 export default function Header() {
   const { user, logout, isLoading } = useAuth();
+  const pathname = usePathname();
+
+  // Helper function to check if link is active
+  const isActive = (path: string) => pathname === path;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white shadow-sm">
@@ -157,10 +162,54 @@ export default function Header() {
           </Link>
           <nav className="hidden md:flex">
              <ul className="flex space-x-6">
-               <li><Link href="/jobpage" className="font-medium text-gray-600 hover:text-emerald-500">Việc làm</Link></li>
-               <li><Link href="/companypage" className="font-medium text-gray-600 hover:text-emerald-500">Công ty IT</Link></li>
-               <li><Link href="/team" className="font-medium text-gray-600 hover:text-emerald-500">Đội ngũ</Link></li>
-               <li><Link href="/contact" className="font-medium text-gray-600 hover:text-emerald-500">Liên hệ</Link></li>
+               <li>
+                 <Link 
+                   href="/jobpage" 
+                   className={`font-medium px-4 py-2 rounded-lg transition-all ${
+                     isActive('/jobpage') 
+                       ? 'text-white font-semibold bg-emerald-600' 
+                       : 'text-gray-600 hover:text-emerald-500 hover:bg-emerald-50'
+                   }`}
+                 >
+                   Việc làm
+                 </Link>
+               </li>
+               <li>
+                 <Link 
+                   href="/companypage" 
+                   className={`font-medium px-4 py-2 rounded-lg transition-all ${
+                     isActive('/companypage') 
+                       ? 'text-white font-semibold bg-emerald-600' 
+                       : 'text-gray-600 hover:text-emerald-500 hover:bg-emerald-50'
+                   }`}
+                 >
+                   Công ty IT
+                 </Link>
+               </li>
+               <li>
+                 <Link 
+                   href="/team" 
+                   className={`font-medium px-4 py-2 rounded-lg transition-all ${
+                     isActive('/team') 
+                       ? 'text-white font-semibold bg-emerald-600' 
+                       : 'text-gray-600 hover:text-emerald-500 hover:bg-emerald-50'
+                   }`}
+                 >
+                   Đội ngũ
+                 </Link>
+               </li>
+               <li>
+                 <Link 
+                   href="/contact" 
+                   className={`font-medium px-4 py-2 rounded-lg transition-all ${
+                     isActive('/contact') 
+                       ? 'text-white font-semibold bg-emerald-600' 
+                       : 'text-gray-600 hover:text-emerald-500 hover:bg-emerald-50'
+                   }`}
+                 >
+                   Liên hệ
+                 </Link>
+               </li>
              </ul>
           </nav>
         </div>

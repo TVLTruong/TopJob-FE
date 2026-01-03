@@ -610,7 +610,6 @@ export default function CandidateProfilePage() {
       setShowWorkModal(false);
       showToast('Cập nhật kinh nghiệm làm việc thành công', 'success');
     } catch (error) {
-      console.error('Error updating work experience:', error);
       showToast(
         error instanceof Error ? error.message : 'Không thể cập nhật kinh nghiệm',
         'error'
@@ -645,7 +644,6 @@ export default function CandidateProfilePage() {
       setProfile(prev => ({ ...prev, workExperience: updatedWork }));
       showToast('Xóa kinh nghiệm làm việc thành công', 'success');
     } catch (error) {
-      console.error('Error deleting work experience:', error);
       showToast(
         error instanceof Error ? error.message : 'Không thể xóa kinh nghiệm',
         'error'

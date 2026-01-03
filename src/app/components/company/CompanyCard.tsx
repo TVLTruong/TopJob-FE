@@ -27,10 +27,10 @@ export default function CompanyCard({ company }: CompanyCardProps) {
     // Card cha: bo góc, bóng đổ, nền trắng, hover effect, flex column
     <Link
         href={companyLink}
-        className="flex flex-col items-center bg-white rounded-lg shadow-md p-10 border border-gray-100 hover:shadow-lg hover:border-emerald-200 transition-all duration-200 group h-[435px] w-[435px]"
+        className="flex flex-col items-center bg-white rounded-lg shadow-md p-6 border border-gray-100 hover:shadow-lg hover:border-emerald-200 transition-all duration-200 group h-[280px] w-full"
         >
         {/* Logo (Căn giữa) */}
-        <div className="w-40 h-40 relative border rounded-md overflow-hidden p-1 bg-white mb-4">
+        <div className="w-20 h-20 relative border rounded-md overflow-hidden p-1 bg-white mb-3">
             <Image
             src={company.logoUrl || "/placeholder-logo.png"}
             alt={`${company.name} logo`}
@@ -40,39 +40,39 @@ export default function CompanyCard({ company }: CompanyCardProps) {
         </div>
 
         {/* Tên công ty (Căn giữa) */}
-        <h3 className="text-xl font-bold text-gray-900 text-center truncate group-hover:text-emerald-700 transition-colors mb-2 w-full">
+        <h3 className="text-lg font-bold text-gray-900 text-center truncate group-hover:text-emerald-700 transition-colors mb-2 w-full">
             {company.name}
         </h3>
 
         {/* Tags công nghệ (Căn giữa, wrap) */}
-        <div className="flex flex-wrap justify-center gap-2 mb-5 w-full">
-            {company.technologies.slice(0, 6).map((tech) => (
+        <div className="flex flex-wrap justify-center gap-1.5 mb-3 w-full">
+            {company.technologies.slice(0, 4).map((tech) => (
             <span
                 key={tech}
-                className="px-3 py-1 text-sm font-medium bg-gray-100 text-gray-600 rounded-full"
+                className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full"
             >
                 {tech}
             </span>
             ))}
-            {company.technologies.length > 5 && (
-            <span className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
-                +{company.technologies.length - 5}
+            {company.technologies.length > 4 && (
+            <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+                +{company.technologies.length - 4}
             </span>
             )}
         </div>
 
         {/* Phần dưới: Địa điểm & Số Job */}
-        <div className="flex justify-between items-center w-full text-sm text-gray-600 mt-auto h-[40px] border-t border-gray-100">
+        <div className="flex justify-between items-center w-full text-xs text-gray-600 mt-auto h-[32px] border-t border-gray-100 pt-2">
             <div className="flex items-center min-w-0 pr-2">
-            <MapPin size={15} className="mr-1.5 text-gray-400 flex-shrink-0" />
+            <MapPin size={13} className="mr-1 text-gray-400 flex-shrink-0" />
             <span className="truncate" title={company.locations.join(', ')}>
                 {displayLocations()}
             </span>
             </div>
 
             {company.jobCount > 0 ? (
-            <span className="px-3 py-1 bg-emerald-50 text-emerald-700 font-semibold rounded-full text-xs flex-shrink-0">
-                {company.jobCount} việc làm
+            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 font-semibold rounded-full text-xs flex-shrink-0">
+                {company.jobCount} việc
             </span>
             ) : (
             <span className="text-xs text-emerald-600 font-medium hover:underline flex-shrink-0">

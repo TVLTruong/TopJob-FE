@@ -907,15 +907,16 @@ export default function CompanyHeader() {
             updatedProfile.contactEmail = formData.contactEmail;
           }
           
-          if (formData.facebookUrl !== profile?.facebookUrl) {
+          // Only send URL fields if they have values
+          if (formData.facebookUrl && formData.facebookUrl !== profile?.facebookUrl) {
             updatedProfile.facebookUrl = formData.facebookUrl;
           }
           
-          if (formData.linkedinUrl !== profile?.linkedlnUrl) {
+          if (formData.linkedinUrl && formData.linkedinUrl !== profile?.linkedlnUrl) {
             updatedProfile.linkedlnUrl = formData.linkedinUrl;
           }
           
-          if (formData.xUrl !== profile?.xUrl) {
+          if (formData.xUrl && formData.xUrl !== profile?.xUrl) {
             updatedProfile.xUrl = formData.xUrl;
           }
           
