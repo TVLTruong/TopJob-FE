@@ -83,7 +83,7 @@ export default function Sidebar() {
                 href={item.href}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition ${
                   active
-                    ? 'text-white bg-blue-600 hover:bg-blue-700'
+                    ? 'text-white bg-green-600 hover:bg-green-700'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
@@ -108,7 +108,7 @@ export default function Sidebar() {
                   href={item.href}
                   className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition ${
                     active
-                      ? 'text-white bg-blue-600 hover:bg-blue-700'
+                      ? 'text-white bg-green-600 hover:bg-green-700'
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >

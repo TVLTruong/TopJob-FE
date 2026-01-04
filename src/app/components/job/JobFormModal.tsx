@@ -438,31 +438,6 @@ export default function JobFormModal({
                 />
               </div>
               
-              {/* Location Selector */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Địa điểm làm việc <span className="text-red-500">*</span>
-                </label>
-                <select 
-                  value={form.locationId} 
-                  onChange={e => setForm({ ...form, locationId: e.target.value })} 
-                  className={`w-full border rounded-lg px-3 py-2 ${errors.locationId ? 'border-red-500' : ''}`}
-                >
-                  <option value="">Chọn địa điểm</option>
-                  {employerProfile?.locations?.map((location) => (
-                    <option key={location.id} value={location.id}>
-                      {location.isHeadquarters && '🏢 '}
-                      {location.fullAddress || `${location.detailedAddress}, ${location.district}, ${location.province}`}
-                    </option>
-                  ))}
-                </select>
-                {errors.locationId && (
-                  <p className="text-red-500 text-xs mt-1">{errors.locationId}</p>
-                )}
-                {(!employerProfile?.locations || employerProfile.locations.length === 0) && (
-                  <p className="text-orange-600 text-xs mt-1">⚠️ Chưa có địa điểm văn phòng. Vui lòng thêm địa điểm trong hồ sơ công ty.</p>
-                )}
-              </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Mức lương (VND/tháng)
@@ -505,7 +480,31 @@ export default function JobFormModal({
                 )}
               </div>
 
-
+              {/* Location Selector */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Địa điểm làm việc <span className="text-red-500">*</span>
+                </label>
+                <select 
+                  value={form.locationId} 
+                  onChange={e => setForm({ ...form, locationId: e.target.value })} 
+                  className={`w-full border rounded-lg px-3 py-2 ${errors.locationId ? 'border-red-500' : ''}`}
+                >
+                  <option value="">Chọn địa điểm</option>
+                  {employerProfile?.locations?.map((location) => (
+                    <option key={location.id} value={location.id}>
+                      {location.isHeadquarters && '🏢 '}
+                      {location.fullAddress || `${location.detailedAddress}, ${location.district}, ${location.province}`}
+                    </option>
+                  ))}
+                </select>
+                {errors.locationId && (
+                  <p className="text-red-500 text-xs mt-1">{errors.locationId}</p>
+                )}
+                {(!employerProfile?.locations || employerProfile.locations.length === 0) && (
+                  <p className="text-orange-600 text-xs mt-1">⚠️ Chưa có địa điểm văn phòng. Vui lòng thêm địa điểm trong hồ sơ công ty.</p>
+                )}
+              </div>
 
 
               <div className="md:col-span-2">

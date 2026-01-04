@@ -8,6 +8,7 @@ import { useEmployerProfile } from '@/contexts/EmployerProfileContext'
 import locationData from "@/app/assets/danh-sach-3321-xa-phuong.json";
 import { updateMyEmployerProfile } from '@/utils/api/employer-api'
 import { employerCategoryApi } from "@/utils/api/categories-api";
+import Toast from '@/app/components/profile/Toast';
 
 interface LocationItem {
   "Tên": string;
@@ -80,8 +81,16 @@ export default function CompanyHeader() {
   const [showAddressForm, setShowAddressForm] = useState(false)
 
   const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [scrollbarWidth, setScrollbarWidth] = useState(0)
+  
+  // Toast state
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null)
+
+  // Show toast helper
+  const showToast = (message: string, type: 'error' | 'success' = 'success') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 10000)
+  }
   
   // New state for managing locations with headquarters
   const [locationsList, setLocationsList] = useState<OfficeLocation[]>([])
@@ -960,37 +969,23 @@ export default function CompanyHeader() {
           })
           .then(() => {
             setShowConfirmModal(false);
-            setShowSuccessModal(true);
+            setIsPopupOpen(false);
+            showToast('Đã lưu thay đổi! Những thay đổi này sẽ được duyệt trong thời gian sớm nhất', 'success');
           })
           .catch((error) => {
             setShowConfirmModal(false);
+            showToast('Có lỗi xảy ra khi lưu thay đổi', 'error');
           });
 
         }}
       />
-      {/* Success Modal */}
-      {isPopupOpen && showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4">
-          <div className="bg-white rounded-lg w-full max-w-md overflow-hidden">
-            <div className="p-6 border-b">
-              <h3 className="text-lg font-semibold text-teal-700">Lưu thành công</h3>
-            </div>
-            <div className="p-6 text-sm text-gray-600">
-              Thay đổi của bạn đã được lưu thành công.
-            </div>
-            <div className="p-6 border-t flex justify-end">
-              <button
-                onClick={() => {
-                  setShowSuccessModal(false)
-                  setIsPopupOpen(false)
-                }}
-                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition text-sm"
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </>
   )

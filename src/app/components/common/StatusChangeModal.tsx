@@ -75,7 +75,7 @@ export default function StatusChangeModal({
             <h3 className="text-lg font-semibold">Thông báo</h3>
           </div>
           <p className="text-gray-600 mb-6">
-            Không thể thay đổi trạng thái &quot;{statusConfig[currentStatus].label}&quot;
+            Không thể thay đổi trạng thái <span className={`font-semibold ${statusConfig[currentStatus].color.split(' ')[1]}`}>&quot;{statusConfig[currentStatus].label}&quot;</span>
           </p>
           <button
             onClick={onClose}
@@ -95,14 +95,14 @@ export default function StatusChangeModal({
           <div className="bg-white rounded-lg max-w-md w-full p-6">
             <h3 className="text-lg font-semibold mb-4">Chọn trạng thái mới</h3>
             <p className="text-sm text-gray-600 mb-4">
-              Trạng thái hiện tại: <span className="font-medium">{statusConfig[currentStatus].label}</span>
+              Trạng thái hiện tại: <span className={`font-medium ${statusConfig[currentStatus].color.split(' ')[1]}`}>{statusConfig[currentStatus].label}</span>
             </p>
             <div className="space-y-2 mb-6">
               {availableStatuses.map((status) => (
                 <button
                   key={status.value}
                   onClick={() => handleSelectStatus(status.value)}
-                  className="w-full px-4 py-3 text-left border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-blue-500 transition-colors font-medium"
+                  className={`w-full px-4 py-3 text-left border rounded-lg hover:opacity-80 transition-all font-medium ${statusConfig[status.value].color}`}
                 >
                   {status.label}
                 </button>
@@ -122,8 +122,8 @@ export default function StatusChangeModal({
             <h3 className="text-lg font-semibold mb-4">Xác nhận thay đổi trạng thái</h3>
             <p className="text-gray-600 mb-6">
               Bạn có chắc chắn muốn thay đổi trạng thái của <strong>{applicantName}</strong> từ{' '}
-              <strong>{statusConfig[currentStatus].label}</strong> sang{' '}
-              <strong>{selectedStatus && statusConfig[selectedStatus].label}</strong>?
+              <strong className={statusConfig[currentStatus].color.split(' ')[1]}>{statusConfig[currentStatus].label}</strong> sang{' '}
+              <strong className={selectedStatus ? statusConfig[selectedStatus].color.split(' ')[1] : ''}>{selectedStatus && statusConfig[selectedStatus].label}</strong>?
             </p>
             <div className="flex gap-3">
               <button

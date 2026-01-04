@@ -78,8 +78,10 @@ export default function EmployerSignUpPage() {
       errors.companyName = "Tên công ty không được để trống";
     }
 
-    if (password.length < 8) {
-      errors.password = "Mật khẩu phải có tối thiểu 8 ký tự";
+    // Validate password: minimum 8 characters, must include uppercase, lowercase, number, and special character
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      errors.password = "Mật khẩu phải có tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt (@$!%*?&)";
     }
 
     if (password !== confirmPassword) {
@@ -113,7 +115,8 @@ export default function EmployerSignUpPage() {
         companyName: companyName.trim(),
       });
 
-      // console.log('Đăng ký nhà tuyển dụng thành công!');
+      // Hiển thị thông báo đăng ký thành công
+      showToast('Đăng ký thành công! Vui lòng đăng nhập để hoàn thiện hồ sơ và chờ xét duyệt.', 'success');
       
       // Lưu email và hiển thị OTP modal
       setRegisteredEmail(email.trim());
@@ -433,9 +436,9 @@ export default function EmployerSignUpPage() {
                 </div>
               )}
 
-              {/* Thông báo xét duyệt */}
+              {/* Ghi chú mật khẩu */}
               <div className="p-3 text-sm text-blue-600 bg-blue-50 rounded-lg border border-blue-200">
-                ℹ️ Tài khoản nhà tuyển dụng cần được xét duyệt trước khi sử dụng
+                ℹ️ Mật khẩu tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt (@$!%*?&)
               </div>
 
               <button
