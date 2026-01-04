@@ -21,6 +21,29 @@ interface JobPostingAPI {
   createdAt: string;
   description?: string;
   requiredSkills?: string[];
+  location?: {
+    id: string;
+    address: string;
+    city: string;
+  };
+  responsibilities?: string[];
+  niceToHave?: string[];
+  benefits?: string[];
+  employmentType?: string;
+  workMode?: string;
+  quantity?: number;
+  applyCount?: number;
+  expiredAt?: string;
+  publishedAt?: string;
+  experienceYearsMin?: number;
+  category?: {
+    id: string;
+    name: string;
+  };
+  viewCount?: number;
+  saveCount?: number;
+  isHot?: boolean;
+  isUrgent?: boolean;
 }
 
 interface JobPosting {
@@ -101,6 +124,18 @@ export default function JobPostingApprovalList() {
           createdDate: new Date(job.createdAt).toLocaleDateString('vi-VN'),
           description: job.description,
           requirements: job.requiredSkills || [],
+          location: job.location?.city,
+          responsibilities: job.responsibilities,
+          plusPoints: job.niceToHave,
+          benefits: job.benefits,
+          employmentType: job.employmentType,
+          workMode: job.workMode,
+          quantity: job.quantity,
+          applicantsCount: job.applyCount,
+          expiredAt: job.expiredAt ? new Date(job.expiredAt).toLocaleDateString('vi-VN') : undefined,
+          publishedAt: job.publishedAt ? new Date(job.publishedAt).toLocaleDateString('vi-VN') : undefined,
+          experienceYearsMin: job.experienceYearsMin,
+          categories: job.category ? [job.category.name] : [],
         };
       });
       
@@ -333,22 +368,10 @@ export default function JobPostingApprovalList() {
         <div className="border border-gray-200 rounded-lg bg-gray-50 overflow-hidden">
           {/* Table Header */}
           <div className="grid grid-cols-[2fr_2fr_1.5fr_1.5fr_1.2fr] gap-4 py-4 px-4 text-sm font-medium text-gray-600 border-b border-gray-200">
-            <div className="flex items-center gap-1">
-              Tiêu đề tin
-              <span className="text-gray-400">⇅</span>
-            </div>
-            <div className="flex items-center gap-1">
-              Công ty
-              <span className="text-gray-400">⇅</span>
-            </div>
-            <div className="flex items-center gap-1">
-              Mức lương
-              <span className="text-gray-400">⇅</span>
-            </div>
-            <div className="flex items-center gap-1">
-              Trạng thái
-              <span className="text-gray-400">⇅</span>
-            </div>
+            <div>Tiêu đề tin</div>
+            <div>Công ty</div>
+            <div>Mức lương</div>
+            <div>Trạng thái</div>
             <div>Thao tác</div>
           </div>
 

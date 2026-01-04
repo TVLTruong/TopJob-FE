@@ -635,47 +635,57 @@ export default function AccountManagementList() {
         </table>
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-6 py-4 border-t">
-          <div className="text-sm text-gray-500">
-            Hiển thị {(currentPage - 1) * itemsPerPage + 1} -{' '}
-            {Math.min(currentPage * itemsPerPage, filteredAccounts.length)} trong tổng số{' '}
-            {filteredAccounts.length} tài khoản
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="p-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`px-3 py-1 rounded-lg ${
-                    currentPage === page
-                      ? 'bg-blue-600 text-white'
-                      : 'hover:bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="p-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
+      {/* Pagination - Always show */}
+      <div className="flex items-center justify-between px-6 py-4 border-t">
+        <div className="text-sm text-gray-500">
+          Hiển thị {filteredAccounts.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} -{' '}
+          {Math.min(currentPage * itemsPerPage, filteredAccounts.length)} trong tổng số{' '}
+          {filteredAccounts.length} tài khoản
         </div>
-      )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="p-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-1">
+            {totalPages > 0 && Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              // Show first page, last page, current page and pages around it
+              if (totalPages <= 5) {
+                return i + 1;
+              }
+              if (currentPage <= 3) {
+                return i + 1;
+              }
+              if (currentPage >= totalPages - 2) {
+                return totalPages - 4 + i;
+              }
+              return currentPage - 2 + i;
+            }).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-1 rounded-lg ${
+                  currentPage === page
+                    ? 'bg-blue-600 text-white'
+                    : 'hover:bg-gray-100 text-gray-700'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages || totalPages === 0}
+            className="p-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
 
       {/* Confirmation Modal */}
       {confirmModal?.isOpen && (

@@ -467,22 +467,10 @@ export default function EmployerApprovalList() {
           {/* Table Header */}
           <div className="grid grid-cols-[1fr_2fr_2fr_1.5fr_1.5fr_1fr] gap-4 py-4 px-4 text-sm font-medium text-gray-600 border-b border-gray-200">
             <div>Logo</div>
-            <div className="flex items-center gap-1">
-              Tên công ty
-              <span className="text-gray-400">⇅</span>
-            </div>
-            <div className="flex items-center gap-1">
-              Email
-              <span className="text-gray-400">⇅</span>
-            </div>
-            {/* <div className="flex items-center gap-1">
-              Mã số thuế
-              <span className="text-gray-400">⇅</span>
-            </div> */}
-            <div className="flex items-center gap-1">
-              Trạng thái
-              <span className="text-gray-400">⇅</span>
-            </div>
+            <div>Tên công ty</div>
+            <div>Email</div>
+            {/* <div>Mã số thuế</div> */}
+            <div>Trạng thái</div>
             <div>Thao tác</div>
           </div>
 

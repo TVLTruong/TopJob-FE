@@ -9,11 +9,11 @@ interface RejectModalProps {
 }
 
 const rejectReasons = [
-  'Logo không rõ nét',
-  'Thông tin công ty không xác thực',
-  'Mã số thuế không hợp lệ',
-  'Thông tin liên hệ không chính xác',
-  'Giới thiệu công ty không phù hợp',
+  'Chứa thông tin nhạy cảm',
+  'Thông tin không chính xác',
+  'Nội dung không phù hợp',
+  'Logo không rõ nét hoặc không phù hợp',
+  'Thiếu thông tin bắt buộc',
   'Khác'
 ];
 
