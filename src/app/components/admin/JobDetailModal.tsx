@@ -25,6 +25,7 @@ interface JobPosting {
   publishedAt?: string;
   experienceYearsMin?: number;
   categories?: string[];
+  technologies?: string[];
   viewCount?: number;
   saveCount?: number;
   isHot?: boolean;
@@ -239,6 +240,23 @@ export default function JobDetailModal({ job, onClose }: JobDetailModalProps) {
                         className="px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-sm font-medium"
                       >
                         {category}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Technologies Card */}
+              {job.technologies && job.technologies.length > 0 && (
+                <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                  <h4 className="text-lg font-bold text-gray-900 mb-4">Công nghệ</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {job.technologies.map((technology, index) => (
+                      <span 
+                        key={index}
+                        className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm font-medium"
+                      >
+                        {technology}
                       </span>
                     ))}
                   </div>
