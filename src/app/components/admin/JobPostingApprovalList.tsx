@@ -20,15 +20,15 @@ interface JobPostingAPI {
   status: 'PENDING_APPROVAL' | 'ACTIVE' | 'REJECTED';
   createdAt: string;
   description?: string;
-  requiredSkills?: string[];
+  requirements?: string[];
+  responsibilities?: string[];
+  niceToHave?: string[];
+  benefits?: string[];
   location?: {
     id: string;
     address: string;
     city: string;
   };
-  responsibilities?: string[];
-  niceToHave?: string[];
-  benefits?: string[];
   employmentType?: string;
   workMode?: string;
   quantity?: number;
@@ -40,6 +40,24 @@ interface JobPostingAPI {
     id: string;
     name: string;
   };
+  jobCategories?: Array<{
+    categoryId: string;
+    isPrimary: boolean;
+    category: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+  }>;
+  jobTechnologies?: Array<{
+    technologyId: string;
+    isPrimary: boolean;
+    technology: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+  }>;
   viewCount?: number;
   saveCount?: number;
   isHot?: boolean;
@@ -56,6 +74,24 @@ interface JobPosting {
   createdDate: string;
   description?: string;
   requirements?: string[];
+  responsibilities?: string[];
+  plusPoints?: string[];
+  benefits?: string[];
+  employmentType?: string;
+  workMode?: string;
+  location?: string;
+  locationAddress?: string;
+  quantity?: number;
+  applicantsCount?: number;
+  expiredAt?: string;
+  publishedAt?: string;
+  experienceYearsMin?: number;
+  categories?: string[];
+  technologies?: string[];
+  viewCount?: number;
+  saveCount?: number;
+  isHot?: boolean;
+  isUrgent?: boolean;
 }
 
 export default function JobPostingApprovalList() {
@@ -123,8 +159,9 @@ export default function JobPostingApprovalList() {
           status: feStatus,
           createdDate: new Date(job.createdAt).toLocaleDateString('vi-VN'),
           description: job.description,
-          requirements: job.requiredSkills || [],
+          requirements: job.requirements || [],
           location: job.location?.city,
+          locationAddress: job.location?.address,
           responsibilities: job.responsibilities,
           plusPoints: job.niceToHave,
           benefits: job.benefits,
@@ -135,7 +172,12 @@ export default function JobPostingApprovalList() {
           expiredAt: job.expiredAt ? new Date(job.expiredAt).toLocaleDateString('vi-VN') : undefined,
           publishedAt: job.publishedAt ? new Date(job.publishedAt).toLocaleDateString('vi-VN') : undefined,
           experienceYearsMin: job.experienceYearsMin,
-          categories: job.category ? [job.category.name] : [],
+          categories: job.jobCategories?.map(jc => jc.category.name) || (job.category ? [job.category.name] : []),
+          technologies: job.jobTechnologies?.map(jt => jt.technology.name) || [],
+          viewCount: job.viewCount,
+          saveCount: job.saveCount,
+          isHot: job.isHot,
+          isUrgent: job.isUrgent,
         };
       });
       
@@ -188,9 +230,21 @@ export default function JobPostingApprovalList() {
   const handleViewDetails = async (job: JobPosting) => {
     try {
       const detail = await getJobDetail(job.id.toString());
+      // The API might return data directly or wrapped in a data property
+      const detailData = (detail.data || detail) as JobPostingAPI;
+      
+      // Map the detail data to ensure categories and technologies are properly formatted
       setSelectedJob({
         ...job,
-        ...detail.data
+        description: detailData?.description || job.description,
+        requirements: detailData?.requirements || job.requirements,
+        responsibilities: detailData?.responsibilities || job.responsibilities,
+        plusPoints: detailData?.niceToHave || job.plusPoints,
+        benefits: detailData?.benefits || job.benefits,
+        // Keep the already mapped categories and technologies from job
+        categories: detailData?.jobCategories?.map(jc => jc.category.name) || 
+                   (detailData?.category ? [detailData.category.name] : job.categories),
+        technologies: detailData?.jobTechnologies?.map(jt => jt.technology.name) || job.technologies,
       });
       setShowDetailModal(true);
     } catch (err) {
