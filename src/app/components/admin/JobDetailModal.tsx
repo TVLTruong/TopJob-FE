@@ -158,7 +158,7 @@ export default function JobDetailModal({ job, onClose }: JobDetailModalProps) {
               <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
                 <h4 className="text-lg font-bold text-gray-900 mb-4">Thông tin công việc</h4>
                 
-                {/* Progress Bar */}
+                {/* Progress Bar
                 {job.quantity && job.applicantsCount !== undefined && (
                   <div className="mb-6">
                     <div className="flex justify-between text-sm mb-2">
@@ -172,7 +172,7 @@ export default function JobDetailModal({ job, onClose }: JobDetailModalProps) {
                       ></div>
                     </div>
                   </div>
-                )}
+                )} */}
                 
                 <div className="space-y-4">
                   {job.expiredAt && (
