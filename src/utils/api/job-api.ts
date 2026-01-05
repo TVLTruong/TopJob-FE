@@ -88,6 +88,8 @@ export const ExperienceLevelReverseMap = {
 export interface CreateJobPayload {
   categoryIds: string[];
   primaryCategoryId?: string;
+  technologyIds?: string[];
+  primaryTechnologyId?: string;
   locationId: string;
   title: string;
   description?: string;
@@ -151,6 +153,24 @@ export interface JobFromAPI {
     name: string;
     slug: string;
   };
+  jobCategories?: Array<{
+    categoryId: string;
+    isPrimary: boolean;
+    category: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+  }>;
+  jobTechnologies?: Array<{
+    technologyId: string;
+    isPrimary: boolean;
+    technology: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+  }>;
   location?: {
     id: string;
     address: string;

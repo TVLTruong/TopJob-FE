@@ -43,9 +43,6 @@ interface CompanyBasicInfo {
   xUrl: string;
 }
 
-// const fieldOptions = ['Công nghệ thông tin', 'Trò chơi', 'Điện toán đám mây', 'Thương mại điện tử', 'Fintech', 'AI/Machine Learning']
-const techOptions = ['HTML 5', 'CSS 3', 'Javascript', 'React', 'Node.js', 'Python', 'Java', 'TypeScript', 'Vue.js', 'Angular']
-
 export default function CompanyHeader() {
   const { user } = useAuth()
   const { profile, isLoading, refreshProfile } = useEmployerProfile()
@@ -75,7 +72,6 @@ export default function CompanyHeader() {
   const [provinces, setProvinces] = useState<string[]>([])
   
   const [showFieldDropdown, setShowFieldDropdown] = useState(false)
-  const [showTechDropdown, setShowTechDropdown] = useState(false)
   const [showAddressForm, setShowAddressForm] = useState(false)
 
   const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -103,14 +99,17 @@ export default function CompanyHeader() {
   // Refs to close sub-windows on outside click
   const addressFormRef = useRef<HTMLDivElement | null>(null)
   const fieldDropdownRef = useRef<HTMLDivElement | null>(null)
-  const techDropdownRef = useRef<HTMLDivElement | null>(null)
-  const [fieldOptions, setFieldOptions] = useState<string[]>([])
+  const [fieldOptions, setFieldOptions] = useState<Array<{ id: string; name: string; slug: string }>>([])
 
   // Load available fields from API
   useEffect(() => {
     employerCategoryApi.getList()
       .then(categories => {
-        setFieldOptions(categories.map(category => category.name));
+        setFieldOptions(categories.map(category => ({
+          id: category.id,
+          name: category.name,
+          slug: category.slug
+        })));
       })
       .catch(error => {
         console.error("Failed to load employer categories:", error);
@@ -138,19 +137,16 @@ export default function CompanyHeader() {
       if (fieldDropdownRef.current && !fieldDropdownRef.current.contains(event.target as Node)) {
         setShowFieldDropdown(false)
       }
-      if (techDropdownRef.current && !techDropdownRef.current.contains(event.target as Node)) {
-        setShowTechDropdown(false)
-      }
     }
 
-    if (showAddressForm || showFieldDropdown || showTechDropdown) {
+    if (showAddressForm || showFieldDropdown) {
       document.addEventListener('mousedown', handleClickOutside)
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [showAddressForm, showFieldDropdown, showTechDropdown])
+  }, [showAddressForm, showFieldDropdown])
 
   // Load data from profile into formData
   useEffect(() => {
@@ -308,19 +304,13 @@ export default function CompanyHeader() {
     )
   }
 
-  const toggleDropdown = (type: 'address' | 'field' | 'tech') => {
+  const toggleDropdown = (type: 'address' | 'field') => {
     if (type === 'address') {
       setShowAddressForm(!showAddressForm)
       setShowFieldDropdown(false)
-      setShowTechDropdown(false)
     } else if (type === 'field') {
       setShowFieldDropdown(!showFieldDropdown)
       setShowAddressForm(false)
-      setShowTechDropdown(false)
-    } else if (type === 'tech') {
-      setShowTechDropdown(!showTechDropdown)
-      setShowAddressForm(false)
-      setShowFieldDropdown(false)
     }
   }
 
@@ -405,7 +395,12 @@ export default function CompanyHeader() {
                       <Globe className="w-4 h-4 text-teal-600" />
                       <div>
                         <div className="text-xs text-gray-500">Lĩnh vực</div>
-                        <div className="font-semibold">{formData.fields.join(', ')}</div>
+                        <div className="font-semibold">
+                          {formData.fields.map(fieldId => {
+                            const category = fieldOptions.find(opt => opt.id === fieldId);
+                            return category?.name || fieldId;
+                          }).join(', ')}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -641,19 +636,21 @@ export default function CompanyHeader() {
                   )}
                 </div>
 
-                {/* Lĩnh vực */}
                 <div className="mb-4 relative">
                   <label className="block text-sm font-medium mb-2">Lĩnh vực</label>
                   <div className="relative">
                     <div className="flex flex-wrap gap-2 p-2 border border-gray-300 rounded-lg min-h-[42px]">
-                      {formData.fields.map((field) => (
-                        <span key={field} className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded text-sm">
-                          {field}
-                          <button onClick={() => removeItem('fields', field)}>
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
+                      {formData.fields.map((fieldId) => {
+                        const category = fieldOptions.find(opt => opt.id === fieldId);
+                        return (
+                          <span key={fieldId} className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded text-sm">
+                            {category?.name || fieldId}
+                            <button onClick={() => removeItem('fields', fieldId)}>
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        );
+                      })}
                       <button 
                         onClick={() => toggleDropdown('field')}
                         className="ml-auto text-gray-400 hover:text-gray-600"
@@ -663,16 +660,16 @@ export default function CompanyHeader() {
                     </div>
                     {showFieldDropdown && (
                       <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                        {fieldOptions.filter(field => !formData.fields.includes(field)).map((field) => (
+                        {fieldOptions.filter(field => !formData.fields.includes(field.id)).map((field) => (
                           <div
-                            key={field}
+                            key={field.id}
                             onClick={() => {
-                              addItem('fields', field)
+                              addItem('fields', field.id)
                               setShowFieldDropdown(false)
                             }}
                             className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
                           >
-                            {field}
+                            {field.name}
                           </div>
                         ))}
                       </div>

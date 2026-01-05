@@ -5,6 +5,7 @@ import ConfirmModal from '@/app/components/companyProfile/ConfirmModal';
 import Toast from '@/app/components/profile/Toast';
 import type { JobDetailData } from '@/app/components/job/JobDetailContents';
 import { JobCategory, jobCategoryApi } from '@/utils/api/categories-api';
+import { Technology, technologyApi } from '@/utils/api/technology-api';
 import { useEmployerProfile } from '@/contexts/EmployerProfileContext';
 
 interface JobFormModalProps {
@@ -29,7 +30,9 @@ export default function JobFormModal({
   const [savedJobData, setSavedJobData] = useState<JobDetailData | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [categoriesFromApi, setCategoriesFromApi] = useState<JobCategory[]>([]);
+  const [technologiesFromApi, setTechnologiesFromApi] = useState<Technology[]>([]);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [isTechnologyDropdownOpen, setIsTechnologyDropdownOpen] = useState(false);
   const { profile: employerProfile } = useEmployerProfile();
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 
@@ -46,6 +49,13 @@ export default function JobFormModal({
       .catch(error => {
         console.error('Error fetching categories:', error);
         showToast('Không thể tải danh mục. Vui lòng thử lại.', 'error');
+      });
+
+    technologyApi.getList()
+      .then(data => setTechnologiesFromApi(data))
+      .catch(error => {
+        console.error('Error fetching technologies:', error);
+        showToast('Không thể tải công nghệ. Vui lòng thử lại.', 'error');
       });
   }, []);
 
@@ -95,6 +105,7 @@ export default function JobFormModal({
         experienceYearsMin: String(initialData.experienceYearsMin ?? ''),
         locationId: initialData.locationId ?? '',
         categories: initialData.categories,
+        technologies: initialData.technologies || [],
         description: initialData.description,
         responsibilitiesText: initialData.responsibilities.join('\n'),
         requirementsText: initialData.requirements.join('\n'),
@@ -122,6 +133,7 @@ export default function JobFormModal({
       experienceYearsMin: '' as string,
       locationId: employerProfile?.locations?.[0]?.id || '',
       categories: [] as string[],
+      technologies: [] as string[],
       description: '',
       responsibilitiesText: '',
       requirementsText: '',
@@ -281,6 +293,7 @@ export default function JobFormModal({
       experienceYearsMin: form.experienceYearsMin ? Number(form.experienceYearsMin) : undefined,
       locationId: form.locationId,
       categories: form.categories,
+      technologies: form.technologies || [],
       description: form.description,
       responsibilities,
       requirements,
@@ -333,7 +346,7 @@ export default function JobFormModal({
 
           <div className="p-6 overflow-y-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Tên công việc <span className="text-red-500">*</span>
                 </label>
@@ -344,26 +357,6 @@ export default function JobFormModal({
                   placeholder="Nhập tên công việc"
                 />
                 {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Cấp độ <span className="text-red-500">*</span>
-                </label>
-                <select 
-                  value={form.experienceLevel || ''} 
-                  onChange={e => setForm({ ...form, experienceLevel: e.target.value })} 
-                  className="w-full border rounded-lg px-3 py-2"
-                >
-                  <option value="">Chọn cấp độ</option>
-                  <option value="intern">Thực tập</option>
-                  <option value="fresher">Fresher</option>
-                  <option value="junior">Junior</option>
-                  <option value="middle">Middle</option>
-                  <option value="senior">Senior</option>
-                  <option value="lead">Lead</option>
-                  <option value="manager">Manager</option>
-                </select>
               </div>
 
               <div>
@@ -421,7 +414,7 @@ export default function JobFormModal({
                 >
                   <option value="onsite">Tại văn phòng</option>
                   <option value="hybrid">Hybrid</option>
-                  <option value="remote">Remote</option>
+                  <option value="remote">Từ xa</option>
                 </select>
               </div>
 
@@ -436,6 +429,26 @@ export default function JobFormModal({
                   inputMode="numeric" 
                   className="w-full border rounded-lg px-3 py-2" 
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Cấp độ <span className="text-red-500">*</span>
+                </label>
+                <select 
+                  value={form.experienceLevel || ''} 
+                  onChange={e => setForm({ ...form, experienceLevel: e.target.value })} 
+                  className="w-full border rounded-lg px-3 py-2"
+                >
+                  <option value="">Chọn cấp độ</option>
+                  <option value="intern">Thực tập</option>
+                  <option value="fresher">Fresher</option>
+                  <option value="junior">Junior</option>
+                  <option value="middle">Middle</option>
+                  <option value="senior">Senior</option>
+                  <option value="lead">Lead</option>
+                  <option value="manager">Manager</option>
+                </select>
               </div>
               
               <div className="md:col-span-2">
@@ -575,6 +588,68 @@ export default function JobFormModal({
                 {errors.categories && (
                   <p className="text-red-500 text-xs mt-1">{errors.categories}</p>
                 )}
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Công nghệ
+                </label>
+
+                <div className="flex items-center gap-2 flex-wrap border rounded-lg p-2 relative">
+                  {/* Hiển thị technologies đã chọn */}
+                  {form.technologies.map((tech, i) => (
+                    <span
+                      key={i}
+                      className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium flex items-center gap-2"
+                    >
+                      {tech}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm({
+                            ...form,
+                            technologies: form.technologies.filter((_, idx) => idx !== i),
+                          })
+                        }
+                        className="text-blue-500 hover:text-blue-700"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+
+                  {/* Button mở dropdown */}
+                  <button
+                    type="button"
+                    onClick={() => setIsTechnologyDropdownOpen(!isTechnologyDropdownOpen)}
+                    className="ml-auto px-2 py-1 hover:bg-gray-100 rounded text-gray-600 hover:text-gray-800"
+                  >
+                    +
+                  </button>
+
+                  {/* Dropdown */}
+                  {isTechnologyDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 border rounded-lg bg-white shadow-lg max-h-48 overflow-y-auto z-10">
+                      {technologiesFromApi.map(opt => (
+                        <div
+                          key={opt.id}
+                          className="py-2 px-3 cursor-pointer hover:bg-gray-50"
+                          onClick={() => {
+                            if (!form.technologies.includes(opt.name)) {
+                              setForm({
+                                ...form,
+                                technologies: [...form.technologies, opt.name],
+                              });
+                            }
+                            setIsTechnologyDropdownOpen(false);
+                          }}
+                        >
+                          {opt.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="md:col-span-2">

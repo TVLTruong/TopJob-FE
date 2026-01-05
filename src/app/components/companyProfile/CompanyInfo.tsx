@@ -27,9 +27,9 @@ export default function CompanyInfo() {
       <p className="text-gray-700 leading-relaxed mb-8">
         {profile?.description || 'Chưa có mô tả công ty'}
       </p>
-      <div className="border-t pt-8 mb-8">
+      {/* <div className="border-t pt-8 mb-8">
         <TechStack />
-      </div>
+      </div> */}
       <div className="border-t pt-8">
         <OfficeLocations />
       </div>

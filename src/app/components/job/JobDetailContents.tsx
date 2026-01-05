@@ -25,6 +25,7 @@ export type JobDetailData = {
   locationName?: string; // Tên địa điểm
   locationAddress?: string; // Địa chỉ chi tiết
   categories: string[]; // Hoặc categoryId nếu BE chỉ nhận 1 ID
+  technologies?: string[]; // Công nghệ sử dụng
   description: string;
   responsibilities: string[];
   requirements: string[];

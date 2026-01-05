@@ -30,13 +30,13 @@ export default function CompleteProfilePage() {
   const [step, setStep] = useState<Step>(1);
   const [submitting, setSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [availableIndustries, setAvailableIndustries] = useState<string[]>([]);
+  const [availableIndustries, setAvailableIndustries] = useState<{ id: string; name: string }[]>([]);
 
   // Load employer categories as available industries
   useEffect(() => {
     employerCategoryApi.getList()
       .then(categories => {
-        setAvailableIndustries(categories.map(category => category.name));
+        setAvailableIndustries(categories.map(category => ({ id: category.id, name: category.name })));
       })
       .catch(error => {
         console.error("Failed to load employer categories:", error);
@@ -78,13 +78,13 @@ export default function CompleteProfilePage() {
   const [foundingDay, setFoundingDay] = useState("");
   const [foundingMonth, setFoundingMonth] = useState("");
   const [foundingYear, setFoundingYear] = useState("");
-  const [industries, setIndustries] = useState<string[]>([]);
+  const [industries, setIndustries] = useState<string[]>([]); // Store category IDs
   const [showIndustryDropdown, setShowIndustryDropdown] = useState(false);
   const industryDropdownRef = useRef<HTMLDivElement | null>(null);
   const [description, setDescription] = useState("");
   const [benefits, setBenefits] = useState("");
-  const [technologies, setTechnologies] = useState<string[]>([]);
-  const [showTechDropdown, setShowTechDropdown] = useState(false);
+  // const [technologies, setTechnologies] = useState<string[]>([]);
+  // const [showTechDropdown, setShowTechDropdown] = useState(false);
   const techDropdownRef = useRef<HTMLDivElement | null>(null);
   const [contacts, setContacts] = useState({
     email: "",
@@ -93,60 +93,6 @@ export default function CompleteProfilePage() {
     twitter: "",
   });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-
-  // const availableIndustries = [
-  //   "Công nghệ thông tin",
-  //   "Phần mềm",
-  //   "Thương mại điện tử",
-  //   "Tài chính - Ngân hàng",
-  //   "Bảo hiểm",
-  //   "Viễn thông",
-  //   "Y tế - Chăm sóc sức khỏe",
-  //   "Giáo dục - Đào tạo",
-  //   "Du lịch - Khách sạn",
-  //   "Bất động sản",
-  //   "Xây dựng",
-  //   "Sản xuất",
-  //   "Logistics - Vận tải",
-  //   "Marketing - Quảng cáo",
-  //   "Truyền thông - Media",
-  //   "Dịch vụ khách hàng",
-  //   "Nhân sự",
-  //   "Kế toán - Kiểm toán",
-  //   "Pháp lý",
-  //   "Năng lượng",
-  //   "Nông nghiệp",
-  //   "Thời trang",
-  //   "Thực phẩm - Đồ uống",
-  //   "Game",
-  //   "Blockchain - Crypto",
-  // ];
-
-  const availableTechnologies = [
-    "HTML 5",
-    "CSS 3",
-    "JavaScript",
-    "TypeScript",
-    "React",
-    "Next.js",
-    "Vue.js",
-    "Angular",
-    "Node.js",
-    "Python",
-    "Java",
-    "C#",
-    "PHP",
-    "Ruby",
-    "Go",
-    "Rust",
-    "Docker",
-    "Kubernetes",
-    "AWS",
-    "Azure",
-    "MongoDB",
-    "PostgreSQL",
-    "MySQL",
-  ];
 
   // Step 2: Locations
   const [locations, setLocations] = useState<OfficeLocation[]>([]);
@@ -163,19 +109,19 @@ export default function CompleteProfilePage() {
   const [stepContainerHeight, setStepContainerHeight] = useState<number | null>(null);
 
   // Close tech dropdown if clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (!techDropdownRef.current?.contains(target)) {
-        setShowTechDropdown(false);
-      }
-      if (!industryDropdownRef.current?.contains(target)) {
-        setShowIndustryDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  // useEffect(() => {
+  //   const handleClickOutside = (event: MouseEvent) => {
+  //     const target = event.target as Node;
+  //     if (!techDropdownRef.current?.contains(target)) {
+  //       setShowTechDropdown(false);
+  //     }
+  //     if (!industryDropdownRef.current?.contains(target)) {
+  //       setShowIndustryDropdown(false);
+  //     }
+  //   };
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   return () => document.removeEventListener("mousedown", handleClickOutside);
+  // }, []);
 
   // Load provinces
   useLayoutEffect(() => {
@@ -299,10 +245,6 @@ export default function CompleteProfilePage() {
     }
     if (!benefits.trim()) {
       setValidationError("Vui lòng nhập Phúc lợi.");
-      return false;
-    }
-    if (technologies.length === 0) {
-      setValidationError("Vui lòng chọn ít nhất 1 công nghệ.");
       return false;
     }
     const hasContact = Object.values(contacts).some(value => value.trim());
@@ -646,21 +588,24 @@ export default function CompleteProfilePage() {
                     </label>
                     <div className="relative" ref={industryDropdownRef}>
                       <div className="flex flex-wrap gap-2 p-2 border border-gray-300 rounded-lg min-h-[42px]">
-                        {industries.map((industry) => (
-                          <span key={industry} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                            {industry}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIndustries(industries.filter((i) => i !== industry));
-                                setValidationError(null);
-                              }}
-                              className="hover:text-blue-900"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))}
+                        {industries.map((industryId) => {
+                          const industry = availableIndustries.find(i => i.id === industryId);
+                          return (
+                            <span key={industryId} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                              {industry?.name || industryId}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIndustries(industries.filter((i) => i !== industryId));
+                                  setValidationError(null);
+                                }}
+                                className="hover:text-blue-900"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          );
+                        })}
                         <button
                           type="button"
                           onClick={() => setShowIndustryDropdown(!showIndustryDropdown)}
@@ -674,18 +619,18 @@ export default function CompleteProfilePage() {
                       {showIndustryDropdown && (
                         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                           {availableIndustries
-                            .filter((industry) => !industries.includes(industry))
+                            .filter((industry) => !industries.includes(industry.id))
                             .map((industry) => (
                               <div
-                                key={industry}
+                                key={industry.id}
                                 onClick={() => {
-                                  setIndustries([...industries, industry]);
+                                  setIndustries([...industries, industry.id]);
                                   setShowIndustryDropdown(false);
                                   setValidationError(null);
                                 }}
                                 className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm"
                               >
-                                {industry}
+                                {industry.name}
                               </div>
                             ))}
                         </div>
@@ -724,7 +669,7 @@ export default function CompleteProfilePage() {
                   </div>
 
                   {/* Technologies */}
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       Công nghệ <span className="text-red-600">*</span>
                     </label>
@@ -775,7 +720,7 @@ export default function CompleteProfilePage() {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Contacts */}
                   <div>
@@ -1102,17 +1047,20 @@ export default function CompleteProfilePage() {
                       <div className="border border-gray-200 rounded-lg p-4">
                         <h3 className="font-semibold text-gray-900 mb-3">Lĩnh vực</h3>
                         <div className="flex flex-wrap gap-2">
-                          {industries.map((industry) => (
-                            <span key={industry} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                              {industry}
-                            </span>
-                          ))}
+                          {industries.map((industryId) => {
+                            const industry = availableIndustries.find(i => i.id === industryId);
+                            return (
+                              <span key={industryId} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                                {industry?.name || industryId}
+                              </span>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
 
                     {/* Technologies Review */}
-                    {technologies.length > 0 && (
+                    {/* {technologies.length > 0 && (
                       <div className="border border-gray-200 rounded-lg p-4">
                         <h3 className="font-semibold text-gray-900 mb-3">Công nghệ</h3>
                         <div className="flex flex-wrap gap-2">
@@ -1123,7 +1071,7 @@ export default function CompleteProfilePage() {
                           ))}
                         </div>
                       </div>
-                    )}
+                    )} */}
 
                     {/* Contacts Review */}
                     <div className="border border-gray-200 rounded-lg p-4">

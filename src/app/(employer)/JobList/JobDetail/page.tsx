@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { updateJob, getEmployerJobDetail, hideJob, unhideJob, deleteJob, closeJob, type JobFromAPI } from '@/utils/api/job-api';
 import type { CreateJobPayload } from '@/utils/api/job-api';
 import { jobCategoryApi } from '@/utils/api/categories-api';
+import { technologyApi } from '@/utils/api/technology-api';
 
 function JobDetailContent_Inner() {
   const { user } = useAuth();
@@ -254,12 +255,30 @@ function JobDetailContent_Inner() {
 
       // Get all categories from API to map names to IDs
       const allCategories = await jobCategoryApi.getList();
-      const firstCategoryName = updatedJob.categories[0];
-      const category = allCategories.find(cat => cat.name === firstCategoryName);
+      const categoryIds: string[] = [];
       
-      if (!category) {
-        showToast(`Không tìm thấy danh mục: ${firstCategoryName}`, 'error');
-        return;
+      for (const catName of updatedJob.categories) {
+        const category = allCategories.find(cat => cat.name === catName);
+        if (category) {
+          categoryIds.push(category.id);
+        } else {
+          showToast(`Không tìm thấy danh mục: ${catName}`, 'error');
+          return;
+        }
+      }
+
+      // Get all technologies from API to map names to IDs (if provided)
+      let technologyIds: string[] | undefined;
+      if (updatedJob.technologies && updatedJob.technologies.length > 0) {
+        const allTechnologies = await technologyApi.getList();
+        technologyIds = [];
+        
+        for (const techName of updatedJob.technologies) {
+          const technology = allTechnologies.find(tech => tech.name === techName);
+          if (technology) {
+            technologyIds.push(technology.id);
+          }
+        }
       }
 
       // Convert expiredAt from dd/MM/yyyy to ISO date
@@ -268,7 +287,8 @@ function JobDetailContent_Inner() {
 
       // Build API payload (only fields that can be updated)
       const payload: Partial<CreateJobPayload> = {
-        categoryId: category.id,
+        categoryIds,
+        technologyIds,
         locationId: updatedJob.locationId!,
         title: updatedJob.title,
         description: updatedJob.description,

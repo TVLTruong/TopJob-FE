@@ -16,7 +16,7 @@ interface EmployerProfile {
   address?: string;
   website?: string;
   foundingDate?: string;
-  industries?: string[];
+  industries?: Array<{ id: string; name: string; slug?: string; isPrimary?: boolean }>;
   technologies?: string[];
   benefits?: string | string[]; // Có thể là string (với \\n) hoặc array
   contactEmail?: string;
@@ -97,12 +97,14 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
     label, 
     newItems, 
     oldItems, 
-    renderItem 
+    renderItem,
+    compareKey
   }: { 
     label: string; 
-    newItems?: string[]; 
-    oldItems?: string[]; 
-    renderItem: (item: string, isRemoved?: boolean) => React.ReactNode;
+    newItems?: any[]; 
+    oldItems?: any[]; 
+    renderItem: (item: any, isRemoved?: boolean) => React.ReactNode;
+    compareKey?: string; // Key to use for comparison if items are objects
   }) => {
     const hasChanged = isEditType && oldItems !== undefined && JSON.stringify(oldItems || []) !== JSON.stringify(newItems || []);
 
@@ -412,38 +414,36 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
             </div>
           )}
 
-          {/* Address with Diff */}
-          {(employer.address || (isEditType && employer.oldData?.address)) && (
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <h4 className="text-sm font-semibold text-gray-900 mb-3">Địa chỉ</h4>
-              <InfoField 
-                label="Địa chỉ công ty" 
-                value={employer.address} 
-                oldValue={employer.oldData?.address} 
-              />
-            </div>
-          )}
-
           {/* Industries */}
           {(employer.industries && employer.industries.length > 0) || (isEditType && employer.oldData?.industries && employer.oldData.industries.length > 0) ? (
             <ArrayDiffField
               label="Lĩnh vực"
               newItems={employer.industries}
               oldItems={employer.oldData?.industries}
-              renderItem={(item, isRemoved) => (
-                <span 
-                  key={item}
-                  className={`px-3 py-1 text-xs font-medium rounded-full ${
-                    isRemoved 
-                      ? 'bg-red-100 text-red-700 line-through' 
-                      : isEditType && employer.oldData?.industries && !employer.oldData.industries.includes(item)
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-blue-100 text-blue-700'
-                  }`}
-                >
-                  {item}
-                </span>
-              )}
+              compareKey="id"
+              renderItem={(item: { id: string; name: string; isPrimary?: boolean }, isRemoved) => {
+                const itemId = typeof item === 'object' ? item.id : item;
+                const itemName = typeof item === 'object' ? item.name : item;
+                const isPrimary = typeof item === 'object' ? item.isPrimary : false;
+                
+                return (
+                  <span 
+                    key={itemId}
+                    className={`px-3 py-1 text-xs font-medium rounded-full ${
+                      isRemoved 
+                        ? 'bg-red-100 text-red-700 line-through' 
+                        : isEditType && employer.oldData?.industries && !employer.oldData.industries.some((old: any) => (typeof old === 'object' ? old.id : old) === itemId)
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-blue-100 text-blue-700'
+                    }`}
+                  >
+                    {itemName}
+                    {isPrimary && (
+                      <span className="ml-1 text-[10px] opacity-75">(Chính)</span>
+                    )}
+                  </span>
+                );
+              }}
             />
           ) : null}
 

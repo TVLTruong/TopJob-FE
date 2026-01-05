@@ -41,7 +41,7 @@ interface EmployerProfile {
   address?: string;
   website?: string;
   foundingDate?: string;
-  industries?: string[];
+  industries?: Array<{ id: string; name: string; slug?: string; isPrimary?: boolean }>;
   technologies?: string[];
   benefits?: string[];
   contactEmail?: string;
@@ -190,7 +190,12 @@ export default function EmployerApprovalList() {
         address: response.employer.locations?.[0]?.detailedAddress,
         website: response.employer.website,
         foundingDate: response.employer.foundedDate?.toString(),
-        industries: response.employer.industries || undefined,
+        industries: response.employer.employerCategories?.map((ec: any) => ({
+          id: ec.id,
+          name: ec.name,
+          slug: ec.slug,
+          isPrimary: ec.isPrimary,
+        })) || undefined,
         technologies: response.employer.technologies || undefined,
         benefits: response.employer.benefits 
           ? response.employer.benefits.flatMap((b: string) => b.replace(/\\n/g, '\n').split('\n').filter((item: string) => item.trim()))
@@ -236,8 +241,21 @@ export default function EmployerApprovalList() {
             oldData.phone = oldValue;
             fullEmployer.phone = newValue;
           } else if (fieldName === 'employerCategory') {
-            oldData.industries = oldValue ? JSON.parse(oldValue) : [];
-            fullEmployer.industries = newValue ? JSON.parse(newValue) : [];
+            // Parse as array of category objects with id, name, slug, isPrimary
+            const oldCategories = oldValue ? JSON.parse(oldValue) : [];
+            const newCategories = newValue ? JSON.parse(newValue) : [];
+            oldData.industries = oldCategories.map((cat: any) => ({
+              id: cat.id || cat.category_id,
+              name: cat.name || cat.category_name,
+              slug: cat.slug,
+              isPrimary: cat.isPrimary || cat.is_primary,
+            }));
+            fullEmployer.industries = newCategories.map((cat: any) => ({
+              id: cat.id || cat.category_id,
+              name: cat.name || cat.category_name,
+              slug: cat.slug,
+              isPrimary: cat.isPrimary || cat.is_primary,
+            }));
           } else if (fieldName === 'technologies') {
             oldData.technologies = oldValue ? JSON.parse(oldValue) : [];
             fullEmployer.technologies = newValue ? JSON.parse(newValue) : [];
