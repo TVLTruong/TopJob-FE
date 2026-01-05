@@ -86,7 +86,8 @@ export const ExperienceLevelReverseMap = {
 // ==================== TYPES ====================
 
 export interface CreateJobPayload {
-  categoryId: string;
+  categoryIds: string[];
+  primaryCategoryId?: string;
   locationId: string;
   title: string;
   description?: string;

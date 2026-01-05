@@ -3,6 +3,5 @@ export interface Company {
   name: string;
   logoUrl: string;
   locations: string[];
-  technologies: string[];
   jobCount: number;
 }

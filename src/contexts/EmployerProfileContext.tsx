@@ -38,12 +38,6 @@ const MOCK_EMPLOYER_PROFILE = {
     "Tham gia sự kiện văn hóa công ty: Công ty thường xuyên tổ chức các hoạt động gắn kết, chương trình giải trí và tặng quà, lì xì cho nhân viên trong các dịp Lễ/Tết và các sự kiện đặc biệt của công ty.",
     "Trợ cấp ăn trưa và công tác: Công ty hỗ trợ tiền ăn trưa hằng tháng cho toàn bộ nhân viên làm việc tại văn phòng và trợ cấp di chuyển, công tác đầy đủ."
   ],
-  "technologies": [
-    "Angular",
-    "JavaScript",
-    "Java",
-    "Python"
-  ],
   "locations": [
     {
       "id": "2",
@@ -103,10 +97,9 @@ export interface EmployerProfile {
   isApproved: boolean;
   status: string;
   profileStatus: string;
-  employerCategory?: string[];
-  // Benefits & Technologies
+  categories?: Array<{ id: string; name: string; slug: string }>;
+  // Benefits
   benefits?: string[];
-  technologies?: string[];
   // Locations
   locations?: EmployerLocation[];
   // Computed fields

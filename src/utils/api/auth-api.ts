@@ -272,8 +272,8 @@ export const AuthApi = {
     description: string;
     benefits: string[];
     foundedDate: string;
-    employerCategory: string[];
-    technologies?: string[];
+    categoryIds: string[];
+    primaryCategoryId?: string;
     contactEmail?: string;
     contactPhone?: string;
     facebookUrl?: string;

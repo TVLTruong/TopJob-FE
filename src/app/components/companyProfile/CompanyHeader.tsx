@@ -35,7 +35,6 @@ interface CompanyBasicInfo {
   foundingDay: string;
   foundingMonth: string;
   foundingYear: string;
-  technologies: string[];
   description: string;
   benefits: string;
   contactEmail: string;
@@ -64,7 +63,6 @@ export default function CompanyHeader() {
     foundingDay: '',
     foundingMonth: '',
     foundingYear: '',
-    technologies: [],
     description: '',
     benefits: '',
     contactEmail: '',
@@ -172,14 +170,13 @@ export default function CompanyHeader() {
         companyName: profile.companyName || '',
         website: profile.website || '',
         locations: profile.locations?.map(loc => loc.province) || [],
-        fields: profile.employerCategory || [],
+        fields: profile.categories?.map(c => c.id) || [],
         province: profile.locations?.[0]?.province || '',
         district: profile.locations?.[0]?.district || '',
         streetAddress: profile.locations?.[0]?.detailedAddress || '',
         foundingDay,
         foundingMonth,
         foundingYear,
-        technologies: profile.technologies || [],
         description: profile.description || '',
         benefits: Array.isArray(profile.benefits) 
           ? profile.benefits.join('\n') 
@@ -271,14 +268,14 @@ export default function CompanyHeader() {
   }, [isPopupOpen, scrollbarWidth])
 
   // Helper functions
-  const removeItem = (field: keyof Pick<CompanyBasicInfo, 'locations' | 'fields' | 'technologies'>, value: string) => {
+  const removeItem = (field: keyof Pick<CompanyBasicInfo, 'locations' | 'fields'>, value: string) => {
     setFormData({
       ...formData,
       [field]: formData[field].filter((item) => item !== value)
     })
   }
 
-  const addItem = (field: keyof Pick<CompanyBasicInfo, 'fields' | 'technologies'>, value: string) => {
+  const addItem = (field: keyof Pick<CompanyBasicInfo, 'fields'>, value: string) => {
     if (!formData[field].includes(value)) {
       setFormData({
         ...formData,
@@ -728,45 +725,6 @@ export default function CompanyHeader() {
                 </div>
               </div>
 
-              {/* Công nghệ sử dụng */}
-              <div className="mb-6 relative">
-                <label className="block text-sm font-medium mb-2">Công nghệ sử dụng</label>
-                <div className="relative">
-                  <div className="flex flex-wrap gap-2 p-2 border border-gray-300 rounded-lg min-h-[42px]">
-                    {formData.technologies.map((tech) => (
-                      <span key={tech} className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded text-sm">
-                        {tech}
-                        <button onClick={() => removeItem('technologies', tech)}>
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                    <button 
-                      onClick={() => toggleDropdown('tech')}
-                      className="ml-auto text-gray-400 hover:text-gray-600"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                  {showTechDropdown && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                      {techOptions.filter(tech => !formData.technologies.includes(tech)).map((tech) => (
-                        <div
-                          key={tech}
-                          onClick={() => {
-                            addItem('technologies', tech)
-                            setShowTechDropdown(false)
-                          }}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                        >
-                          {tech}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
               {/* Giới thiệu về công ty */}
               <div className="mb-6">
                 <label className="block text-sm font-medium mb-2">Giới thiệu về công ty</label>
@@ -888,16 +846,11 @@ export default function CompanyHeader() {
           }
           
           // Compare arrays using JSON.stringify
-          const currentCategories = JSON.stringify(profile?.employerCategory || []);
-          const newCategories = JSON.stringify(formData.fields);
-          if (currentCategories !== newCategories) {
-            updatedProfile.employerCategory = formData.fields;
-          }
-          
-          const currentTechnologies = JSON.stringify(profile?.technologies || []);
-          const newTechnologies = JSON.stringify(formData.technologies);
-          if (currentTechnologies !== newTechnologies) {
-            updatedProfile.technologies = formData.technologies;
+          const currentCategoryIds = JSON.stringify(profile?.categories?.map(c => c.id) || []);
+          const newCategoryIds = JSON.stringify(formData.fields);
+          if (currentCategoryIds !== newCategoryIds) {
+            updatedProfile.categoryIds = formData.fields;
+            updatedProfile.primaryCategoryId = formData.fields[0];
           }
           
           if (formData.description !== profile?.description) {
