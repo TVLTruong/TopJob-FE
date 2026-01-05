@@ -220,6 +220,23 @@ export default function JobDetailContent({ job }: { job: JobDetailData }) {
             ))}
           </div>
         </div>
+
+        {/* Technologies */}
+        {job.technologies && job.technologies.length > 0 && (
+          <div className="bg-white rounded-xl p-6 shadow-sm">
+            <h3 className="font-bold text-xl text-gray-900 mb-4">Công nghệ</h3>
+            <div className="flex flex-wrap gap-2">
+              {job.technologies.map((technology, index) => (
+                <span 
+                  key={index}
+                  className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm font-medium"
+                >
+                  {technology}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
