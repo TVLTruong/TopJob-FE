@@ -211,6 +211,10 @@ export default function JobFormModal({
       newErrors.categories = 'Vui lòng chọn ít nhất một danh mục';
     }
 
+    if (form.technologies.length === 0) {
+      newErrors.technologies = 'Vui lòng chọn ít nhất một công nghệ';
+    }
+
     if (!form.description.trim()) {
       newErrors.description = 'Vui lòng nhập mô tả công việc';
     }
@@ -592,7 +596,7 @@ export default function JobFormModal({
 
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Công nghệ
+                  Công nghệ <span className="text-red-500">*</span>
                 </label>
 
                 <div className="flex items-center gap-2 flex-wrap border rounded-lg p-2 relative">

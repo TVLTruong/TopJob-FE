@@ -87,6 +87,7 @@ function JobDetailContent_Inner() {
           locationName: apiJob.location?.city,
           locationAddress: apiJob.location?.address,
           categories: apiJob.category ? [apiJob.category.name] : [],
+          technologies: apiJob.jobTechnologies?.map(jt => jt.technology.name) || [],
           description: apiJob.description || 'Chưa có mô tả',
           responsibilities: apiJob.responsibilities || [],
           requirements: apiJob.requirements || [],
@@ -250,6 +251,11 @@ function JobDetailContent_Inner() {
 
       if (!updatedJob.categories || updatedJob.categories.length === 0) {
         showToast('Vui lòng chọn ít nhất một danh mục', 'error');
+        return;
+      }
+
+      if (!updatedJob.technologies || updatedJob.technologies.length === 0) {
+        showToast('Vui lòng chọn ít nhất một công nghệ', 'error');
         return;
       }
 

@@ -47,6 +47,11 @@ export default function Header() {
         return;
       }
 
+      if (!jobData.technologies || jobData.technologies.length === 0) {
+        showToast('Vui lòng chọn ít nhất một công nghệ', 'error');
+        return;
+      }
+
       // Get all categories from API to map names to IDs
       let allCategories;
       try {
