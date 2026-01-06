@@ -5,22 +5,21 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmployerProfile } from '@/contexts/EmployerProfileContext';
 import Header from '@/app/components/companyProfile/Header';
-import CompanyHeader from '@/app/components/companyProfile/CompanyHeader';
-import CompanyInfo from '@/app/components/companyProfile/CompanyInfo';
-import Benefits from '@/app/components/companyProfile/Benefits';
-import Contact from '@/app/components/companyProfile/Contact';
-import JobListings from '@/app/components/companyProfile/JobListings';
+import CompanyProfileDisplay from '@/app/components/companyProfile/CompanyProfileDisplay';
 import { getMyEmployerProfile, updateMyEmployerProfile } from '@/utils/api/employer-api';
 import Toast from '@/app/components/profile/Toast';
 
+/**
+ * Employer Company Profile Page
+ * This page is for employers to view and edit their company profile
+ * Role is always employer (no role checking needed)
+ */
 export default function CompanyProfilePage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
-  const { profile, isLoading : profileLoading, refreshProfile } = useEmployerProfile();
+  const { profile, isLoading: profileLoading, refreshProfile } = useEmployerProfile();
   const [checking, setChecking] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
-  // const [profile, setProfile] = useState<any>(null);
-  // const [loadingProfile, setLoadingProfile] = useState(true);
 
   // Show toast helper
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
@@ -28,6 +27,7 @@ export default function CompanyProfilePage() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  // Check access - Employer only, must be ACTIVE
   useEffect(() => {
     const checkAccess = async () => {
       // Wait for auth to load
@@ -39,8 +39,8 @@ export default function CompanyProfilePage() {
         return;
       }
 
-      // Check role directly (backend returns lowercase)
-      if (user.role !== 'employer') {
+      // Check role (backend returns uppercase EMPLOYER/CANDIDATE)
+      if (user.role !== 'EMPLOYER') {
         router.push('/login');
         return;
       }
@@ -75,38 +75,7 @@ export default function CompanyProfilePage() {
     checkAccess();
   }, [user, authLoading, router]);
 
-  // useEffect(() => {
-  //   const fetchProfile = async () => {
-  //     try {
-  //       const data = await getMyEmployerProfile();
-  //       setProfile(data);
-  //     } catch (error) {
-  //       console.error('Error fetching profile:', error);
-  //     } finally {
-  //       setLoadingProfile(false);
-  //     }
-  //   };
-
-  //   if (!checking && user) {
-  //     fetchProfile();
-  //   }
-  // }, [checking, user]);
-
-  // if (authLoading || checking || loadingProfile) {
-  if (authLoading || checking || profileLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
-      </div>
-    );
-  }
-
-  // Format benefits: API trả về string hoặc array, Benefits component cần string format newline separated
-  const benefitsText = Array.isArray(profile?.benefits) 
-    ? profile.benefits.join('\n') 
-    : (profile?.benefits || '');
-
-  // Handler to save benefits to API
+  // Handler to save benefits to API (employer only)
   const handleSaveBenefits = async (newBenefitsText: string) => {
     try {
       // Convert newline separated string back to array
@@ -126,39 +95,30 @@ export default function CompanyProfilePage() {
     }
   };
 
+  if (authLoading || checking || profileLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+      </div>
+    );
+  }
+
+  // Format benefits: API trả về string hoặc array, Benefits component cần string format newline separated
+  const benefitsText = Array.isArray(profile?.benefits) 
+    ? profile.benefits.join('\n') 
+    : (profile?.benefits || '');
+
   return (
-    // <EmployerProfileProvider>
-    //   <div className="min-h-screen bg-gray-50">
-    //     <Header />
-    //     <div>
-    //       <CompanyHeader />
-    //       <div className="grid grid-cols-[2fr_1fr]">
-    //         <div>
-    //           <CompanyInfo />
-    //           <Benefits benefitsText={benefitsText} canEddit />
-    //           <Contact canEdit={true} />
-    //         </div>
-    //         <div>
-    //           <JobListings />
-    //         </div>
-    //       </div>
-    //     </div>
-    //   </div>
-    // </EmployerProfileProvider>
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div>
-        <CompanyHeader />
-        <div className="grid grid-cols-[2fr_1fr]">
-          <div>
-            <CompanyInfo />
-            <Benefits benefitsText={benefitsText} canEddit onSave={handleSaveBenefits} />
-            <Contact canEdit={true} />
-          </div>
-          <div>
-            <JobListings />
-          </div>
-        </div>
+        {/* Display company profile in edit mode (canEdit = true) */}
+        <CompanyProfileDisplay 
+          benefitsText={benefitsText} 
+          canEdit={true}
+          onSaveBenefits={handleSaveBenefits}
+        />
+      </div>
 
       {/* Toast Notification */}
       {toast && (
@@ -168,7 +128,6 @@ export default function CompanyProfilePage() {
           onClose={() => setToast(null)} 
         />
       )}
-      </div>
     </div>
   );
 }

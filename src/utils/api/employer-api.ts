@@ -122,3 +122,20 @@ export const deleteEmployerLocation = async (locationId: string) => {
     throw error;
   }
 };
+
+/**
+ * Get public employer profile by ID (for candidates to view)
+ */
+export const getPublicEmployerProfile = async (employerId: string) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/employers/${employerId}`
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch employer profile');
+    }
+    throw error;
+  }
+};

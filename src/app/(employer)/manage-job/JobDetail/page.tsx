@@ -4,30 +4,30 @@ import JobDetailContent, { JobDetailData } from '@/app/components/job/JobDetailC
 import ApplicantsTab from '@/app/components/job/Applicant';
 import JobFormModal from '@/app/components/job/JobFormModal';
 import Toast from '@/app/components/profile/Toast';
-import { ChevronDown, Power, Edit, Eye, EyeOff, Trash2, X, Heart } from 'lucide-react';
+import { ChevronDown, Power, Edit, Eye, EyeOff, Trash2, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
 import { updateJob, getEmployerJobDetail, hideJob, unhideJob, deleteJob, closeJob, type JobFromAPI } from '@/utils/api/job-api';
 import type { CreateJobPayload } from '@/utils/api/job-api';
 import { jobCategoryApi } from '@/utils/api/categories-api';
 import { technologyApi } from '@/utils/api/technology-api';
 
+/**
+ * Employer JobDetail Page
+ * This page is for employers to manage their job postings
+ * Includes edit, hide, delete, and close job functionalities
+ * Role is always employer (no role checking needed)
+ */
 function JobDetailContent_Inner() {
-  const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const jobId = searchParams.get('id');
   
-  const isRecruiter = user?.role === 'employer';
-  const isCandidate = user?.role === 'candidate';
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<'end' | 'hide' | 'delete' | 'apply' | 'unapply' | null>(null);
+  const [confirmAction, setConfirmAction] = useState<'end' | 'hide' | 'delete' | null>(null);
   const [activeTab, setActiveTab] = useState<'detail' | 'applicants'>('detail');
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [hasApplied, setHasApplied] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [job, setJob] = useState<JobDetailData | null>(null);
@@ -132,20 +132,6 @@ function JobDetailContent_Inner() {
     setIsDropdownOpen(false);
   };
 
-  const handleApply = () => {
-    if (hasApplied) {
-      setConfirmAction('unapply');
-    } else {
-      setConfirmAction('apply');
-    }
-    setShowConfirmModal(true);
-  };
-
-  const handleSaveJob = () => {
-    setIsSaved(!isSaved);
-    console.log(isSaved ? 'Đã bỏ lưu công việc' : 'Đã lưu công việc');
-  };
-
   const confirmHandler = async () => {
     if (!jobId) return;
 
@@ -164,17 +150,11 @@ function JobDetailContent_Inner() {
         // Close job via dedicated endpoint
         await closeJob(jobId);
         showToast('Đã kết thúc công việc thành công!');
-        router.push('/JobList');
+        router.push('/manage-job');
       } else if (confirmAction === 'delete') {
         await deleteJob(jobId);
         showToast('Đã xóa công việc thành công!');
-        router.push('/JobList');
-      } else if (confirmAction === 'apply') {
-        setHasApplied(true);
-        console.log('Đã ứng tuyển');
-      } else if (confirmAction === 'unapply') {
-        setHasApplied(false);
-        console.log('Đã hủy ứng tuyển');
+        router.push('/manage-job');
       }
     } catch (error: any) {
       console.error('Error performing action:', error);
@@ -213,20 +193,6 @@ function JobDetailContent_Inner() {
           title: 'Xác nhận xóa',
           message: 'Bạn có chắc chắn muốn xóa công việc này không? Hành động này không thể hoàn tác.',
           confirmText: 'Xóa',
-          confirmClass: 'bg-red-600 hover:bg-red-700'
-        };
-      case 'apply':
-        return {
-          title: 'Xác nhận ứng tuyển',
-          message: 'Bạn có chắc chắn muốn ứng tuyển vào vị trí này không?',
-          confirmText: 'Ứng tuyển',
-          confirmClass: 'bg-emerald-600 hover:bg-emerald-700'
-        };
-      case 'unapply':
-        return {
-          title: 'Xác nhận hủy ứng tuyển',
-          message: 'Bạn có chắc chắn muốn hủy ứng tuyển vào vị trí này không?',
-          confirmText: 'Hủy ứng tuyển',
           confirmClass: 'bg-red-600 hover:bg-red-700'
         };
       default:
@@ -388,95 +354,64 @@ function JobDetailContent_Inner() {
               </div>
             </div>
             
-            {/* Actions based on role */}
-            {isCandidate ? (
-              <div className="flex items-center gap-3">
-                <button 
-                  onClick={handleApply}
-                  className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors ${
-                    hasApplied 
-                      ? 'bg-gray-400 text-white cursor-pointer hover:bg-gray-500' 
-                      : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                  }`}
-                >
-                  <span className="text-sm">
-                    {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển'}
-                  </span>
-                </button>
-                
-                {/* Nút Lưu công việc (trái tim) */}
-                <button
-                  onClick={handleSaveJob}
-                  className={`aspect-square h-10 flex items-center justify-center border rounded-lg transition-colors ${
-                    isSaved
-                      ? "border-red-500 bg-red-100 text-red-600 hover:bg-red-200"
-                      : "border-gray-300 text-gray-600 hover:bg-emerald-50 hover:border-emerald-500"
-                  }`}
-                  aria-label={isSaved ? "Bỏ lưu công việc" : "Lưu công việc"}
-                >
-                  <Heart size={20} fill={isSaved ? "currentColor" : "none"} />
-                </button>
-              </div>
-            ) : isRecruiter ? (
-              <div className="relative">
-                <button 
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  <span className="text-sm">Tùy chọn khác</span>
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-                
-                {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                    <button 
-                      onClick={handleEnd}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <Power className="w-4 h-4" />
-                      <span>Kết thúc</span>
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setIsEditOpen(true);
-                        setIsDropdownOpen(false);
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <Edit className="w-4 h-4" />
-                      <span>Chỉnh sửa</span>
-                    </button>
-                    <button 
-                      onClick={handleToggleHidden}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      {isHidden ? (
-                        <>
-                          <Eye className="w-4 h-4" />
-                          <span>Hủy ẩn</span>
-                        </>
-                      ) : (
-                        <>
-                          <EyeOff className="w-4 h-4" />
-                          <span>Ẩn</span>
-                        </>
-                      )}
-                    </button>
-                    <button 
-                      onClick={handleDelete}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-red-600"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Xóa</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : null}
+            {/* Employer Actions */}
+            <div className="relative">
+              <button 
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                <span className="text-sm">Tùy chọn khác</span>
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              
+              {isDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                  <button 
+                    onClick={handleEnd}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Power className="w-4 h-4" />
+                    <span>Kết thúc</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setIsEditOpen(true);
+                      setIsDropdownOpen(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Edit className="w-4 h-4" />
+                    <span>Chỉnh sửa</span>
+                  </button>
+                  <button 
+                    onClick={handleToggleHidden}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    {isHidden ? (
+                      <>
+                        <Eye className="w-4 h-4" />
+                        <span>Hủy ẩn</span>
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="w-4 h-4" />
+                        <span>Ẩn</span>
+                      </>
+                    )}
+                  </button>
+                  <button 
+                    onClick={handleDelete}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-red-600"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Xóa</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Tabs */}
-          {isRecruiter && (
+          {/* Tabs - Employer can view applicants */}
           <div className="flex gap-6 border-b">
             <button 
               onClick={() => setActiveTab('detail')}
@@ -499,15 +434,14 @@ function JobDetailContent_Inner() {
               Ứng viên
             </button>
           </div>
-          )}
         </div>
 
         {/* Tab Content */}
         {activeTab === 'detail' ? (
           <JobDetailContent job={job} />
-        ) : isRecruiter ? (
+        ) : (
           <ApplicantsTab />
-        ) : null}
+        )}
 
         {/* Job Form Modal */}
         <JobFormModal
