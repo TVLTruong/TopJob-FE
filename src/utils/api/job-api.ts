@@ -332,3 +332,65 @@ export const closeJob = async (jobId: string) => {
     throw error;
   }
 };
+
+/**
+ * Get all public jobs (for candidates/guests)
+ * Supports filtering, searching, and pagination
+ */
+export interface PublicJobsParams {
+  keyword?: string;
+  location?: string;
+  jobType?: string;
+  experienceLevel?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  page?: number;
+  limit?: number;
+  sort?: 'newest' | 'relevant';
+  isHot?: boolean;
+}
+
+export const getPublicJobs = async (params: PublicJobsParams = {}): Promise<PaginationResponse<JobFromAPI>> => {
+  try {
+    const queryParams = new URLSearchParams();
+    
+    if (params.keyword) queryParams.append('keyword', params.keyword);
+    if (params.location) queryParams.append('location', params.location);
+    if (params.jobType) queryParams.append('jobType', params.jobType);
+    if (params.experienceLevel) queryParams.append('experienceLevel', params.experienceLevel);
+    if (params.salaryMin) queryParams.append('salaryMin', params.salaryMin.toString());
+    if (params.salaryMax) queryParams.append('salaryMax', params.salaryMax.toString());
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.sort) queryParams.append('sort', params.sort);
+    if (params.isHot !== undefined) queryParams.append('isHot', params.isHot.toString());
+    
+    const response = await axios.get<PaginationResponse<JobFromAPI>>(
+      `${API_BASE_URL}/jobs?${queryParams.toString()}`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching public jobs:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get featured/recommended jobs (isHot = true)
+ */
+export const getFeaturedJobs = async (limit: number = 8): Promise<PaginationResponse<JobFromAPI>> => {
+  try {
+    // Fetch featured jobs by filtering isHot = true and sort by relevant
+    const response = await getPublicJobs({
+      isHot: true,
+      sort: 'relevant',
+      limit: limit,
+      page: 1
+    });
+    return response;
+  } catch (error) {
+    console.error('Error fetching featured jobs:', error);
+    throw error;
+  }
+};

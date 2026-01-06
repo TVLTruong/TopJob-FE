@@ -1,110 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { ChevronDown, X, SlidersHorizontal, MapPin, Layers } from "lucide-react";
 import HeroSearcher from "@/app/components/landing/searcher";
 import CompanyCard from "@/app/components/company/CompanyCard";
 import { Company } from "@/app/components/types/company.types";
-
-// Mock data cho demo
-const mockCompanies: Company[] = [
-  {
-    id: "1",
-    name: "FPT Software",
-    logoUrl: "/placeholder-logo.png",
-    technologies: ["Java", "React", "NodeJS", "AWS", "Docker", "Python"],
-    locations: ["TP.HCM", "Hà Nội", "Đà Nẵng"],
-    jobCount: 45
-  },
-  {
-    id: "2",
-    name: "VNG Corporation",
-    logoUrl: "/placeholder-logo.png",
-    technologies: ["Java", "Golang", "React", "MySQL", "Redis"],
-    locations: ["TP.HCM"],
-    jobCount: 32
-  },
-  {
-    id: "3",
-    name: "Tiki",
-    logoUrl: "/placeholder-logo.png",
-    technologies: ["Python", "React", "Kubernetes", "MongoDB", "Kafka"],
-    locations: ["TP.HCM", "Hà Nội"],
-    jobCount: 28
-  },
-  {
-    id: "4",
-    name: "Shopee Vietnam",
-    logoUrl: "/placeholder-logo.png",
-    technologies: ["Java", "Go", "React", "Docker", "Kubernetes", "AWS"],
-    locations: ["TP.HCM"],
-    jobCount: 56
-  },
-  {
-    id: "5",
-    name: "Grab Vietnam",
-    logoUrl: "/placeholder-logo.png",
-    technologies: ["Go", "React Native", "AWS", "PostgreSQL", "Redis"],
-    locations: ["TP.HCM", "Hà Nội"],
-    jobCount: 38
-  },
-  {
-    id: "6",
-    name: "Momo",
-    logoUrl: "/placeholder-logo.png",
-    technologies: ["Java", "Kotlin", "Swift", "React", "MySQL"],
-    locations: ["TP.HCM"],
-    jobCount: 24
-  },
-  {
-    id: "7",
-    name: "VinID",
-    logoUrl: "/placeholder-logo.png",
-    technologies: ["C#", ".NET", "Angular", "SQL Server", "Azure"],
-    locations: ["Hà Nội", "TP.HCM"],
-    jobCount: 19
-  },
-  {
-    id: "8",
-    name: "ZaloPay",
-    logoUrl: "/placeholder-logo.png",
-    technologies: ["Java", "React", "NodeJS", "MongoDB", "Redis"],
-    locations: ["TP.HCM"],
-    jobCount: 22
-  },
-  {
-    id: "9",
-    name: "Viettel Solutions",
-    logoUrl: "/placeholder-logo.png",
-    technologies: ["Java", "Python", "React", "Oracle", "Docker"],
-    locations: ["Hà Nội", "TP.HCM", "Đà Nẵng", "Cần Thơ"],
-    jobCount: 67
-  },
-  {
-    id: "10",
-    name: "ELCA Vietnam",
-    logoUrl: "/placeholder-logo.png",
-    technologies: ["Java", "Angular", "PostgreSQL", "Docker", "Kubernetes"],
-    locations: ["TP.HCM", "Hà Nội"],
-    jobCount: 15
-  },
-  {
-    id: "11",
-    name: "TMA Solutions",
-    logoUrl: "/placeholder-logo.png",
-    technologies: ["C++", "Java", "React", "MySQL", "AWS"],
-    locations: ["TP.HCM", "Hà Nội", "Quy Nhơn"],
-    jobCount: 41
-  },
-  {
-    id: "12",
-    name: "NashTech Vietnam",
-    logoUrl: "/placeholder-logo.png",
-    technologies: [".NET", "React", "Azure", "SQL Server", "Docker"],
-    locations: ["TP.HCM", "Hà Nội", "Đà Nẵng"],
-    jobCount: 33
-  }
-];
+import { getPublicCompanies } from "@/utils/api/company-api";
 
 const locationOptions = ["TP.HCM", "Hà Nội", "Đà Nẵng", "Cần Thơ", "Quy Nhơn", "Hải Phòng"];
 const technologyOptions = [
@@ -212,6 +114,11 @@ function HorizontalFilter({ label, icon, options, selected, tempSelected, onTemp
 
 // Main Component
 export default function CompanyPage() {
+  // State for companies data
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   // Applied filters
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [selectedTechnologies, setSelectedTechnologies] = useState<string[]>([]);
@@ -219,6 +126,46 @@ export default function CompanyPage() {
   // Temporary filters
   const [tempLocations, setTempLocations] = useState<string[]>([]);
   const [tempTechnologies, setTempTechnologies] = useState<string[]>([]);
+
+  const searchParams = useSearchParams();
+
+  // Fetch companies from API
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const keyword = searchParams.get('keyword') || undefined;
+        const city = searchParams.get('location') || undefined;
+
+        const response = await getPublicCompanies({
+          page: 1,
+          limit: 100, // Lấy nhiều công ty
+          keyword,
+          city,
+        });
+        
+        // Convert CompanyFromAPI to Company type
+        const convertedCompanies = response.data.map((company: any) => ({
+          id: company.id,
+          name: company.companyName,
+          locations: company.locations?.map((loc: any) => loc.province) || [],
+          technologies: company.employerCategories?.map((ec: any) => ec.category.name) || [],
+          jobCount: company.jobCount || 0,
+          logoUrl: company.logoUrl || '/placeholder-logo.png',
+        })) as Company[];
+        
+        setCompanies(convertedCompanies);
+      } catch (err) {
+        console.error('Error fetching companies:', err);
+        setError('Không thể tải danh sách công ty. Vui lòng thử lại sau.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchCompanies();
+  }, [searchParams]);
 
   const applyAllFilters = () => {
     setSelectedLocations([...tempLocations]);
@@ -241,10 +188,22 @@ export default function CompanyPage() {
     JSON.stringify(tempLocations) !== JSON.stringify(selectedLocations) ||
     JSON.stringify(tempTechnologies) !== JSON.stringify(selectedTechnologies);
 
+  const keyword = searchParams.get('keyword') || '';
+  const locationQuery = searchParams.get('location') || '';
+
   return (
     <div className="min-h-screen">
       {/* Search Section */}
       <HeroSearcher />
+
+      {/* Search context info (optional) */}
+      {(keyword || locationQuery) && (
+        <div className="container mx-auto px-4 max-w-[1400px] mt-4">
+          <div className="text-sm text-gray-600">
+            Đang tìm kiếm công ty{keyword ? ` với từ khóa "${keyword}"` : ''}{locationQuery ? ` tại ${locationQuery}` : ''}.
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="container mx-auto px-4 max-w-[1400px] py-8 bg-gray-50">
@@ -301,31 +260,63 @@ export default function CompanyPage() {
         <div>
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Tất cả công ty IT</h2>
-            <p className="text-gray-600 mt-1">Tìm thấy {mockCompanies.length} công ty phù hợp</p>
+            {isLoading ? (
+              <p className="text-gray-600 mt-1">Đang tải...</p>
+            ) : error ? (
+              <p className="text-red-600 mt-1">{error}</p>
+            ) : (
+              <p className="text-gray-600 mt-1">Tìm thấy {companies.length} công ty phù hợp</p>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {mockCompanies.map((company) => (
-              <CompanyCard key={company.id} company={company} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {[...Array(8)].map((_, index) => (
+                <div key={index} className="bg-white rounded-lg shadow-md p-6 border border-gray-100 animate-pulse flex flex-col items-center h-[280px]">
+                  <div className="w-20 h-20 bg-gray-200 rounded-md mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="flex gap-2 mb-5 w-full justify-center">
+                    <div className="h-5 bg-gray-200 rounded-full w-16"></div>
+                    <div className="h-5 bg-gray-200 rounded-full w-20"></div>
+                  </div>
+                  <div className="w-full border-t border-gray-100 my-4"></div>
+                  <div className="flex justify-between w-full mt-auto">
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-6 bg-gray-200 rounded-full w-24"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : companies.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">Không tìm thấy công ty phù hợp.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {companies.map((company) => (
+                <CompanyCard key={company.id} company={company} />
+              ))}
+            </div>
+          )}
 
-          {/* Pagination */}
-          <div className="flex justify-center items-center gap-2 mt-8">
-            <button className="w-10 h-10 flex items-center justify-center bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium">
-              1
-            </button>
-            <button className="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-              2
-            </button>
-            <button className="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-              3
-            </button>
-            <span className="text-gray-500">...</span>
-            <button className="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-              15
-            </button>
-          </div>
+          {/* Pagination - Giữ lại để sau này implement */}
+          {companies.length > 0 && (
+            <div className="flex justify-center items-center gap-2 mt-8">
+              <button className="w-10 h-10 flex items-center justify-center bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium">
+                1
+              </button>
+              <button className="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                2
+              </button>
+              <button className="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                3
+              </button>
+              <span className="text-gray-500">...</span>
+              <button className="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                15
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

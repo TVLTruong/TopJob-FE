@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Search, MapPin, Check, ChevronsUpDown } from "lucide-react";
 import Image from "next/image";
+import { useRouter, usePathname } from "next/navigation";
 import images from "@/app/utils/images";
 import { Combobox, Transition } from '@headlessui/react';
 import { allOption, locationsWithAll } from '@/app/utils/vietnamLocations';
 
-const suggestions = [
+const jobSuggestions = [
   "Java Developer",
   "Frontend Engineer",
   "Backend Developer",
@@ -17,17 +18,59 @@ const suggestions = [
   "Product Manager",
   "UI/UX Designer",
   "Mobile Developer",
-  "Game Developer"
+  "Game Developer",
+  "Security Engineer",
+  "QA Engineer",
+  "Business Analyst",
+];
+
+const companySuggestions = [
+  "Fintech",
+  "E-commerce",
+  "SaaS",
+  "Game Studio",
+  "AI/ML",
+  "HealthTech",
+  "EdTech",
+  "Logistics",
+  "Consulting",
 ];
 
 export default function HeroSearcher() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const isCompanyPage = pathname?.includes('/companypage');
   const [selectedLocation, setSelectedLocation] = useState<{ id: string; name: string } | null>(allOption);
   const [locationQuery, setLocationQuery] = useState('');
   const [searchTerm, setSearchTerm] = useState("");
+
+  const pickedSuggestions = useMemo(() => {
+    const pool = isCompanyPage ? companySuggestions : jobSuggestions;
+    // Simple shuffle-copy then slice to 5
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 5);
+  }, [isCompanyPage]);
+  
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Tìm kiếm:", { searchTerm, location: selectedLocation?.id });
+    
+    // Build query params
+    const params = new URLSearchParams();
+    
+    if (searchTerm.trim()) {
+      params.append('keyword', searchTerm.trim());
+    }
+    
+    // Only add location if it's not "All"
+    if (selectedLocation && selectedLocation.id !== 'all') {
+      params.append('location', selectedLocation.name);
+    }
+    
+    // Navigate based on scope
+    const targetPath = isCompanyPage ? '/companypage' : '/jobpage';
+    router.push(`${targetPath}?${params.toString()}`);
   };
+  
   const handleSuggestionClick = (term: string) => { setSearchTerm(term); };
   const filteredLocations =
     locationQuery === ''
@@ -53,11 +96,13 @@ export default function HeroSearcher() {
       <div className="relative container mx-auto max-w-5xl flex flex-col items-center space-y-5 rounded-lg p-4 md:p-6"> 
         {/* Tiêu đề */}
         <h3 className="text-2xl md:text-4xl font-bold text-center mt-0 mb-2">
-          Có được công việc mơ ước của bạn với TopJob
+          {isCompanyPage ? 'Khám phá công ty phù hợp trên TopJob' : 'Có được công việc mơ ước của bạn với TopJob'}
         </h3>
 
         <h3 className="text-1xl md:text-1xl text-center">
-          Cơ hội không tự tìm đến – hãy chủ động nắm bắt sự nghiệp của bạn!
+          {isCompanyPage
+            ? 'Tìm nhà tuyển dụng, ngành nghề và địa điểm phù hợp với bạn.'
+            : 'Cơ hội không tự tìm đến – hãy chủ động nắm bắt sự nghiệp của bạn!'}
         </h3>
 
         {/* Form tìm kiếm */}
@@ -129,7 +174,9 @@ export default function HeroSearcher() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Nhập từ khóa kỹ năng (Java, iOS...), chức danh, công ty..."
+              placeholder={isCompanyPage
+                ? 'Nhập từ khóa công ty, ngành, lĩnh vực...'
+                : 'Nhập từ khóa kỹ năng (Java, iOS...), chức danh, công ty...'}
               className="w-full h-full outline-none p-3 pl-3 md:pl-6 text-gray-900 placeholder:text-gray-500"
             />
           </div>
@@ -147,7 +194,7 @@ export default function HeroSearcher() {
         {/* Gợi ý */}
         <div className="w-full flex flex-wrap items-center justify-center gap-3 pt-4">
           <span className="text-white/90 text-sm font-bold">Đề xuất:</span>
-          {suggestions.map((item) => (
+          {pickedSuggestions.map((item) => (
             <button
               key={item}
               onClick={() => handleSuggestionClick(item)}

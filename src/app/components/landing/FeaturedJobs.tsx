@@ -6,28 +6,7 @@ import { useRouter } from "next/navigation";
 import Jobcard from "@/app/components/job/Jobcard"; // Import Jobcard
 import { Job } from "@/app/components/types/job.types"; // Import kiểu Job
 import { ArrowRight } from "lucide-react"; // Import icon mũi tên
-
-// Hàm giả lập fetch API (bạn sẽ thay bằng API thật)
-async function fetchFeaturedJobs(): Promise<Job[]> {
-  console.log("Fetching featured jobs...");
-  // Giả lập gọi API backend (ví dụ: /jobs?featured=true&limit=6)
-  await new Promise(resolve => setTimeout(resolve, 500)); // Giả lập độ trễ mạng
-
-  // --- DỮ LIỆU GIẢ LẬP ---
-  const mockJobs: Job[] = [
-    { id: 'uuid-1', title: "Project Manager", companyName: "Gameloft", location: "TP.HCM", type: "Full Time", experience: "Senior", salary: "40 - 50 triệu / tháng", tags: ["Gaming", "Management"], logoUrl: "/placeholder-logo.png" }, // Nhớ đặt ảnh vào /public/images/
-    { id: 'uuid-2', title: "Frontend Developer", companyName: "Viggle", location: "Đà Nẵng", type: "Remote", experience: "Junior", salary: "Thoả thuận", tags: ["React", "TypeScript"], logoUrl: "/placeholder-logo.png" },
-    { id: 'uuid-3', title: "Backend Engineer", companyName: "Base.vn", location: "Hà Nội", type: "Full Time", experience: "Fresher", salary: "15 - 25 triệu", tags: ["NodeJS", "PHP"], logoUrl: "/placeholder-logo.png" },
-    { id: 'uuid-4', title: "UI/UX Designer", companyName: "Eureka", location: "TP.HCM", type: "Part Time", experience: "Junior", salary: "Thoả thuận", tags: ["Figma", "Design"], logoUrl: "/placeholder-logo.png" },
-    { id: 'uuid-5', title: "DevOps Engineer", companyName: "DXC Technology", location: "TP.HCM", type: "Full Time", experience: "Senior", salary: "Verry High", tags: ["AWS", "CI/CD"], logoUrl: "/placeholder-logo.png" },
-    { id: 'uuid-6', title: "QA Tester", companyName: "Corsair", location: "Hà Nội", type: "Full Time", experience: "Fresher", salary: "Thoả thuận", tags: ["Testing", "Manual"], logoUrl: "/placeholder-logo.png" },
-    { id: 'uuid-7', title: "Data Scientist", companyName: "Shopee", location: "TP.HCM", type: "Full Time", experience: "Senior", salary: "2500 USD+", tags: ["Python", "Machine Learning"], logoUrl: "/placeholder-logo.png" },
-    { id: 'uuid-8', title: "Mobile Developer (iOS)", companyName: "Zalo", location: "TP.HCM", type: "Full Time", experience: "Junior", salary: "1800 - 2200 USD", tags: ["Swift", "iOS"], logoUrl: "/placeholder-logo.png" },
-  ];
-  // -------------------------
-
-  return mockJobs;
-}
+import { getFeaturedJobs } from "@/utils/api/job-api"; // Import API function
 
 
 export default function FeaturedJobs() {
@@ -50,8 +29,28 @@ export default function FeaturedJobs() {
     async function loadJobs() {
       setIsLoading(true);
       try {
-        const featuredJobs = await fetchFeaturedJobs();
-        setJobs(featuredJobs);
+        // Gọi API để lấy danh sách việc làm nổi bật
+        const response = await getFeaturedJobs(8);
+        // Convert JobFromAPI to Job type
+        const convertedJobs = response.data.map((job: any) => {
+          const locationText = job.location?.city || job.location?.province || job.location?.address || '';
+          const salaryText = (job.salaryMin && job.salaryMax)
+            ? `${job.salaryMin} - ${job.salaryMax} ${job.salaryCurrency || ''}`.trim()
+            : 'Thoả thuận';
+
+          return {
+            id: job.id,
+            title: job.title,
+            companyName: job.employer?.companyName || 'Unknown',
+            location: locationText,
+            type: job.employmentType || 'Full Time',
+            experience: job.experienceLevel || 'Junior',
+            salary: salaryText,
+            tags: job.jobTechnologies?.map((jt: any) => jt.technology?.name).filter(Boolean) || [],
+            logoUrl: job.employer?.logoUrl || '/placeholder-logo.png',
+          } as Job;
+        });
+        setJobs(convertedJobs);
       } catch (error) {
         console.error("Lỗi khi tải việc làm nổi bật:", error);
         // Có thể thêm state lỗi để hiển thị thông báo
@@ -72,7 +71,7 @@ export default function FeaturedJobs() {
           </h2>
           {/* Nút Xem tất cả */}
           <Link
-            href="/itjob" // Link trực tiếp
+            href="/jobpage" // Link trực tiếp
             className="px-5 py-2 bg-jobcard-button text-white rounded-lg space-x-2 flex items-center hover:bg-jobcard-button-hover transition-all transform hover:scale-105 text-sm font-medium"
           >
             <span>Xem tất cả</span>

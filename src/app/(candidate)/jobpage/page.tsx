@@ -1,148 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, X, SlidersHorizontal, Briefcase, DollarSign, Clock, Layers, Award } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import HeroSearcher from "@/app/components/landing/searcher";
 import Jobcard from "@/app/components/job/Jobcard";
 import { Job } from "@/app/components/types/job.types";
+import { getPublicJobs } from "@/utils/api/job-api";
 
-// Mock data cho demo
-const mockJobs: Job[] = [
-  {
-    id: "1",
-    title: "Senior Frontend Developer",
-    companyName: "Tech Corp",
-    salary: "25 - 40 triệu",
-    type: "Full-time",
-    location: "TP.HCM",
-    experience: "3+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "2",
-    title: "Backend Developer",
-    companyName: "Digital Solutions",
-    salary: "20 - 35 triệu",
-    type: "Remote",
-    location: "Hà Nội",
-    experience: "2+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "3",
-    title: "Full Stack Developer",
-    companyName: "Innovation Hub",
-    salary: "30 - 50 triệu",
-    type: "Hybrid",
-    location: "Đà Nẵng",
-    experience: "4+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "4",
-    title: "UI/UX Designer",
-    companyName: "Creative Agency",
-    salary: "15 - 25 triệu",
-    type: "Part-time",
-    location: "TP.HCM",
-    experience: "1+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "5",
-    title: "DevOps Engineer",
-    companyName: "Cloud Systems",
-    salary: "35 - 60 triệu",
-    type: "Full-time",
-    location: "Hà Nội",
-    experience: "5+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "6",
-    title: "Mobile Developer",
-    companyName: "App Studio",
-    salary: "22 - 38 triệu",
-    type: "Remote",
-    location: "TP.HCM",
-    experience: "3+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-  id: "7",
-  title: "Data Scientist",
-  companyName: "AI Analytics",
-  salary: "40 - 70 triệu",
-  type: "Full-time",
-  location: "Hà Nội",
-  experience: "3+ năm",
-  logoUrl: "/placeholder-logo.png",
-  tags: []
-  },
-  {
-    id: "8",
-    title: "Game Developer (Unity/Unreal)",
-    companyName: "Pixel Studio",
-    salary: "25 - 45 triệu",
-    type: "Hybrid",
-    location: "TP.HCM",
-    experience: "2+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "9",
-    title: "AI Engineer",
-    companyName: "DeepMind Asia",
-    salary: "45 - 80 triệu",
-    type: "Full-time",
-    location: "Đà Nẵng",
-    experience: "4+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "10",
-    title: "Project Manager",
-    companyName: "NextGen Solutions",
-    salary: "30 - 55 triệu",
-    type: "Hybrid",
-    location: "TP.HCM",
-    experience: "5+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "11",
-    title: "QA Engineer",
-    companyName: "Testify Co.",
-    salary: "18 - 30 triệu",
-    type: "Full-time",
-    location: "Hà Nội",
-    experience: "2+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "12",
-    title: "Product Designer",
-    companyName: "Visionary Design",
-    salary: "20 - 32 triệu",
-    type: "Part-time",
-    location: "TP.HCM",
-    experience: "1+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  }
-];
-
+// Filter Options Constants
 const workTypeOptions = ["Full-time", "Part-time", "Remote", "Hybrid"];
 const jobDomainOptions = [
   "Frontend Development",
@@ -335,6 +201,12 @@ function SalaryFilter({ minSalary, maxSalary, tempMin, tempMax, onTempChange }: 
 // Main Component
 export default function JobSearchPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // State for jobs data
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Applied filters (actual filters being used)
   const [selectedWorkTypes, setSelectedWorkTypes] = useState<string[]>([]);
@@ -343,6 +215,10 @@ export default function JobSearchPage() {
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
   const [minSalary, setMinSalary] = useState(0);
   const [maxSalary, setMaxSalary] = useState(100);
+  
+  // Get search params
+  const keyword = searchParams.get('keyword') || '';
+  const location = searchParams.get('location') || '';
   
   const handleJobClick = (jobId: string) => {
     router.push(`/JobList/JobDetail?id=${jobId}`);
@@ -357,6 +233,52 @@ export default function JobSearchPage() {
   const [tempMaxSalary, setTempMaxSalary] = useState(100);
   
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
+
+  // Fetch jobs from API
+  useEffect(() => {
+    const fetchJobs = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await getPublicJobs({
+          keyword: keyword || undefined,
+          location: location || undefined,
+          page: 1,
+          limit: 20,
+          sort: 'relevant'
+        });
+        
+        // Convert JobFromAPI to Job type
+        const convertedJobs = response.data.map((job: any) => {
+          const locationText = job.location?.city || job.location?.province || job.location?.address || '';
+          const salaryText = (job.salaryMin && job.salaryMax)
+            ? `${job.salaryMin} - ${job.salaryMax} ${job.salaryCurrency || ''}`.trim()
+            : 'Thoả thuận';
+
+          return {
+            id: job.id,
+            title: job.title,
+            companyName: job.employer?.companyName || 'Unknown',
+            location: locationText,
+            type: job.employmentType || 'Full Time',
+            experience: job.experienceLevel || 'Junior',
+            salary: salaryText,
+            tags: job.jobTechnologies?.map((jt: any) => jt.technology?.name).filter(Boolean) || [],
+            logoUrl: job.employer?.logoUrl || '/placeholder-logo.png',
+          } as Job;
+        });
+        
+        setJobs(convertedJobs);
+      } catch (err) {
+        console.error('Error fetching jobs:', err);
+        setError('Không thể tải danh sách việc làm. Vui lòng thử lại sau.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchJobs();
+  }, [keyword, location]);
 
   const handleSaveJob = (jobId: string) => {
     setSavedJobs(prev =>
@@ -501,21 +423,56 @@ export default function JobSearchPage() {
         <div>
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Tất cả công việc</h2>
-            <p className="text-gray-600 mt-1">Tìm thấy {mockJobs.length} công việc phù hợp</p>
+            {isLoading ? (
+              <p className="text-gray-600 mt-1">Đang tải...</p>
+            ) : error ? (
+              <p className="text-red-600 mt-1">{error}</p>
+            ) : (
+              <p className="text-gray-600 mt-1">Tìm thấy {jobs.length} công việc phù hợp</p>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
-            {mockJobs.map((job) => (
-              <Jobcard
-                key={job.id}
-                job={job}
-                onApply={handleApplyJob}
-                onSave={handleSaveJob}
-                isSaved={savedJobs.includes(job.id)}
-                onClick={handleJobClick}
-              />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+              {[...Array(8)].map((_, index) => (
+                <div key={index} className="bg-white rounded-lg shadow-md p-5 border border-gray-100 animate-pulse w-full">
+                  <div className="flex items-start space-x-4 mb-4">
+                    <div className="w-16 h-16 bg-gray-200 rounded-md"></div>
+                    <div className="flex-1 space-y-3 pt-1">
+                      <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mb-5">
+                    <div className="h-5 bg-gray-200 rounded-full w-20"></div>
+                    <div className="h-5 bg-gray-200 rounded-full w-24"></div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="h-9 bg-gray-200 rounded-lg w-28"></div>
+                    <div className="h-9 w-9 bg-gray-200 rounded-lg"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : jobs.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">Không tìm thấy công việc phù hợp.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+              {jobs.map((job) => (
+                <Jobcard
+                  key={job.id}
+                  job={job}
+                  onApply={handleApplyJob}
+                  onSave={handleSaveJob}
+                  isSaved={savedJobs.includes(job.id)}
+                  onClick={handleJobClick}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Pagination */}
           <div className="flex justify-center items-center gap-2 mt-8">

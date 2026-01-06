@@ -4,28 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import CompanyCard from "@/app/components/company/CompanyCard";
 import { Company } from "@/app/components/types/company.types";
-// -------------------------
 import { ArrowRight } from "lucide-react";
-
-async function fetchFeaturedCompanies(): Promise<Company[]> {
-  console.log("Fetching featured companies...");
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  // --- DỮ LIỆU GIẢ LẬP (COMPANY) ---
-  const mockCompanies: Company[] = [
-    { id: 'comp-1', name: "Gameloft", locations: ["TP.HCM", "Đà Nẵng"], technologies: ["Unity", "C++", "Game"], jobCount: 15, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-2', name: "Viggle", locations: ["Đà Nẵng", "Remote"], technologies: ["AI", "Machine Learning", "Python"], jobCount: 8, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-3', name: "Base.vn", locations: ["Hà Nội", "TP.HCM"], technologies: ["PHP", "ReactJS", "NodeJS", "SaaS"], jobCount: 22, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-4', name: "Eureka", locations: ["TP.HCM"], technologies: ["Software Outsourcing", ".NET", "Java", "Cloud", "Security", "NLP", "LLM"], jobCount: 5, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-5', name: "DXC Technology", locations: ["TP.HCM", "Hà Nội", "Đà Nẵng", "Cần Thơ"], technologies: ["Cloud", "Security", "Consulting", "Java"], jobCount: 30, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-6', name: "Corsair", locations: ["Hà Nội", "Đài Loan"], technologies: ["Gaming Gear", "Hardware", "Firmware"], jobCount: 3, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-7', name: "Shopee", locations: ["TP.HCM", "Hà Nội"], technologies: ["E-commerce", "Go", "Python", "React"], jobCount: 40, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-8', name: "Zalo", locations: ["TP.HCM", "Hà Nội"], technologies: ["Messaging", "AI", "Mobile", "Zing MP3"], jobCount: 0, logoUrl: "/placeholder-logo.png" }, // Ví dụ công ty không có job
-  ];
-
-  return mockCompanies;
-}
-
+import { getFeaturedCompanies } from "@/utils/api/company-api";
 
 export default function FeaturedCompanies() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -35,8 +15,20 @@ export default function FeaturedCompanies() {
     async function loadCompanies() {
       setIsLoading(true);
       try {
-        const featuredCompanies = await fetchFeaturedCompanies();
-        setCompanies(featuredCompanies);
+        // Gọi API để lấy 6 công ty nổi bật (có nhiều job nhất)
+        const response = await getFeaturedCompanies(6);
+        
+        // Convert CompanyFromAPI to Company type
+        const convertedCompanies = response.data.map((company: any) => ({
+          id: company.id,
+          name: company.companyName,
+          locations: company.locations?.map((loc: any) => loc.province) || [],
+          technologies: company.employerCategories?.map((ec: any) => ec.category.name) || [],
+          jobCount: company.jobCount || 0,
+          logoUrl: company.logoUrl || '/placeholder-logo.png',
+        })) as Company[];
+        
+        setCompanies(convertedCompanies);
       } catch (error) {
         console.error("Lỗi khi tải công ty nổi bật:", error);
       } finally {
@@ -52,10 +44,10 @@ export default function FeaturedCompanies() {
         {/* Header Section */}
         <div className="w-full flex justify-between items-center mb-8">
           <h2 className="text-2xl md:text-3xl font-semibold text-gray-800">
-            Nhà tuyển dụng nổi bật
+            Công ty nổi bật
           </h2>
           <Link
-            href="/companies" // Link tới trang danh sách công ty
+            href="/companypage" // Link tới trang danh sách công ty
             className="px-5 py-2 bg-jobcard-button text-white rounded-lg space-x-2 flex items-center hover:bg-jobcard-button-hover transition-all transform hover:scale-105 text-sm font-medium"
           >
             <span>Xem tất cả</span>
