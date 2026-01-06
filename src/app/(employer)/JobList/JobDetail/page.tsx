@@ -7,7 +7,7 @@ import Toast from '@/app/components/profile/Toast';
 import { ChevronDown, Power, Edit, Eye, EyeOff, Trash2, X, Heart } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { updateJob, getEmployerJobDetail, hideJob, unhideJob, deleteJob, closeJob, type JobFromAPI } from '@/utils/api/job-api';
+import { updateJob, getEmployerJobDetail, getCandidateJobDetail, hideJob, unhideJob, deleteJob, closeJob, type JobFromAPI } from '@/utils/api/job-api';
 import type { CreateJobPayload } from '@/utils/api/job-api';
 import { jobCategoryApi } from '@/utils/api/categories-api';
 import { technologyApi } from '@/utils/api/technology-api';
@@ -61,7 +61,11 @@ function JobDetailContent_Inner() {
       try {
         setLoading(true);
         setError(null);
-        const apiJob: JobFromAPI = await getEmployerJobDetail(jobId);
+        
+        // Use different API endpoint based on user role
+        const apiJob: JobFromAPI = isRecruiter 
+          ? await getEmployerJobDetail(jobId)
+          : await getCandidateJobDetail(jobId);
         
         // Map JobFromAPI to JobDetailData
         const mappedJob: JobDetailData = {
@@ -113,7 +117,7 @@ function JobDetailContent_Inner() {
     };
 
     fetchJobDetail();
-  }, [jobId]);
+  }, [jobId, isRecruiter]);
 
   const handleToggleHidden = () => {
     setConfirmAction('hide');
