@@ -360,6 +360,11 @@ export interface ApplicationFromAPI {
     title: string;
     fileUrl: string;
   };
+  job?: {
+    id: string;
+    title: string;
+    slug: string;
+  };
 }
 
 export const getJobApplications = async (

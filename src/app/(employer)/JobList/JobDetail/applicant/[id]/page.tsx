@@ -4,54 +4,118 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Mail, Phone, MapPin } from 'lucide-react';
 import StatusChangeModal from '@/app/components/common/StatusChangeModal';
 import { CandidateApi, type CandidateProfile } from '@/utils/api/candidate-api';
+import { updateApplicationStatus, getApplicationDetail } from '@/utils/api/employer-api';
+import Toast from '@/app/components/profile/Toast';
 
+// Application status config - khớp với backend enum
 const statusConfig = {
-  pending: { label: 'Chờ duyệt', color: 'bg-orange-500', progress: 33 },
-  approved: { label: 'Đã duyệt', color: 'bg-blue-500', progress: 66 },
-  passed: { label: 'Đã đậu', color: 'bg-green-500', progress: 100 },
-  rejected: { label: 'Từ chối', color: 'bg-red-500', progress: 100 },
+  new: { label: 'Hồ sơ mới', color: 'bg-yellow-500', progress: 20 },
+  viewed: { label: 'Đã xem', color: 'bg-blue-500', progress: 40 },
+  shortlisted: { label: 'Ứng viên tiềm năng', color: 'bg-green-500', progress: 75 },
+  rejected: { label: 'Đã từ chối', color: 'bg-red-500', progress: 100 },
+  hired: { label: 'Đã tuyển', color: 'bg-purple-500', progress: 100 },
+  withdrawn: { label: 'Ứng viên đã rút', color: 'bg-gray-500', progress: 100 },
 };
+
+type ApplicationStatus = 'new' | 'viewed' | 'shortlisted' | 'rejected' | 'hired' | 'withdrawn';
 
 export default function ApplicantDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const candidateId = params.id as string;
+  const applicationId = params.id as string; // This is applicationId from URL
   
   const [activeTab, setActiveTab] = useState<'profile' | 'cv'>('profile');
-  const [currentStatus, setCurrentStatus] = useState<'pending' | 'approved' | 'passed' | 'rejected'>('pending');
+  const [currentStatus, setCurrentStatus] = useState<ApplicationStatus>('new');
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [candidateData, setCandidateData] = useState<CandidateProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 
-  // Fetch candidate data
+  // Show toast helper
+  const showToast = (message: string, type: 'error' | 'success' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // Fetch application and candidate data
   useEffect(() => {
-    const fetchCandidateData = async () => {
-      if (!candidateId) return;
+    const fetchApplicationData = async () => {
+      if (!applicationId) return;
       
       try {
         setLoading(true);
         setError(null);
+        
+        // Fetch application detail to get status and candidate info
+        const appDetail = await getApplicationDetail(applicationId);
+        
+        // Set status from application
+        setCurrentStatus(appDetail.status.toLowerCase() as ApplicationStatus);
+        
+        // Fetch candidate detail using candidate.id from appDetail
         const token = localStorage.getItem('accessToken');
         if (!token) {
           throw new Error('Bạn cần đăng nhập để xem thông tin này');
         }
         
-        const data = await CandidateApi.getCandidateById(token, candidateId);
-        setCandidateData(data);
+        const candidateData = await CandidateApi.getCandidateById(token, appDetail.candidate.id);
+        setCandidateData(candidateData);
       } catch (err) {
-        console.error('Error fetching candidate data:', err);
+        console.error('Error fetching application data:', err);
         setError(err instanceof Error ? err.message : 'Không thể tải thông tin ứng viên');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCandidateData();
-  }, [candidateId]);
+    fetchApplicationData();
+  }, [applicationId]);
 
-  const handleStatusChange = (newStatus: 'pending' | 'approved' | 'passed' | 'rejected') => {
-    setCurrentStatus(newStatus);
+  const handleStatusChange = async (newStatus: ApplicationStatus) => {
+    try {
+      setUpdatingStatus(true);
+      
+      // Determine action based on new status
+      let action: 'shortlist' | 'reject' | 'hire';
+      if (newStatus === 'shortlisted') {
+        action = 'shortlist';
+      } else if (newStatus === 'rejected') {
+        action = 'reject';
+      } else if (newStatus === 'hired') {
+        action = 'hire';
+      } else {
+        throw new Error(`Invalid status transition to ${newStatus}`);
+      }
+      
+      // Call API with correct applicationId
+      const result = await updateApplicationStatus(applicationId, action);
+      
+      // Update UI with backend response
+      setCurrentStatus(result.status);
+      
+      // Show success toast
+      let message: string;
+      if (action === 'shortlist') {
+        message = 'Đã thêm vào danh sách ứng viên tiềm năng';
+      } else if (action === 'reject') {
+        message = 'Đã từ chối hồ sơ ứng tuyển';
+      } else {
+        message = 'Đã tuyển dụng ứng viên';
+      }
+      showToast(message, 'success');
+      
+    } catch (error) {
+      console.error('Error updating status:', error);
+      showToast(
+        error instanceof Error ? error.message : 'Không thể cập nhật trạng thái',
+        'error'
+      );
+    } finally {
+      setUpdatingStatus(false);
+      setShowStatusModal(false);
+    }
   };
 
   // Calculate age from date of birth
@@ -138,9 +202,12 @@ export default function ApplicantDetailPage() {
             </button>
             <button
               onClick={() => setShowStatusModal(true)}
-              className="px-6 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+              disabled={updatingStatus}
+              className={`px-6 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors ${
+                updatingStatus ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              Đổi trạng thái
+              {updatingStatus ? 'Đang cập nhật...' : 'Đổi trạng thái'}
             </button>
           </div>
         </div>
@@ -411,6 +478,15 @@ export default function ApplicantDetailPage() {
           currentStatus={currentStatus}
           onClose={() => setShowStatusModal(false)}
           onConfirm={handleStatusChange}
+        />
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
         />
       )}
     </div>

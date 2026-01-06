@@ -5,19 +5,21 @@ import { Search, MoreVertical, Trash2, ChevronLeft, ChevronRight, Filter, X, Ale
 import StatusChangeModal from '@/app/components/common/StatusChangeModal';
 import { getJobApplications, type ApplicationFromAPI } from '@/utils/api/job-api';
 
+type ApplicationStatus = 'new' | 'viewed' | 'shortlisted' | 'rejected' | 'hired' | 'withdrawn';
+
 interface Applicant {
-  id: number;
+  id: number; // This is applicationId
   candidateId: string;
   name: string;
   avatar: string;
   position: string;
-  status: 'pending' | 'approved' | 'passed' | 'rejected';
+  status: ApplicationStatus;
   appliedDate: string;
 }
 
 type StatusChangeModalType = {
   applicantId: number;
-  currentStatus: 'pending' | 'approved' | 'passed' | 'rejected';
+  currentStatus: ApplicationStatus;
   applicantName: string;
 } | null;
 
@@ -41,42 +43,35 @@ export default function ApplicantsTab({ jobId, source = 'allApplicants' }: Appli
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
 
-  // Map BE status to FE status
-  const mapApplicationStatus = (beStatus: ApplicationFromAPI['status']): Applicant['status'] => {
-    switch (beStatus) {
-      case 'NEW':
-      case 'REVIEWING':
-        return 'pending';
-      case 'SHORTLISTED':
-      case 'INTERVIEWING':
-        return 'approved';
-      case 'OFFERED':
-      case 'HIRED':
-        return 'passed';
-      case 'REJECTED':
-        return 'rejected';
-      default:
-        return 'pending';
-    }
+  // Map BE status to lowercase for frontend
+  const mapApplicationStatus = (beStatus: ApplicationFromAPI['status']): ApplicationStatus => {
+    return beStatus.toLowerCase() as ApplicationStatus;
   };
 
   // Fetch applications from API
   useEffect(() => {
     const fetchApplications = async () => {
-      if (!jobId) return;
-
       try {
         setLoading(true);
         setError(null);
-        const response = await getJobApplications(jobId, currentPage, 10);
+        
+        let response;
+        if (jobId) {
+          // Fetch applications for specific job
+          response = await getJobApplications(jobId, currentPage, 10);
+        } else {
+          // Fetch all applications for employer
+          const { getAllApplications } = await import('@/utils/api/employer-api');
+          response = await getAllApplications(currentPage, 10);
+        }
         
         // Map API data to component format
-        const mappedApplicants = response.data.map((app: ApplicationFromAPI) => ({
+        const mappedApplicants = response.data.map((app: any) => ({
           id: parseInt(app.id, 10),
-          candidateId: app.candidateId,
+          candidateId: app.candidateId || app.candidate?.id,
           name: app.candidate?.fullName || 'Chưa có tên',
           avatar: app.candidate?.avatarUrl || '/default-avatar.png',
-          position: 'Ứng viên', // We don't have position info in Application entity
+          position: app.job?.title || 'Chưa rõ vị trí',
           status: mapApplicationStatus(app.status),
           appliedDate: new Date(app.appliedAt).toLocaleDateString('vi-VN'),
         }));
@@ -95,17 +90,20 @@ export default function ApplicantsTab({ jobId, source = 'allApplicants' }: Appli
   }, [jobId, currentPage]);
 
   const statusConfig = {
-    pending: { label: 'Chờ duyệt', color: 'bg-orange-100 text-orange-600 border-orange-300' },
-    approved: { label: 'Đã duyệt', color: 'bg-green-100 text-green-600 border-green-300' },
-    passed: { label: 'Đã đậu', color: 'bg-blue-100 text-blue-600 border-blue-300' },
+    new: { label: 'Hồ sơ mới', color: 'bg-yellow-100 text-yellow-600 border-yellow-300' },
+    viewed: { label: 'Đã xem', color: 'bg-blue-100 text-blue-600 border-blue-300' },
+    shortlisted: { label: 'Ứng viên tiềm năng', color: 'bg-green-100 text-green-600 border-green-300' },
+    hired: { label: 'Đã tuyển', color: 'bg-purple-100 text-purple-600 border-purple-300' },
+    withdrawn: { label: 'Ứng viên đã rút', color: 'bg-gray-100 text-gray-600 border-gray-300' },
     rejected: { label: 'Từ chối', color: 'bg-red-100 text-red-600 border-red-300' },
   };
 
   const filterOptions = [
     { value: 'all', label: 'Tất cả', count: applicants.length },
-    { value: 'pending', label: 'Chờ duyệt', count: applicants.filter(a => a.status === 'pending').length },
-    { value: 'approved', label: 'Đã duyệt', count: applicants.filter(a => a.status === 'approved').length },
-    { value: 'passed', label: 'Đã đậu', count: applicants.filter(a => a.status === 'passed').length },
+    { value: 'new', label: 'Hồ sơ mới', count: applicants.filter(a => a.status === 'new').length },
+    { value: 'viewed', label: 'Đã xem', count: applicants.filter(a => a.status === 'viewed').length },
+    { value: 'shortlisted', label: 'Ứng viên tiềm năng', count: applicants.filter(a => a.status === 'shortlisted').length },
+    { value: 'hired', label: 'Đã tuyển', count: applicants.filter(a => a.status === 'hired').length },
     { value: 'rejected', label: 'Từ chối', count: applicants.filter(a => a.status === 'rejected').length },
   ];
 
@@ -159,12 +157,13 @@ export default function ApplicantsTab({ jobId, source = 'allApplicants' }: Appli
     return option?.label || 'Tất cả';
   };
 
-  const handleOpenProfile = (candidateId: string) => {
+  const handleOpenProfile = (applicationId: number) => {
     // Navigate to different route based on source
+    // Pass applicationId in URL
     if (source === 'jobDetail') {
-      router.push(`/JobList/JobDetail/applicant/${candidateId}`);
+      router.push(`/JobList/JobDetail/applicant/${applicationId}`);
     } else {
-      router.push(`/AllApplicant/${candidateId}`);
+      router.push(`/AllApplicant/${applicationId}`);
     }
   };
 
@@ -178,19 +177,43 @@ export default function ApplicantsTab({ jobId, source = 'allApplicants' }: Appli
     setShowStatusModal(true);
   };
 
-  const handleStatusChange = (newStatus: 'pending' | 'approved' | 'passed' | 'rejected') => {
+  const handleStatusChange = async (newStatus: ApplicationStatus) => {
     if (!selectedApplicant) return;
 
-    setApplicants(prev =>
-      prev.map(applicant =>
-        applicant.id === selectedApplicant.id
-          ? { ...applicant, status: newStatus }
-          : applicant
-      )
-    );
-    
-    setShowStatusModal(false);
-    setSelectedApplicant(null);
+    try {
+      // Import API function
+      const { updateApplicationStatus } = await import('@/utils/api/employer-api');
+      
+      // Determine action based on new status
+      let action: 'shortlist' | 'reject' | 'hire';
+      if (newStatus === 'shortlisted') {
+        action = 'shortlist';
+      } else if (newStatus === 'rejected') {
+        action = 'reject';
+      } else if (newStatus === 'hired') {
+        action = 'hire';
+      } else {
+        throw new Error(`Invalid status transition to ${newStatus}`);
+      }
+
+      // Call API to update
+      await updateApplicationStatus(selectedApplicant.id.toString(), action);
+
+      // Update local state
+      setApplicants(prev =>
+        prev.map(applicant =>
+          applicant.id === selectedApplicant.id
+            ? { ...applicant, status: newStatus }
+            : applicant
+        )
+      );
+      
+      setShowStatusModal(false);
+      setSelectedApplicant(null);
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert(error instanceof Error ? error.message : 'Không thể cập nhật trạng thái');
+    }
   };
 
   const handleCancelStatusChange = () => {
@@ -355,7 +378,7 @@ export default function ApplicantsTab({ jobId, source = 'allApplicants' }: Appli
               Họ tên
             </div>
             <div className="flex items-center gap-1">
-              Vị trí ứng
+              Tên công việc ứng tuyển
             </div>
             <div className="flex items-center gap-1">
               Trạng thái
@@ -396,7 +419,7 @@ export default function ApplicantsTab({ jobId, source = 'allApplicants' }: Appli
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => handleOpenProfile(applicant.candidateId)}
+                  onClick={() => handleOpenProfile(applicant.id)}
                   className="flex items-center gap-3 text-left"
                 >
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">

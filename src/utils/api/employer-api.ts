@@ -122,3 +122,84 @@ export const deleteEmployerLocation = async (locationId: string) => {
     throw error;
   }
 };
+
+/**
+ * Get all applications for employer's jobs
+ * GET /employers/applications
+ */
+export const getAllApplications = async (
+  page: number = 1,
+  limit: number = 10,
+  status?: string,
+  search?: string
+) => {
+  try {
+    const params: any = { page, limit };
+    if (status && status !== 'all') params.status = status;
+    if (search) params.search = search;
+
+    const response = await axios.get(
+      `${API_BASE_URL}/employers/applications`,
+      { 
+        headers: getAuthHeaders(),
+        params 
+      }
+    );
+    console.log('getAllApplications response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('getAllApplications error:', error);
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message || 'Failed to fetch applications'
+      );
+    }
+    throw error;
+  }
+};
+
+/**
+ * Get application detail
+ * GET /employers/applications/:applicationId
+ */
+export const getApplicationDetail = async (applicationId: string) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/employers/applications/${applicationId}`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message || 'Failed to fetch application detail'
+      );
+    }
+    throw error;
+  }
+};
+
+/**
+ * Update application status (shortlist or reject)
+ * PATCH /employers/applications/:id/:action
+ */
+export const updateApplicationStatus = async (
+  applicationId: string,
+  action: 'shortlist' | 'reject' | 'hire'
+) => {
+  try {
+    const response = await axios.patch(
+      `${API_BASE_URL}/employers/applications/${applicationId}/${action}`,
+      {},
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message || 'Failed to update application status'
+      );
+    }
+    throw error;
+  }
+};
