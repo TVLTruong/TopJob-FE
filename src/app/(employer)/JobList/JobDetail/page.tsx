@@ -506,7 +506,7 @@ function JobDetailContent_Inner() {
         {activeTab === 'detail' ? (
           <JobDetailContent job={job} />
         ) : isRecruiter ? (
-          <ApplicantsTab />
+          <ApplicantsTab source="jobDetail" />
         ) : null}
 
         {/* Job Form Modal */}

@@ -19,7 +19,11 @@ type StatusChangeModalType = {
   applicantName: string;
 } | null;
 
-export default function ApplicantsTab() {
+interface ApplicantsTabProps {
+  source?: 'jobDetail' | 'allApplicants';
+}
+
+export default function ApplicantsTab({ source = 'allApplicants' }: ApplicantsTabProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -108,7 +112,12 @@ export default function ApplicantsTab() {
   };
 
   const handleOpenProfile = (applicantId: number) => {
-    router.push(`/AllApplicant/${applicantId}?from=jobDetail`);
+    // Navigate to different route based on source
+    if (source === 'jobDetail') {
+      router.push(`/JobList/JobDetail/applicant/${applicantId}`);
+    } else {
+      router.push(`/AllApplicant/${applicantId}`);
+    }
   };
 
   const handleOpenJobDetail = () => {
