@@ -272,6 +272,23 @@ export const getEmployerJobs = async (
 };
 
 /**
+ * Get active jobs by company/employer ID (Public)
+ * Returns max 4 jobs sorted by earliest deadline
+ * Used for company profile page
+ */
+export const getCompanyActiveJobs = async (employerId: string): Promise<JobFromAPI[]> => {
+  try {
+    const response = await axios.get<JobFromAPI[]>(
+      `${API_BASE_URL}/jobs/employer/${employerId}/active`
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching company active jobs:', error);
+    throw error;
+  }
+};
+
+/**
  * Get employer job detail by ID
  */
 export const getEmployerJobDetail = async (jobId: string): Promise<JobFromAPI> => {

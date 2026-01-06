@@ -84,7 +84,6 @@ export default function CompanyProfilePage() {
 
           setChecking(false);
         } catch (error) {
-          console.error('Error checking profile:', error);
           // If profile not found, might need to complete profile
           router.push('/completeProfile');
         }
@@ -115,7 +114,6 @@ export default function CompanyProfilePage() {
         
         setProfile(data);
       } catch (error) {
-        console.error('Error fetching profile:', error);
         showToast('Không thể tải thông tin công ty', 'error');
       } finally {
         setLoadingProfile(false);
@@ -161,7 +159,6 @@ export default function CompanyProfilePage() {
       
       showToast('Lưu phúc lợi thành công!', 'success');
     } catch (error) {
-      console.error('Error saving benefits:', error);
       showToast('Có lỗi khi lưu phúc lợi. Vui lòng thử lại.', 'error');
     }
   };
@@ -202,7 +199,7 @@ export default function CompanyProfilePage() {
               <Contact canEdit={canEdit} />
             </div>
             <div>
-              <JobListings />
+              <JobListings employerId={profile?.id || employerId || ''} />
             </div>
           </div>
 

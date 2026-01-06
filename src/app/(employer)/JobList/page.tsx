@@ -48,7 +48,6 @@ export default function JobListingsTab() {
         setLoading(true);
         setError(null);
         const response = await getEmployerJobs(currentPage, itemsPerPage);
-        console.log('API Response:', response); // Debug log
         
         // Map JobFromAPI to Job interface
         const mappedJobs: Job[] = (response.data || []).map((apiJob: JobFromAPI) => ({
@@ -66,7 +65,6 @@ export default function JobListingsTab() {
         setJobs(mappedJobs);
         setTotalJobs(response.meta?.total || 0);
       } catch (err: any) {
-        console.error('Error fetching jobs:', err);
         setError(err.response?.data?.message || 'Không thể tải danh sách công việc');
       } finally {
         setLoading(false);

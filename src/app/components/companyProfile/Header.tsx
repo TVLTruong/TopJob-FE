@@ -167,8 +167,8 @@ export default function Header() {
   return (
     <>
       <header className="bg-white border-b">
-        <div className="px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="px-8 py-4 flex items-center justify-end">
+          {/* <div className="flex items-center gap-3">
             {profile?.logoUrl ? (
               <Image 
                 src={profile.logoUrl} 
@@ -186,13 +186,13 @@ export default function Header() {
                 {profile?.companyName || 'Loading...'}
               </div>
             </div>
-          </div>
+          </div> */}
           
           {/* Chỉ hiện nút "Đăng việc làm" cho RECRUITER */}
           {isRecruiter && (
             <button 
               onClick={() => setIsCreateJobOpen(true)}
-              className="bg-teal-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-teal-700 transition"
+              className="bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition"
             >
               + Đăng việc làm
             </button>
