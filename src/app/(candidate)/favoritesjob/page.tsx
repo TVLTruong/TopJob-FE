@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Heart, Trash2, Search } from "lucide-react";
+import Image from "next/image";
+import images from "@/app/utils/images";
 import Jobcard from "@/app/components/job/Jobcard";
 import { Job } from "@/app/components/types/job.types";
 
@@ -207,7 +209,7 @@ export default function SavedJobsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Toast Notification */}
       {toast && (
         <div className="fixed top-4 right-4 z-[9999] animate-slide-in">
@@ -243,24 +245,28 @@ export default function SavedJobsPage() {
       )}
 
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 py-12">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-3 bg-white/20 rounded-lg">
-              <Heart className="w-8 h-8 text-white" fill="white" />
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white">
-              Công việc yêu thích
-            </h1>
-          </div>
-          <p className="text-white/90 text-lg">
+      <div className="relative w-full text-white py-16">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src={images.searcherBG}
+            alt="Background"
+            fill
+            style={{ objectFit: 'cover', objectPosition: 'center' }}
+            priority
+          />
+        </div>
+        <div className="container mx-auto px-4 max-w-6xl text-center relative z-10">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            Công việc yêu thích
+          </h1>
+          <p className="text-white/90 text-lg md:text-xl max-w-2xl mx-auto">
             Quản lý và theo dõi các công việc bạn quan tâm
           </p>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 max-w-[1400px] py-8">
+      <div className="container mx-auto px-4 max-w-[1400px] py-8 bg-gray-50">
         {savedJobs.length === 0 ? (
           // Empty State
           <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
