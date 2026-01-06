@@ -216,15 +216,27 @@ export const updateJob = async (jobId: string, payload: Partial<CreateJobPayload
 
 /**
  * Get job detail (public - for candidates)
- * Note: Backend expects job ID, not slug
+ * Note: Using /jobs endpoint with filter since /jobs/:id doesn't exist yet
  */
 export const getJobDetail = async (jobId: string): Promise<JobFromAPI> => {
   try {
     const response = await axios.get(
-      `${API_BASE_URL}/jobs/${jobId}`,
-      { headers: getAuthHeaders() }
+      `${API_BASE_URL}/jobs`,
+      { 
+        params: { id: jobId },
+        headers: getAuthHeaders() 
+      }
     );
-    return response.data;
+    
+    // Backend might return array or single object
+    const data = response.data;
+    const job = Array.isArray(data) ? data[0] : data;
+    
+    if (!job) {
+      throw new Error(`Job with ID ${jobId} not found`);
+    }
+    
+    return job;
   } catch (error) {
     console.error('Error fetching job detail:', error);
     throw error;
@@ -233,21 +245,30 @@ export const getJobDetail = async (jobId: string): Promise<JobFromAPI> => {
 
 /**
  * Get job detail for candidates (public endpoint with job ID)
+ * Using /jobs endpoint with filter since /jobs/:id doesn't exist yet
  */
 export const getCandidateJobDetail = async (jobId: string): Promise<JobFromAPI> => {
   try {
-    // Try public endpoint first
+    // Use /jobs endpoint with ID filter
     const response = await axios.get(
-      `${API_BASE_URL}/jobs/${jobId}`,
-      { headers: getAuthHeaders() }
+      `${API_BASE_URL}/jobs`,
+      { 
+        params: { id: jobId },
+        headers: getAuthHeaders() 
+      }
     );
-    return response.data;
+    
+    // Backend might return array or single object
+    const data = response.data;
+    const job = Array.isArray(data) ? data[0] : data;
+    
+    if (!job) {
+      throw new Error(`Job with ID ${jobId} not found`);
+    }
+    
+    return job;
   } catch (error: any) {
     console.error('Error fetching candidate job detail:', error);
-    // If 404, it might mean the endpoint expects different format
-    if (error.response?.status === 404) {
-      console.warn('Job not found with ID, backend might expect slug or different route');
-    }
     throw error;
   }
 };

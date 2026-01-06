@@ -37,7 +37,7 @@ export default function FeaturedJobs() {
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
 
   const handleJobClick = (jobId: string) => {
-    router.push(`/JobList/JobDetail?id=${jobId}`);
+    router.push(`/jobpage/${jobId}`);
   };
 
   const handleSaveJob = (jobId: string) => {

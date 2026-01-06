@@ -345,7 +345,7 @@ export default function JobSearchPage() {
   const [maxSalary, setMaxSalary] = useState(100);
   
   const handleJobClick = (jobId: string) => {
-    router.push(`/JobList/JobDetail?id=${jobId}`);
+    router.push(`/jobpage/${jobId}`);
   };
   
   // Temporary filters (being edited)

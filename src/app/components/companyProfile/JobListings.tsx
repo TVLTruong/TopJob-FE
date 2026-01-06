@@ -81,7 +81,7 @@ export default function JobListings({ employerId }: JobListingsProps) {
           return (
             <Link
               key={job.id}
-              href={`/JobList/JobDetail?id=${job.id}`}
+              href={`/jobpage/${job.id}`}
               className="block p-4 border rounded-lg hover:border-teal-300 transition cursor-pointer"
             >
               <h3 className="font-semibold text-gray-900 text-sm mb-2">{job.title}</h3>
