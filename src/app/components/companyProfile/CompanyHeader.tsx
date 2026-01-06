@@ -1,8 +1,9 @@
 "use client"
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import ConfirmModal from './ConfirmModal'
-import { Users, Globe, Edit, X, Plus } from 'lucide-react'
+import { Users, Globe, Edit, X, Plus, ArrowLeft } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useEmployerProfile } from '@/app/(employer)/companyProfilePage/page'
 import locationData from "@/app/assets/danh-sach-3321-xa-phuong.json";
@@ -44,9 +45,11 @@ interface CompanyBasicInfo {
 }
 
 export default function CompanyHeader() {
+  const router = useRouter()
   const { user } = useAuth()
   const { profile, isLoading, refreshProfile } = useEmployerProfile()
   const isRecruiter = user?.role === 'employer'
+  const isCandidate = user?.role === 'candidate'
   const canEdit = isRecruiter
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [formData, setFormData] = useState<CompanyBasicInfo>({
@@ -165,8 +168,8 @@ export default function CompanyHeader() {
       setFormData({
         companyName: profile.companyName || '',
         website: profile.website || '',
-        locations: profile.locations?.map(loc => loc.province) || [],
-        fields: profile.categories?.map(c => c.id) || [],
+        locations: profile.locations?.map((loc: any) => loc.province) || [],
+        fields: profile.categories?.map((c: any) => c.id) || [],
         province: profile.locations?.[0]?.province || '',
         district: profile.locations?.[0]?.district || '',
         streetAddress: profile.locations?.[0]?.detailedAddress || '',
@@ -185,7 +188,7 @@ export default function CompanyHeader() {
       
       // Load locations into locationsList with isHeadquarters flag
       if (profile.locations && profile.locations.length > 0) {
-        setLocationsList(profile.locations.map((loc, index) => ({
+        setLocationsList(profile.locations.map((loc: any, index: number) => ({
           id: `loc-${index}`,
           province: loc.province,
           district: loc.district || '',
@@ -360,65 +363,78 @@ export default function CompanyHeader() {
             </div>
           </div>
         ) : (
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-6">
-              {logoPreview ? (
-                <Image 
-                  src={logoPreview} 
-                  alt={formData.companyName} 
-                  width={96} 
-                  height={96}
-                  className="w-24 h-24 rounded-xl object-cover"
-                />
-              ) : (
-                <div className="w-24 h-24 bg-gray-200 rounded-xl"></div>
-              )}
-              <div>
-                <h1 className="text-3xl font-bold mb-2">{formData.companyName || 'Tên công ty'}</h1>
-                {formData.website && (
-                  <a href={formData.website} target="_blank" rel="noopener noreferrer" className="text-teal-600 text-sm hover:underline mb-4 block">
-                    {formData.website}
-                  </a>
+          <>
+            {/* Nút Back cho Candidate */}
+            {isCandidate && (
+              <button
+                onClick={() => router.back()}
+                className="flex items-center gap-2 px-4 py-2 mb-4 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
+              >
+                <ArrowLeft size={20} />
+                <span className="font-medium">Quay lại</span>
+              </button>
+            )}
+            
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-6">
+                {logoPreview ? (
+                  <Image 
+                    src={logoPreview} 
+                    alt={formData.companyName} 
+                    width={96} 
+                    height={96}
+                    className="w-24 h-24 rounded-xl object-cover"
+                  />
+                ) : (
+                  <div className="w-24 h-24 bg-gray-200 rounded-xl"></div>
                 )}
-                <div className="flex items-center gap-8 text-sm">
-                  {formData.foundingYear && (
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-teal-600" />
-                      <div>
-                        <div className="text-xs text-gray-500">Thành lập</div>
-                        <div className="font-semibold">{`${formData.foundingDay} ${formData.foundingMonth} ${formData.foundingYear}`}</div>
-                      </div>
-                    </div>
+                <div>
+                  <h1 className="text-3xl font-bold mb-2">{formData.companyName || 'Tên công ty'}</h1>
+                  {formData.website && (
+                    <a href={formData.website} target="_blank" rel="noopener noreferrer" className="text-teal-600 text-sm hover:underline mb-4 block">
+                      {formData.website}
+                    </a>
                   )}
-                  {formData.fields.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-teal-600" />
-                      <div>
-                        <div className="text-xs text-gray-500">Lĩnh vực</div>
-                        <div className="font-semibold">
-                          {formData.fields.map(fieldId => {
-                            const category = fieldOptions.find(opt => opt.id === fieldId);
-                            return category?.name || fieldId;
-                          }).join(', ')}
+                  <div className="flex items-center gap-8 text-sm">
+                    {formData.foundingYear && (
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-teal-600" />
+                        <div>
+                          <div className="text-xs text-gray-500">Thành lập</div>
+                          <div className="font-semibold">{`${formData.foundingDay} ${formData.foundingMonth} ${formData.foundingYear}`}</div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                    {formData.fields.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-teal-600" />
+                        <div>
+                          <div className="text-xs text-gray-500">Lĩnh vực</div>
+                          <div className="font-semibold">
+                            {formData.fields.map(fieldId => {
+                              const category = fieldOptions.find(opt => opt.id === fieldId);
+                              return category?.name || fieldId;
+                            }).join(', ')}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
+              {canEdit && (
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setIsPopupOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50 transition text-sm"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Chỉnh sửa
+                  </button>
+                </div>
+              )}
             </div>
-            {canEdit && (
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => setIsPopupOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50 transition text-sm"
-                >
-                  <Edit className="w-4 h-4" />
-                  Chỉnh sửa
-                </button>
-              </div>
-            )}
-          </div>
+          </>
         )}
       </div>
 
@@ -843,7 +859,7 @@ export default function CompanyHeader() {
           }
           
           // Compare arrays using JSON.stringify
-          const currentCategoryIds = JSON.stringify(profile?.categories?.map(c => c.id) || []);
+          const currentCategoryIds = JSON.stringify(profile?.categories?.map((c: any) => c.id) || []);
           const newCategoryIds = JSON.stringify(formData.fields);
           if (currentCategoryIds !== newCategoryIds) {
             updatedProfile.categoryIds = formData.fields;

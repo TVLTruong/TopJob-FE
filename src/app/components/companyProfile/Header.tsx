@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEmployerProfile } from '@/app/(employer)/companyProfilePage/page';
 import JobFormModal from '@/app/components/job/JobFormModal';
 import Toast from '@/app/components/profile/Toast';
 import type { JobDetailData } from '@/app/components/job/JobDetailContents';
@@ -11,9 +10,31 @@ import type { CreateJobPayload } from '@/utils/api/job-api';
 import { jobCategoryApi } from '@/utils/api/categories-api';
 import { technologyApi } from '@/utils/api/technology-api';
 
+// Try to import the hook, but handle if not available
+let useEmployerProfileHook: any = null;
+try {
+  const module = require('@/app/(employer)/companyProfilePage/page');
+  useEmployerProfileHook = module.useEmployerProfile;
+} catch (e) {
+  // Context not available - this is ok
+}
+
 export default function Header() {
   const { user } = useAuth();
-  const { profile, isLoading } = useEmployerProfile();
+  
+  // Try to use context if available
+  let profile = null;
+  let isLoading = false;
+  if (useEmployerProfileHook) {
+    try {
+      const context = useEmployerProfileHook();
+      profile = context.profile;
+      isLoading = context.isLoading;
+    } catch (error) {
+      // Context not available - use fallback
+    }
+  }
+  
   const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 

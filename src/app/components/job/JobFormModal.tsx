@@ -6,7 +6,6 @@ import Toast from '@/app/components/profile/Toast';
 import type { JobDetailData } from '@/app/components/job/JobDetailContents';
 import { JobCategory, jobCategoryApi } from '@/utils/api/categories-api';
 import { Technology, technologyApi } from '@/utils/api/technology-api';
-import { useEmployerProfile } from '@/contexts/EmployerProfileContext';
 
 interface JobFormModalProps {
   isOpen: boolean;
@@ -33,7 +32,17 @@ export default function JobFormModal({
   const [technologiesFromApi, setTechnologiesFromApi] = useState<Technology[]>([]);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isTechnologyDropdownOpen, setIsTechnologyDropdownOpen] = useState(false);
-  const { profile: employerProfile } = useEmployerProfile();
+  
+  // Try to get employer profile if available
+  let employerProfile = null;
+  try {
+    const { useEmployerProfile } = require('@/contexts/EmployerProfileContext');
+    const context = useEmployerProfile();
+    employerProfile = context.profile;
+  } catch (error) {
+    // Context not available - this is ok, we'll handle it
+  }
+  
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 
   // Show toast helper
