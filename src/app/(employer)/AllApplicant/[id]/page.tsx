@@ -1,72 +1,9 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Mail, Phone, MapPin } from 'lucide-react';
 import StatusChangeModal from '@/app/components/common/StatusChangeModal';
-
-// Mock data - replace with actual API call
-const applicantData = {
-  id: 1,
-  name: 'Jerome Bell',
-  avatar: '👨',
-  position: 'Product Designer',
-  jobApplied: 'Product Development',
-  department: 'Marketing • Full-Time',
-  appliedDate: '2 ngày trước',
-  status: 'pending' as 'pending' | 'approved' | 'passed' | 'rejected',
-  personalInfo: {
-    fullName: 'Jerome Bell',
-    gender: 'Nam',
-    dateOfBirth: '23/03/1999',
-    age: 26,
-    languages: 'English, French, Bahasa',
-    address: '4517 Washington Ave.\nManchester, Kentucky, 39495',
-  },
-  contact: {
-    email: 'jeromeBell45@email.com',
-    phone: '+44 1245 572 135',
-  },
-  aboutMe: "I'm a product designer + filmmaker currently working remotely at Twitter from beautiful Manchester, United Kingdom. I'm passionate about designing digital products that have a positive impact on the world.\n\nFor 10 years, I've specialised in interface, experience & interaction design as well as working in user research and product strategy for product agencies, big tech companies & start-ups.",
-  currentJob: 'Product Designer',
-  experience: '4 Years',
-  highestQualification: 'Bachelors in Engineering',
-  skills: ['Project Management', 'Copywriting', 'English'],
-  cvUrl: null, // Set to PDF URL if CV is uploaded, e.g., '/path/to/cv.pdf' or null if not uploaded
-  cv: {
-    positions: [
-      {
-        title: 'Senior UI/UX Product Designer',
-        company: 'Enterprise name',
-        period: 'Aug 2020 - Present • 2 years, 5 mos',
-        description: 'Created digital design systems for small + larger projects. Work prototype, design and deliver the UI and UX experience with a lean design process. User research, design brief and handle.',
-      },
-      {
-        title: 'UI/UX Product Designer',
-        company: 'Enterprise name',
-        period: 'Aug 2018 - Jul 2020 • 2 years, 1 mo',
-        description: 'Lead the UI/UX for the accountability of the design system, collaborated with product and development teams on core projects to improve product interfaces and experiences.',
-      },
-      {
-        title: 'UI Designer',
-        company: 'Enterprise name',
-        period: 'Aug 2016 - Jul 2018 • 2 years',
-        description: 'Designed mobile UI applications for Orange R&D department, BNP Paribas, Société générale, Crédit.',
-      },
-    ],
-    education: [
-      {
-        degree: 'Bachelor European in Graphic Design',
-        school: 'School name',
-        period: '2008 - 2012, Belgium',
-      },
-      {
-        degree: 'BTS Communication Visuelle option Multimédia',
-        school: 'School name',
-        period: '2006 - 2008',
-      },
-    ],
-  },
-};
+import { CandidateApi, type CandidateProfile } from '@/utils/api/candidate-api';
 
 const statusConfig = {
   pending: { label: 'Chờ duyệt', color: 'bg-orange-500', progress: 33 },
@@ -78,13 +15,113 @@ const statusConfig = {
 export default function ApplicantDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const candidateId = params.id as string;
+  
   const [activeTab, setActiveTab] = useState<'profile' | 'cv'>('profile');
-  const [currentStatus, setCurrentStatus] = useState(applicantData.status);
+  const [currentStatus, setCurrentStatus] = useState<'pending' | 'approved' | 'passed' | 'rejected'>('pending');
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [candidateData, setCandidateData] = useState<CandidateProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch candidate data
+  useEffect(() => {
+    const fetchCandidateData = async () => {
+      if (!candidateId) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          throw new Error('Bạn cần đăng nhập để xem thông tin này');
+        }
+        
+        const data = await CandidateApi.getCandidateById(token, candidateId);
+        setCandidateData(data);
+      } catch (err) {
+        console.error('Error fetching candidate data:', err);
+        setError(err instanceof Error ? err.message : 'Không thể tải thông tin ứng viên');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCandidateData();
+  }, [candidateId]);
 
   const handleStatusChange = (newStatus: 'pending' | 'approved' | 'passed' | 'rejected') => {
     setCurrentStatus(newStatus);
   };
+
+  // Calculate age from date of birth
+  const calculateAge = (dateOfBirth: string | undefined) => {
+    if (!dateOfBirth) return null;
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  // Format date
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('vi-VN');
+  };
+
+  // Get full address
+  const getFullAddress = () => {
+    if (!candidateData) return '';
+    const parts = [
+      candidateData.addressStreet,
+      candidateData.addressDistrict,
+      candidateData.addressCity,
+      candidateData.addressCountry,
+    ].filter(Boolean);
+    return parts.join(', ');
+  };
+
+  // Get default CV
+  const getDefaultCV = () => {
+    if (!candidateData?.cvs || candidateData.cvs.length === 0) return null;
+    return candidateData.cvs.find(cv => cv.isDefault) || candidateData.cvs[0];
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600">Đang tải thông tin ứng viên...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !candidateData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Không thể tải thông tin</h2>
+          <p className="text-gray-600 mb-4">{error || 'Không tìm thấy thông tin ứng viên'}</p>
+          <button
+            onClick={() => router.back()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Quay lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const age = calculateAge(candidateData.dateOfBirth);
+  const defaultCV = getDefaultCV();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -116,20 +153,32 @@ export default function ApplicantDetailPage() {
             {/* Profile Card */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="text-center">
-                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-5xl mx-auto mb-4">
-                  {applicantData.avatar}
+                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                  {candidateData.avatarUrl ? (
+                    <img 
+                      src={candidateData.avatarUrl} 
+                      alt={candidateData.fullName}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"%3E%3Cpath d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"%3E%3C/path%3E%3Ccircle cx="12" cy="7" r="4"%3E%3C/circle%3E%3C/svg%3E';
+                      }}
+                    />
+                  ) : (
+                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  )}
                 </div>
-                <h2 className="text-xl font-bold mb-1">{applicantData.name}</h2>
-                <p className="text-gray-600 text-sm mb-4">{applicantData.position}</p>
+                <h2 className="text-xl font-bold mb-1">{candidateData.fullName}</h2>
+                <p className="text-gray-600 text-sm mb-4">{candidateData.title || 'Ứng viên'}</p>
               </div>
 
               <div className="space-y-3 mb-6">
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Công việc ứng tuyển</p>
-                  <p className="font-medium">{applicantData.jobApplied}</p>
-                  <p className="text-sm text-gray-600">{applicantData.department}</p>
+                  <p className="text-sm text-gray-500 mb-1">Trình độ kinh nghiệm</p>
+                  <p className="font-medium">{candidateData.experienceLevel || 'Chưa cập nhật'}</p>
+                  <p className="text-sm text-gray-600">{candidateData.experienceYears ? `${candidateData.experienceYears} năm kinh nghiệm` : ''}</p>
                 </div>
-                <p className="text-sm text-gray-500">{applicantData.appliedDate}</p>
               </div>
 
               {/* Status Progress Bar */}
@@ -157,7 +206,7 @@ export default function ApplicantDetailPage() {
                   <Mail className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <p className="text-sm text-gray-500">Email</p>
-                    <p className="text-sm text-gray-900 break-all">{applicantData.contact.email}</p>
+                    <p className="text-sm text-gray-900 break-all">{candidateData.email || 'Chưa cập nhật'}</p>
                   </div>
                 </div>
                 <div className="border-t border-gray-200"></div>
@@ -165,17 +214,21 @@ export default function ApplicantDetailPage() {
                   <Phone className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <p className="text-sm text-gray-500">Số điện thoại</p>
-                    <p className="text-sm text-gray-900">{applicantData.contact.phone}</p>
+                    <p className="text-sm text-gray-900">{candidateData.phoneNumber || 'Chưa cập nhật'}</p>
                   </div>
                 </div>
-                <div className="border-t border-gray-200"></div>
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-500">Địa chỉ</p>
-                    <p className="text-sm text-gray-900 whitespace-pre-line">{applicantData.personalInfo.address}</p>
-                  </div>
-                </div>
+                {getFullAddress() && (
+                  <>
+                    <div className="border-t border-gray-200"></div>
+                    <div className="flex items-start gap-3">
+                      <MapPin className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-500">Địa chỉ</p>
+                        <p className="text-sm text-gray-900 whitespace-pre-line">{getFullAddress()}</p>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -218,24 +271,39 @@ export default function ApplicantDetailPage() {
                     <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                       <div>
                         <h4 className="text-sm text-gray-500 mb-1">Họ tên</h4>
-                        <p className="font-medium">{applicantData.personalInfo.fullName}</p>
+                        <p className="font-medium">{candidateData.fullName}</p>
                       </div>
                       <div>
                         <h4 className="text-sm text-gray-500 mb-1">Giới tính</h4>
-                        <p className="font-medium">{applicantData.personalInfo.gender}</p>
+                        <p className="font-medium">
+                          {candidateData.gender === 'male' ? 'Nam' : candidateData.gender === 'female' ? 'Nữ' : candidateData.gender === 'other' ? 'Khác' : 'Chưa cập nhật'}
+                        </p>
                       </div>
                       <div>
                         <h4 className="text-sm text-gray-500 mb-1">Ngày sinh</h4>
-                        <p className="font-medium">{applicantData.personalInfo.dateOfBirth} ({applicantData.personalInfo.age} tuổi)</p>
+                        <p className="font-medium">
+                          {candidateData.dateOfBirth ? `${formatDate(candidateData.dateOfBirth)}${age ? ` (${age} tuổi)` : ''}` : 'Chưa cập nhật'}
+                        </p>
                       </div>
-                      <div>
-                        <h4 className="text-sm text-gray-500 mb-1">Ngôn ngữ</h4>
-                        <p className="font-medium">{applicantData.personalInfo.languages}</p>
-                      </div>
-                      <div className="col-span-2">
-                        <h4 className="text-sm text-gray-500 mb-1">Địa chỉ</h4>
-                        <p className="font-medium whitespace-pre-line">{applicantData.personalInfo.address}</p>
-                      </div>
+                      {candidateData.personalUrl && (
+                        <div>
+                          <h4 className="text-sm text-gray-500 mb-1">Website</h4>
+                          <a 
+                            href={candidateData.personalUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="font-medium text-blue-600 hover:underline"
+                          >
+                            {candidateData.personalUrl}
+                          </a>
+                        </div>
+                      )}
+                      {getFullAddress() && (
+                        <div className="col-span-2">
+                          <h4 className="text-sm text-gray-500 mb-1">Địa chỉ</h4>
+                          <p className="font-medium whitespace-pre-line">{getFullAddress()}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -245,55 +313,108 @@ export default function ApplicantDetailPage() {
                   <div>
                     <h3 className="font-semibold text-lg mb-4">Thông tin nghề nghiệp</h3>
                     
-                    {/* About Me */}
-                    <div className="mb-6">
-                      <h4 className="text-sm text-gray-500 mb-2">Giới thiệu bản thân</h4>
-                      <p className="text-gray-700 whitespace-pre-line">{applicantData.aboutMe}</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6 mb-6">
-                      <div>
-                        <h4 className="text-sm text-gray-500 mb-1">Công việc hiện tại</h4>
-                        <p className="font-medium">{applicantData.currentJob}</p>
+                    {/* About Me / Bio */}
+                    {candidateData.bio && (
+                      <div className="mb-6">
+                        <h4 className="text-sm text-gray-500 mb-2">Giới thiệu bản thân</h4>
+                        <p className="text-gray-700 whitespace-pre-line">{candidateData.bio}</p>
                       </div>
+                    )}
+
+                    {/* <div className="grid grid-cols-2 gap-6 mb-6">
                       <div>
                         <h4 className="text-sm text-gray-500 mb-1">Kinh nghiệm</h4>
-                        <p className="font-medium">{applicantData.experience}</p>
+                        <p className="font-medium">
+                          {candidateData.experienceYears ? `${candidateData.experienceYears} năm` : 'Chưa cập nhật'}
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="text-sm text-gray-500 mb-1">Cấp độ</h4>
+                        <p className="font-medium">{candidateData.experienceLevel || 'Chưa cập nhật'}</p>
                       </div>
                     </div>
 
                     <div className="mb-6">
-                      <h4 className="text-sm text-gray-500 mb-1">Trình độ học vấn cao nhất</h4>
-                      <p className="font-medium">{applicantData.highestQualification}</p>
-                    </div>
+                      <h4 className="text-sm text-gray-500 mb-1">Trình độ học vấn</h4>
+                      <p className="font-medium">{candidateData.educationLevel || 'Chưa cập nhật'}</p>
+                    </div> */}
 
-                    {/* Skills */}
-                    <div>
-                      <h4 className="text-sm text-gray-500 mb-2">Kỹ năng</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {applicantData.skills.map((skill, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
-                          >
-                            {skill}
-                          </span>
-                        ))}
+                    {/* Work Experience */}
+                    {candidateData.workExperience && candidateData.workExperience.length > 0 && (
+                      <div className="mb-6">
+                        <h4 className="text-sm text-gray-500 mb-3">Kinh nghiệm làm việc</h4>
+                        <div className="space-y-4">
+                          {candidateData.workExperience.map((exp, index) => (
+                            <div key={index} className="border-l-2 border-blue-500 pl-4">
+                              <h5 className="font-semibold text-gray-900">{exp.jobTitle}</h5>
+                              <p className="text-sm text-gray-600">{exp.company}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Hiện tại' : formatDate(exp.endDate)}
+                              </p>
+                              {exp.description && (
+                                <p className="text-sm text-gray-700 mt-2">{exp.description}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
+
+                    {/* Education */}
+                    {candidateData.education && candidateData.education.length > 0 && (
+                      <div>
+                        <h4 className="text-sm text-gray-500 mb-3">Học vấn</h4>
+                        <div className="space-y-4">
+                          {candidateData.education.map((edu, index) => (
+                            <div key={index} className="border-l-2 border-green-500 pl-4">
+                              <h5 className="font-semibold text-gray-900">{edu.degree}</h5>
+                              <p className="text-sm text-gray-600">{edu.school}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {edu.major && `${edu.major} • `}
+                                {formatDate(edu.startDate)} - {edu.currentlyStudying ? 'Hiện tại' : formatDate(edu.endDate)}
+                              </p>
+                              {edu.additionalDetails && (
+                                <p className="text-sm text-gray-700 mt-2">{edu.additionalDetails}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
               {activeTab === 'cv' && (
                 <div>
-                  {applicantData.cvUrl ? (
-                    <div className="w-full h-[800px] border border-gray-200 rounded-lg overflow-hidden">
-                      <iframe
-                        src={applicantData.cvUrl}
-                        className="w-full h-full"
-                        title="CV của ứng viên"
-                      />
+                  {defaultCV ? (
+                    <div className="space-y-4">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-semibold text-gray-900">{defaultCV.fileName}</h4>
+                            <p className="text-sm text-gray-600">
+                              Tải lên: {formatDate(defaultCV.uploadedAt)}
+                            </p>
+                          </div>
+                          <a
+                            href={defaultCV.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                          >
+                            Xem CV
+                          </a>
+                        </div>
+                      </div>
+                      
+                      <div className="w-full border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                        <iframe
+                          src={defaultCV.fileUrl}
+                          className="w-full h-[800px]"
+                          title="CV của ứng viên"
+                        />
+                      </div>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-20">
@@ -314,7 +435,7 @@ export default function ApplicantDetailPage() {
       {/* Status Change Modal */}
       {showStatusModal && (
         <StatusChangeModal
-          applicantName={applicantData.name}
+          applicantName={candidateData.fullName}
           currentStatus={currentStatus}
           onClose={() => setShowStatusModal(false)}
           onConfirm={handleStatusChange}
