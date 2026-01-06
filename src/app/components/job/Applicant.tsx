@@ -159,7 +159,7 @@ export default function ApplicantsTab({ jobId }: ApplicantsTabProps) {
   };
 
   const handleOpenProfile = (candidateId: string) => {
-    router.push(`/AllApplicant/${candidateId}`);
+    router.push(`/AllApplicant/${candidateId}?from=jobDetail`);
   };
 
   const handleOpenJobDetail = () => {

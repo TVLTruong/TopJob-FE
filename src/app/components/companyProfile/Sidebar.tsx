@@ -15,6 +15,10 @@ export default function Sidebar() {
   const { user } = useAuth();
   const { profile, isLoading } = useEmployerProfile();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  
+  // Check if we're viewing from job detail
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const fromJobDetail = searchParams?.get('from') === 'jobDetail';
 
   const navItems = [
     {
@@ -47,7 +51,13 @@ export default function Sidebar() {
     }
   ];
 
-  const isActive = (href: string) => pathname.startsWith(href);
+  const isActive = (href: string) => {
+    // Nếu đang xem chi tiết ứng viên từ trang job detail, giữ active ở JobList
+    if (fromJobDetail && pathname.startsWith('/AllApplicant')) {
+      return href === '/JobList';
+    }
+    return pathname.startsWith(href);
+  };
 
   const handleLogout = () => {
     setShowLogoutModal(false);
