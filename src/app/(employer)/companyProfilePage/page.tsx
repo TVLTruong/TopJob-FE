@@ -105,8 +105,7 @@ export default function CompanyProfilePage() {
         setLoadingProfile(true);
         let data;
         
-        if (isViewingOwnProfile && employerContext) {
-          //employerId) {
+        if (employerId) {
           // Fetch public profile for viewing another company
           data = await getPublicEmployerProfile(employerId);
         } else if (isRecruiter) {
@@ -124,7 +123,8 @@ export default function CompanyProfilePage() {
     };
 
     fetchProfile();
-  }, [checking, employerId
+  }, [checking, employerId, isRecruiter]);
+
   if (authLoading || checking || loadingProfile) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -156,27 +156,18 @@ export default function CompanyProfilePage() {
       await updateMyEmployerProfile({ benefits: benefitsArray });
       
       // Refresh profile to get updated data
-      if (employerContext) {
-        await employerContext.refreshProfile();
-        setProfile(employerContext.profile);
-      } else {
       const updatedProfile = await getMyEmployerProfile();
-      setProfile(updatedProfile);onsole.error('Error saving benefits:', error);
+      setProfile(updatedProfile);
+      
+      showToast('Lưu phúc lợi thành công!', 'success');
+    } catch (error) {
+      console.error('Error saving benefits:', error);
       showToast('Có lỗi khi lưu phúc lợi. Vui lòng thử lại.', 'error');
     }
   };
 
   const canEdit = isViewingOwnProfile;
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div>
-        <CompanyHeader />
-        <div className="grid grid-cols-[2fr_1fr]">
-          <div>
-            <CompanyInfo />
-            <Benefits benefitsText={benefitsText} canEddit={canEdit} onSave={handleSaveBenefits} />
   // Create a refreshProfile function for context
   const refreshProfile = async () => {
     try {
@@ -216,14 +207,16 @@ export default function CompanyProfilePage() {
             </div>
           </div>
 
-        {/* Toast Notification */}
-        {toast && (
-          <Toast 
-            message={toast.message} 
-            type={toast.type} 
-            onClose={() => setToast(null)} 
-          />
-        )}
+          {/* Toast Notification */}
+          {toast && (
+            <Toast 
+              message={toast.message} 
+              type={toast.type} 
+              onClose={() => setToast(null)} 
+            />
+          )}
         </div>
       </div>
-    </EmployerProfileContext.Provider
+    </EmployerProfileContext.Provider>
+  );
+}
