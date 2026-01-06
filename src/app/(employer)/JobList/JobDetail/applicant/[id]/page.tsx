@@ -349,23 +349,6 @@ export default function ApplicantDetailPage() {
                         </div>
                       </div>
                     )}
-
-                    {/* Skills */}
-                    {candidateData.skills && candidateData.skills.length > 0 && (
-                      <div>
-                        <h4 className="text-sm text-gray-500 mb-2">Kỹ năng</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {candidateData.skills.map((skill, index) => (
-                            <span
-                              key={index}
-                              className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
-                            >
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
