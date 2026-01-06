@@ -126,7 +126,7 @@ export default function ApplicantDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <button
@@ -149,7 +149,7 @@ export default function ApplicantDetailPage() {
       <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
           {/* Left Sidebar */}
-          <div className="space-y-4">
+          <div className="space-y-4 lg:sticky lg:top-20 lg:self-start">
             {/* Profile Card */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="text-center">
@@ -227,9 +227,9 @@ export default function ApplicantDetailPage() {
           </div>
 
           {/* Right Content */}
-          <div className="bg-white rounded-lg shadow-sm">
+          <div className="bg-white rounded-lg shadow-sm lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:flex lg:flex-col">
             {/* Tabs Header */}
-            <div className="border-b flex items-center justify-between px-6">
+            <div className="border-b flex items-center justify-between px-6 lg:flex-shrink-0">
               <div className="flex gap-8">
                 <button
                   onClick={() => setActiveTab('profile')}
@@ -255,7 +255,7 @@ export default function ApplicantDetailPage() {
             </div>
 
             {/* Tab Content */}
-            <div className="p-6">
+            <div className="p-6 lg:overflow-y-auto lg:flex-1">
               {activeTab === 'profile' && (
                 <div className="space-y-6">
                   {/* Personal Info */}

@@ -126,7 +126,7 @@ export default function ApplicantDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <button
@@ -149,7 +149,7 @@ export default function ApplicantDetailPage() {
       <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
           {/* Left Sidebar */}
-          <div className="space-y-4">
+          <div className="space-y-4 lg:sticky lg:top-20 lg:self-start">
             {/* Profile Card */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="text-center">
@@ -226,9 +226,9 @@ export default function ApplicantDetailPage() {
           </div>
 
           {/* Right Content */}
-          <div className="bg-white rounded-lg shadow-sm">
+          <div className="bg-white rounded-lg shadow-sm lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:flex lg:flex-col">
             {/* Tabs Header */}
-            <div className="border-b flex items-center justify-between px-6">
+            <div className="border-b flex items-center justify-between px-6 lg:flex-shrink-0">
               <div className="flex gap-8">
                 <button
                   onClick={() => setActiveTab('profile')}
@@ -254,7 +254,7 @@ export default function ApplicantDetailPage() {
             </div>
 
             {/* Tab Content */}
-            <div className="p-6">
+            <div className="p-6 lg:overflow-y-auto lg:flex-1">
               {activeTab === 'profile' && (
                 <div className="space-y-6">
                   {/* Personal Info */}
@@ -299,7 +299,7 @@ export default function ApplicantDetailPage() {
                   <div>
                     <h3 className="font-semibold text-lg mb-4">Thông tin nghề nghiệp</h3>
                     
-                    {/* About Me */}
+                    {/* About Me / Bio */}
                     {candidateData.bio && (
                       <div className="mb-6">
                         <h4 className="text-sm text-gray-500 mb-2">Giới thiệu bản thân</h4>
@@ -307,20 +307,48 @@ export default function ApplicantDetailPage() {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-6 mb-6">
-                      {candidateData.title && (
-                        <div>
-                          <h4 className="text-sm text-gray-500 mb-1">Vị trí</h4>
-                          <p className="font-medium">{candidateData.title}</p>
+                    {/* Work Experience */}
+                    {candidateData.workExperience && candidateData.workExperience.length > 0 && (
+                      <div className="mb-6">
+                        <h4 className="text-sm text-gray-500 mb-3">Kinh nghiệm làm việc</h4>
+                        <div className="space-y-4">
+                          {candidateData.workExperience.map((exp, index) => (
+                            <div key={index} className="border-l-2 border-blue-500 pl-4">
+                              <h5 className="font-semibold text-gray-900">{exp.jobTitle}</h5>
+                              <p className="text-sm text-gray-600">{exp.company}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Hiện tại' : formatDate(exp.endDate)}
+                              </p>
+                              {exp.description && (
+                                <p className="text-sm text-gray-700 mt-2">{exp.description}</p>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                      )}
-                      {candidateData.yearsOfExperience !== undefined && (
-                        <div>
-                          <h4 className="text-sm text-gray-500 mb-1">Kinh nghiệm</h4>
-                          <p className="font-medium">{candidateData.yearsOfExperience} năm</p>
+                      </div>
+                    )}
+
+                    {/* Education */}
+                    {candidateData.education && candidateData.education.length > 0 && (
+                      <div className="mb-6">
+                        <h4 className="text-sm text-gray-500 mb-3">Học vấn</h4>
+                        <div className="space-y-4">
+                          {candidateData.education.map((edu, index) => (
+                            <div key={index} className="border-l-2 border-green-500 pl-4">
+                              <h5 className="font-semibold text-gray-900">{edu.degree}</h5>
+                              <p className="text-sm text-gray-600">{edu.school}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {edu.major && `${edu.major} • `}
+                                {formatDate(edu.startDate)} - {edu.currentlyStudying ? 'Hiện tại' : formatDate(edu.endDate)}
+                              </p>
+                              {edu.additionalDetails && (
+                                <p className="text-sm text-gray-700 mt-2">{edu.additionalDetails}</p>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* Skills */}
                     {candidateData.skills && candidateData.skills.length > 0 && (
@@ -344,13 +372,34 @@ export default function ApplicantDetailPage() {
 
               {activeTab === 'cv' && (
                 <div>
-                  {defaultCV?.cvUrl ? (
-                    <div className="w-full h-[800px] border border-gray-200 rounded-lg overflow-hidden">
-                      <iframe
-                        src={defaultCV.cvUrl}
-                        className="w-full h-full"
-                        title="CV của ứng viên"
-                      />
+                  {defaultCV ? (
+                    <div className="space-y-4">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-semibold text-gray-900">{defaultCV.fileName}</h4>
+                            <p className="text-sm text-gray-600">
+                              Tải lên: {formatDate(defaultCV.uploadedAt)}
+                            </p>
+                          </div>
+                          <a
+                            href={defaultCV.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                          >
+                            Xem CV
+                          </a>
+                        </div>
+                      </div>
+                      
+                      <div className="w-full border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                        <iframe
+                          src={defaultCV.fileUrl}
+                          className="w-full h-[800px]"
+                          title="CV của ứng viên"
+                        />
+                      </div>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-20">
