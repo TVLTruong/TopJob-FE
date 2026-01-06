@@ -216,6 +216,7 @@ export const updateJob = async (jobId: string, payload: Partial<CreateJobPayload
 
 /**
  * Get job detail (public - for candidates)
+ * Note: Backend expects job ID, not slug
  */
 export const getJobDetail = async (jobId: string): Promise<JobFromAPI> => {
   try {
@@ -231,10 +232,24 @@ export const getJobDetail = async (jobId: string): Promise<JobFromAPI> => {
 };
 
 /**
- * Get job detail for candidates (same as getJobDetail but more explicit naming)
+ * Get job detail for candidates (public endpoint with job ID)
  */
 export const getCandidateJobDetail = async (jobId: string): Promise<JobFromAPI> => {
-  return getJobDetail(jobId);
+  try {
+    // Try public endpoint first
+    const response = await axios.get(
+      `${API_BASE_URL}/jobs/${jobId}`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching candidate job detail:', error);
+    // If 404, it might mean the endpoint expects different format
+    if (error.response?.status === 404) {
+      console.warn('Job not found with ID, backend might expect slug or different route');
+    }
+    throw error;
+  }
 };
 
 /**

@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, createContext, useContext } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEmployerProfile } from '@/contexts/EmployerProfileContext';
 import Header from '@/app/components/companyProfile/Header';
 import CompanyHeader from '@/app/components/companyProfile/CompanyHeader';
 import CompanyInfo from '@/app/components/companyProfile/CompanyInfo';
@@ -12,6 +11,18 @@ import Contact from '@/app/components/companyProfile/Contact';
 import JobListings from '@/app/components/companyProfile/JobListings';
 import { getMyEmployerProfile, getPublicEmployerProfile, updateMyEmployerProfile } from '@/utils/api/employer-api';
 import Toast from '@/app/components/profile/Toast';
+
+// Create a local context for this page to provide profile to child components
+const EmployerProfileContext = createContext<any>(undefined);
+
+// Export the hook so child components can use it
+export function useEmployerProfile() {
+  const context = useContext(EmployerProfileContext);
+  if (context === undefined) {
+    throw new Error('useEmployerProfile must be used within CompanyProfilePage');
+  }
+  return context;
+}
 
 export default function CompanyProfilePage() {
   const router = useRouter();
@@ -26,16 +37,6 @@ export default function CompanyProfilePage() {
   const isRecruiter = user?.role === 'employer';
   const isCandidate = user?.role === 'candidate';
   const isViewingOwnProfile = isRecruiter && !employerId;
-
-  // Only use EmployerProfileContext if viewing own profile as employer
-  let employerContext: any = null;
-  try {
-    if (isViewingOwnProfile) {
-      employerContext = useEmployerProfile();
-    }
-  } catch (error) {
-    // Context not available - will fetch manually
-  }
 
   // Show toast helper
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
@@ -105,14 +106,11 @@ export default function CompanyProfilePage() {
         let data;
         
         if (isViewingOwnProfile && employerContext) {
-          // Use context for employer viewing own profile
-          await employerContext.refreshProfile();
-          data = employerContext.profile;
-        } else if (employerId) {
+          //employerId) {
           // Fetch public profile for viewing another company
           data = await getPublicEmployerProfile(employerId);
         } else if (isRecruiter) {
-          // Fallback: fetch own profile directly
+          // Fetch own profile directly
           data = await getMyEmployerProfile();
         }
         
@@ -126,8 +124,7 @@ export default function CompanyProfilePage() {
     };
 
     fetchProfile();
-  }, [checking, employerId, isViewingOwnProfile, isRecruiter]);
-
+  }, [checking, employerId
   if (authLoading || checking || loadingProfile) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -163,13 +160,8 @@ export default function CompanyProfilePage() {
         await employerContext.refreshProfile();
         setProfile(employerContext.profile);
       } else {
-        const updatedProfile = await getMyEmployerProfile();
-        setProfile(updatedProfile);
-      }
-      
-      showToast('Lưu phúc lợi thành công!', 'success');
-    } catch (error) {
-      console.error('Error saving benefits:', error);
+      const updatedProfile = await getMyEmployerProfile();
+      setProfile(updatedProfile);onsole.error('Error saving benefits:', error);
       showToast('Có lỗi khi lưu phúc lợi. Vui lòng thử lại.', 'error');
     }
   };
@@ -185,22 +177,53 @@ export default function CompanyProfilePage() {
           <div>
             <CompanyInfo />
             <Benefits benefitsText={benefitsText} canEddit={canEdit} onSave={handleSaveBenefits} />
-            <Contact canEdit={canEdit} />
-          </div>
-          <div>
-            <JobListings />
-          </div>
-        </div>
+  // Create a refreshProfile function for context
+  const refreshProfile = async () => {
+    try {
+      const data = employerId 
+        ? await getPublicEmployerProfile(employerId)
+        : await getMyEmployerProfile();
+      setProfile(data);
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+      throw error;
+    }
+  };
 
-      {/* Toast Notification */}
-      {toast && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={() => setToast(null)} 
-        />
-      )}
+  // Provide profile context to all child components
+  const contextValue = {
+    profile,
+    isLoading: loadingProfile,
+    error: null,
+    refreshProfile,
+    updateProfile: (data: any) => setProfile({ ...profile, ...data })
+  };
+
+  return (
+    <EmployerProfileContext.Provider value={contextValue}>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div>
+          <CompanyHeader />
+          <div className="grid grid-cols-[2fr_1fr]">
+            <div>
+              <CompanyInfo />
+              <Benefits benefitsText={benefitsText} canEddit={canEdit} onSave={handleSaveBenefits} />
+              <Contact canEdit={canEdit} />
+            </div>
+            <div>
+              <JobListings />
+            </div>
+          </div>
+
+        {/* Toast Notification */}
+        {toast && (
+          <Toast 
+            message={toast.message} 
+            type={toast.type} 
+            onClose={() => setToast(null)} 
+          />
+        )}
+        </div>
       </div>
-    </div>
-  );
-}
+    </EmployerProfileContext.Provider

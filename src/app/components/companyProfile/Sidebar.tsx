@@ -13,7 +13,18 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
-  const { profile, isLoading } = useEmployerProfile();
+  
+  // Try to use context, but handle if not available
+  let profile = null;
+  let isLoading = false;
+  try {
+    const context = useEmployerProfile();
+    profile = context.profile;
+    isLoading = context.isLoading;
+  } catch (error) {
+    // Context not available - this is ok for pages outside employer layout
+  }
+  
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const navItems = [

@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { useEmployerProfile } from '@/contexts/EmployerProfileContext';
+import { useEmployerProfile } from '@/app/(employer)/companyProfilePage/page';
 import { MapPin } from 'lucide-react';
 
 export default function OfficeLocations() {
