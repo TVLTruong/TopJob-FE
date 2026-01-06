@@ -50,7 +50,7 @@ export const requestUpdateInfoOtp = async (): Promise<{ message: string; expires
  * PUT /api/users/me/info
  */
 export const updateUserInfo = async (data: UpdateUserInfoData): Promise<{ message: string }> => {
-  const response = await axiosClient.put('/users/me/info', data);
+  const response = await axiosClient.put('/users/me/update-info', data);
   return response.data;
 };
 
