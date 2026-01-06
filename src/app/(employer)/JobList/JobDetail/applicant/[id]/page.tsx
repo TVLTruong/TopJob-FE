@@ -307,26 +307,28 @@ export default function ApplicantDetailPage() {
                       </div>
                     )}
 
-                    {/* Work Experience */}
-                    {candidateData.workExperience && candidateData.workExperience.length > 0 && (
-                      <div className="mb-6">
-                        <h4 className="text-sm text-gray-500 mb-3">Kinh nghiệm làm việc</h4>
-                        <div className="space-y-4">
-                          {candidateData.workExperience.map((exp, index) => (
-                            <div key={index} className="border-l-2 border-blue-500 pl-4">
-                              <h5 className="font-semibold text-gray-900">{exp.jobTitle}</h5>
-                              <p className="text-sm text-gray-600">{exp.company}</p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                {formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Hiện tại' : formatDate(exp.endDate)}
-                              </p>
-                              {exp.description && (
-                                <p className="text-sm text-gray-700 mt-2">{exp.description}</p>
-                              )}
-                            </div>
-                          ))}
+                    {/* Work Experience & Education - 2 columns */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Work Experience */}
+                      {candidateData.workExperience && candidateData.workExperience.length > 0 && (
+                        <div>
+                          <h4 className="text-sm text-gray-500 mb-3">Kinh nghiệm làm việc</h4>
+                          <div className="space-y-4">
+                            {candidateData.workExperience.map((exp, index) => (
+                              <div key={index} className="border-l-2 border-blue-500 pl-4">
+                                <h5 className="font-semibold text-gray-900">{exp.jobTitle}</h5>
+                                <p className="text-sm text-gray-600">{exp.company}</p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Hiện tại' : formatDate(exp.endDate)}
+                                </p>
+                                {exp.description && (
+                                  <p className="text-sm text-gray-700 mt-2">{exp.description}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* Education */}
                     {candidateData.education && candidateData.education.length > 0 && (
@@ -349,6 +351,8 @@ export default function ApplicantDetailPage() {
                         </div>
                       </div>
                     )}
+
+                    </div>
                   </div>
                 </div>
               )}
