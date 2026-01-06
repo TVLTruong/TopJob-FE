@@ -1,11 +1,13 @@
 'use client';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, MoreVertical, Trash2, ChevronLeft, ChevronRight, Filter, X, AlertCircle } from 'lucide-react';
 import StatusChangeModal from '@/app/components/common/StatusChangeModal';
+import { getJobApplications, type ApplicationFromAPI } from '@/utils/api/job-api';
 
 interface Applicant {
   id: number;
+  candidateId: string;
   name: string;
   avatar: string;
   position: string;
@@ -20,10 +22,11 @@ type StatusChangeModalType = {
 } | null;
 
 interface ApplicantsTabProps {
+  jobId?: string;
   source?: 'jobDetail' | 'allApplicants';
 }
 
-export default function ApplicantsTab({ source = 'allApplicants' }: ApplicantsTabProps) {
+export default function ApplicantsTab({ jobId, source = 'allApplicants' }: ApplicantsTabProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -33,18 +36,63 @@ export default function ApplicantsTab({ source = 'allApplicants' }: ApplicantsTa
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
-  const [applicants, setApplicants] = useState<Applicant[]>([
-    { id: 1, name: 'Jake Gyll', avatar: '👨', position: 'Senior Product Designer', status: 'pending', appliedDate: '24/05/2025' },
-    { id: 2, name: 'Guy Hawkins', avatar: '👨‍🦰', position: 'UI/UX Researcher', status: 'pending', appliedDate: '24/05/2025' },
-    { id: 3, name: 'Cyndy Lillibridge', avatar: '👩', position: 'Frontend Developer', status: 'passed', appliedDate: '24/05/2025' },
-    { id: 4, name: 'Rodolfo Goode', avatar: '👨‍🦱', position: 'QA Automation Engineer', status: 'rejected', appliedDate: '24/05/2025' },
-    { id: 5, name: 'Leif Floyd', avatar: '👨‍💼', position: 'Product Manager', status: 'approved', appliedDate: '24/05/2025' },
-    { id: 6, name: 'Jenny Wilson', avatar: '👩‍🦰', position: 'Senior Backend Engineer', status: 'approved', appliedDate: '24/05/2025' },
-    { id: 7, name: 'Jerome Bell', avatar: '👨‍🦲', position: 'Mobile Developer', status: 'pending', appliedDate: '24/05/2025' },
-    { id: 8, name: 'Eleanor Pena', avatar: '👩‍🦱', position: 'Data Analyst', status: 'rejected', appliedDate: '24/05/2025' },
-    { id: 9, name: 'Darrell Steward', avatar: '👨‍🦳', position: 'DevOps Engineer', status: 'passed', appliedDate: '24/05/2025' },
-    { id: 10, name: 'Floyd Miles', avatar: '👨‍💻', position: 'Growth Marketer', status: 'pending', appliedDate: '24/05/2025' },
-  ]);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Map BE status to FE status
+  const mapApplicationStatus = (beStatus: ApplicationFromAPI['status']): Applicant['status'] => {
+    switch (beStatus) {
+      case 'NEW':
+      case 'REVIEWING':
+        return 'pending';
+      case 'SHORTLISTED':
+      case 'INTERVIEWING':
+        return 'approved';
+      case 'OFFERED':
+      case 'HIRED':
+        return 'passed';
+      case 'REJECTED':
+        return 'rejected';
+      default:
+        return 'pending';
+    }
+  };
+
+  // Fetch applications from API
+  useEffect(() => {
+    const fetchApplications = async () => {
+      if (!jobId) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await getJobApplications(jobId, currentPage, 10);
+        
+        // Map API data to component format
+        const mappedApplicants = response.data.map((app: ApplicationFromAPI) => ({
+          id: parseInt(app.id, 10),
+          candidateId: app.candidateId,
+          name: app.candidate?.fullName || 'Chưa có tên',
+          avatar: app.candidate?.avatarUrl || '/default-avatar.png',
+          position: 'Ứng viên', // We don't have position info in Application entity
+          status: mapApplicationStatus(app.status),
+          appliedDate: new Date(app.appliedAt).toLocaleDateString('vi-VN'),
+        }));
+        
+        setApplicants(mappedApplicants);
+        setTotalCount(response.meta?.total || response.data.length);
+      } catch (err) {
+        console.error('Error fetching applications:', err);
+        setError(err instanceof Error ? err.message : 'Không thể tải danh sách ứng viên');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApplications();
+  }, [jobId, currentPage]);
 
   const statusConfig = {
     pending: { label: 'Chờ duyệt', color: 'bg-orange-100 text-orange-600 border-orange-300' },
@@ -111,12 +159,12 @@ export default function ApplicantsTab({ source = 'allApplicants' }: ApplicantsTa
     return option?.label || 'Tất cả';
   };
 
-  const handleOpenProfile = (applicantId: number) => {
+  const handleOpenProfile = (candidateId: string) => {
     // Navigate to different route based on source
     if (source === 'jobDetail') {
-      router.push(`/JobList/JobDetail/applicant/${applicantId}`);
+      router.push(`/JobList/JobDetail/applicant/${candidateId}`);
     } else {
-      router.push(`/AllApplicant/${applicantId}`);
+      router.push(`/AllApplicant/${candidateId}`);
     }
   };
 
@@ -146,13 +194,9 @@ export default function ApplicantsTab({ source = 'allApplicants' }: ApplicantsTa
   };
 
   const handleCancelStatusChange = () => {
-    setStatusChangeModal(null);
+    setShowStatusModal(false);
+    setSelectedApplicant(null);
   };
-
-  const handleCancelConfirmation = () => {
-    setConfirmationModal(null);
-  };
-
 
   return (
     <div className="bg-white rounded-xl shadow-sm min-h-screen">
@@ -160,8 +204,23 @@ export default function ApplicantsTab({ source = 'allApplicants' }: ApplicantsTa
       <div className="p-6">
         {/* Total count header */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold">Tổng số ứng viên: {applicants.length}</h2>
+          <h2 className="text-2xl font-bold">Tổng số ứng viên: {totalCount}</h2>
         </div>
+
+        {/* Loading indicator */}
+        {loading && (
+          <div className="text-center py-4">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p className="mt-2 text-gray-600">Đang tải...</p>
+          </div>
+        )}
+
+        {/* Error message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
         {/* Search & Filter controls with result count */}
         <div className="flex items-center justify-between gap-4 mb-4">
@@ -337,11 +396,18 @@ export default function ApplicantsTab({ source = 'allApplicants' }: ApplicantsTa
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => handleOpenProfile(applicant.id)}
+                  onClick={() => handleOpenProfile(applicant.candidateId)}
                   className="flex items-center gap-3 text-left"
                 >
-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-2xl">
-                    {applicant.avatar}
+                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                    <img 
+                      src={applicant.avatar} 
+                      alt={applicant.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"%3E%3Cpath d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"%3E%3C/path%3E%3Ccircle cx="12" cy="7" r="4"%3E%3C/circle%3E%3C/svg%3E';
+                      }}
+                    />
                   </div>
                   <span className="font-medium text-gray-900 hover:text-blue-600 underline-offset-2">
                     {applicant.name}

@@ -86,7 +86,8 @@ function JobDetailContent_Inner() {
           locationId: apiJob.location?.id,
           locationName: apiJob.location?.city,
           locationAddress: apiJob.location?.address,
-          categories: apiJob.category ? [apiJob.category.name] : [],
+          categories: apiJob.jobCategories?.map(jc => jc.category.name) || 
+                     (apiJob.category ? [apiJob.category.name] : []),
           technologies: apiJob.jobTechnologies?.map(jt => jt.technology.name) || [],
           description: apiJob.description || 'Chưa có mô tả',
           responsibilities: apiJob.responsibilities || [],
@@ -506,7 +507,7 @@ function JobDetailContent_Inner() {
         {activeTab === 'detail' ? (
           <JobDetailContent job={job} />
         ) : isRecruiter ? (
-          <ApplicantsTab source="jobDetail" />
+          <ApplicantsTab jobId={jobId || undefined} source="jobDetail" />
         ) : null}
 
         {/* Job Form Modal */}

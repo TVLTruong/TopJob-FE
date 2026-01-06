@@ -332,3 +332,52 @@ export const closeJob = async (jobId: string) => {
     throw error;
   }
 };
+
+/**
+ * Get applications for a specific job
+ * GET /employer/jobs/:jobId/applications
+ */
+export interface ApplicationFromAPI {
+  id: string;
+  candidateId: string;
+  jobId: string;
+  cvId: string | null;
+  status: 'NEW' | 'REVIEWING' | 'SHORTLISTED' | 'INTERVIEWING' | 'OFFERED' | 'HIRED' | 'REJECTED';
+  statusUpdatedAt: string | null;
+  appliedAt: string;
+  createdAt: string;
+  updatedAt: string;
+  candidate?: {
+    id: string;
+    userId: string;
+    fullName: string;
+    email: string;
+    phone: string;
+    avatarUrl: string | null;
+  };
+  cv?: {
+    id: string;
+    title: string;
+    fileUrl: string;
+  };
+}
+
+export const getJobApplications = async (
+  jobId: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<PaginationResponse<ApplicationFromAPI>> => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/employer/jobs/${jobId}/applications`,
+      {
+        params: { page, limit },
+        headers: getAuthHeaders(),
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching job applications:', error);
+    throw error;
+  }
+};
