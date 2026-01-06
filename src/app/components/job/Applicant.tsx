@@ -108,7 +108,7 @@ export default function ApplicantsTab() {
   };
 
   const handleOpenProfile = (applicantId: number) => {
-    router.push(`/AllApplicant/${applicantId}`);
+    router.push(`/AllApplicant/${applicantId}?from=jobDetail`);
   };
 
   const handleOpenJobDetail = () => {
