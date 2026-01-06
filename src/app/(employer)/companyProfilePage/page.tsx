@@ -3,7 +3,7 @@
 import { useEffect, useState, createContext, useContext } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import Header from '@/app/components/companyProfile/Header';
+
 import CompanyHeader from '@/app/components/companyProfile/CompanyHeader';
 import CompanyInfo from '@/app/components/companyProfile/CompanyInfo';
 import Benefits from '@/app/components/companyProfile/Benefits';
@@ -193,7 +193,6 @@ export default function CompanyProfilePage() {
   return (
     <EmployerProfileContext.Provider value={contextValue}>
       <div className="min-h-screen bg-gray-50">
-        <Header />
         <div>
           <CompanyHeader />
           <div className="grid grid-cols-[2fr_1fr]">
