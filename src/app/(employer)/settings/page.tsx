@@ -1,8 +1,18 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Lock, Phone, Briefcase, Save, Eye, EyeOff, Mail } from 'lucide-react'
 import OtpModal from '@/app/components/common/OtpModal'
+import Toast from '@/app/components/profile/Toast'
+import { 
+  getCurrentUser, 
+  requestUpdateInfoOtp, 
+  updateUserInfo, 
+  requestPasswordChangeOtp, 
+  changePasswordWithOtp,
+  type UserInfo 
+} from '@/utils/api/user-api'
+import { getMyEmployerProfile } from '@/utils/api/employer-api'
 
 type TabType = 'account' | 'password'
 
@@ -11,16 +21,24 @@ export default function SettingsPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [successMessage, setSuccessMessage] = useState('')
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null)
   const [showOtpModal, setShowOtpModal] = useState(false)
   const [pendingAction, setPendingAction] = useState<'account' | 'password' | null>(null)
+  const [otpCode, setOtpCode] = useState('')
+  const [loading, setLoading] = useState(true)
+
+  // Toast helper
+  const showToast = (message: string, type: 'error' | 'success' = 'error') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000)
+  }
 
   // Form states
   const [accountInfo, setAccountInfo] = useState({
-    fullName: 'Nguyễn Quang Huy',
-    email: 'huynqd@company.com',
-    position: 'Quản lý Nhân sự',
-    phone: '0901234567'
+    fullName: '',
+    email: '',
+    workTitle: '',
+    contactPhone: ''
   })
 
   const [passwordInfo, setPasswordInfo] = useState({
@@ -32,6 +50,31 @@ export default function SettingsPage() {
   // Validation error states
   const [accountErrors, setAccountErrors] = useState<Record<string, string>>({});
   const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
+
+  // Fetch user data on mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true)
+        const user = await getCurrentUser()
+        const employerProfile = await getMyEmployerProfile()
+        
+        setAccountInfo({
+          fullName: employerProfile.fullName || '',
+          email: user.email || '',
+          workTitle: employerProfile.workTitle || '',
+          contactPhone: employerProfile.contactPhone || ''
+        })
+      } catch (err) {
+        console.error('Error fetching user data:', err)
+        showToast('Không thể tải thông tin tài khoản', 'error')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserData()
+  }, [])
 
   // Helpers
   const validateEmail = (email: string) => {
@@ -74,27 +117,32 @@ export default function SettingsPage() {
     });
   }
 
-  const handleSaveAccountClick = () => {
+  const handleSaveAccountClick = async () => {
     const errs: Record<string,string> = {};
     if (!accountInfo.fullName.trim()) errs.fullName = 'Vui lòng nhập tên';
-    if (!accountInfo.email.trim()) errs.email = 'Vui lòng nhập email';
-    else if (!validateEmail(accountInfo.email)) errs.email = 'Email không hợp lệ';
-    if (!accountInfo.position.trim()) errs.position = 'Vui lòng nhập chức vụ';
-    if (!accountInfo.phone.trim()) errs.phone = 'Vui lòng nhập số điện thoại';
-    else if (!validatePhone(accountInfo.phone)) errs.phone = 'Số điện thoại không hợp lệ (chỉ chữ số, 9-11 số)';
+    if (!accountInfo.workTitle.trim()) errs.workTitle = 'Vui lòng nhập chức vụ';
+    if (!accountInfo.contactPhone.trim()) errs.contactPhone = 'Vui lòng nhập số điện thoại';
+    else if (!validatePhone(accountInfo.contactPhone)) errs.contactPhone = 'Số điện thoại không hợp lệ (chỉ chữ số, 9-11 số)';
 
     setAccountErrors(errs);
     if (Object.keys(errs).length === 0) {
-      setPendingAction('account');
-      setShowOtpModal(true);
+      try {
+        // Request OTP
+        await requestUpdateInfoOtp()
+        setPendingAction('account');
+        setShowOtpModal(true);
+        showToast('Mã OTP đã được gửi đến email của bạn', 'success')
+      } catch (err: any) {
+        showToast(err.response?.data?.message || 'Không thể gửi mã OTP', 'error')
+      }
     }
   }
 
-  const handleChangePasswordClick = () => {
+  const handleChangePasswordClick = async () => {
     const errs: Record<string,string> = {};
     if (!passwordInfo.currentPassword) errs.currentPassword = 'Vui lòng nhập mật khẩu hiện tại';
     if (!passwordInfo.newPassword) errs.newPassword = 'Vui lòng nhập mật khẩu mới';
-    else if (passwordInfo.newPassword.length < 6) errs.newPassword = 'Mật khẩu phải có ít nhất 6 ký tự';
+    else if (passwordInfo.newPassword.length < 8) errs.newPassword = 'Mật khẩu phải có ít nhất 8 ký tự';
     if (!passwordInfo.confirmPassword) errs.confirmPassword = 'Vui lòng xác nhận mật khẩu mới';
     if (passwordInfo.newPassword && passwordInfo.confirmPassword && passwordInfo.newPassword !== passwordInfo.confirmPassword) {
       errs.confirmPassword = 'Mật khẩu xác nhận không khớp';
@@ -102,35 +150,60 @@ export default function SettingsPage() {
 
     setPasswordErrors(errs);
     if (Object.keys(errs).length === 0) {
-      setPendingAction('password');
-      setShowOtpModal(true);
+      try {
+        // Request OTP
+        await requestPasswordChangeOtp()
+        setPendingAction('password');
+        setShowOtpModal(true);
+        showToast('Mã OTP đã được gửi đến email của bạn', 'success')
+      } catch (err: any) {
+        showToast(err.response?.data?.message || 'Không thể gửi mã OTP', 'error')
+      }
     }
   }
 
   const verifyOtp = async (code: string) => {
-    // Mock verify: accept 123456
-    const ok = code === '123456'
-    if (ok) {
+    try {
       if (pendingAction === 'account') {
-        setSuccessMessage('Cập nhật thông tin tài khoản thành công!')
-        setTimeout(() => setSuccessMessage(''), 3000)
+        // Update account info
+        await updateUserInfo({
+          fullName: accountInfo.fullName,
+          workTitle: accountInfo.workTitle,
+          contactPhone: accountInfo.contactPhone,
+          otpCode: code
+        })
+        showToast('Cập nhật thông tin tài khoản thành công!', 'success')
+        setPendingAction(null)
+        return true
       } else if (pendingAction === 'password') {
-        setSuccessMessage('Đổi mật khẩu thành công!')
+        // Change password
+        await changePasswordWithOtp({
+          currentPassword: passwordInfo.currentPassword,
+          newPassword: passwordInfo.newPassword,
+          otpCode: code
+        })
         setPasswordInfo({
           currentPassword: '',
           newPassword: '',
           confirmPassword: ''
         })
-        setTimeout(() => setSuccessMessage(''), 3000)
+        showToast('Đổi mật khẩu thành công!', 'success')
+        setPendingAction(null)
+        return true
       }
-      setPendingAction(null)
-      return true
+      return false
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Mã OTP không hợp lệ'
+      showToast(message, 'error')
+      return false
     }
-    return false
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Toast Notification */}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
       <div className="max-w-6xl mx-auto px-8 pb-8">
         {/* Container for Title and Tabs */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-[3px]">
@@ -163,17 +236,14 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {successMessage && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 flex items-center gap-2">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            {successMessage}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
           </div>
         )}
 
         {/* Tab Content */}
-        {activeTab === 'account' && (
+        {!loading && activeTab === 'account' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">Thông tin tài khoản</h2>
@@ -210,16 +280,11 @@ export default function SettingsPage() {
                   type="email"
                   name="email"
                   value={accountInfo.email}
-                  onChange={handleAccountInfoChange}
-                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${accountErrors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
+                  disabled
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
                   placeholder="Nhập email công việc"
                 />
-                <p
-                  className={`text-red-500 text-xs mt-1 transition-all`}
-                  style={{ minHeight: '20px' }}
-                >
-                  {accountErrors.email || ''}
-                </p>
+                <p className="text-xs text-gray-500 mt-1">Email không thể thay đổi</p>
               </div>
 
               <div>
@@ -229,17 +294,17 @@ export default function SettingsPage() {
                 </label>
                 <input
                   type="text"
-                  name="position"
-                  value={accountInfo.position}
+                  name="workTitle"
+                  value={accountInfo.workTitle}
                   onChange={handleAccountInfoChange}
-                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${accountErrors.position ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${accountErrors.workTitle ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                   placeholder="Nhập chức vụ của bạn"
                 />
                 <p
                   className={`text-red-500 text-xs mt-1 transition-all`}
                   style={{ minHeight: '20px' }}
                 >
-                  {accountErrors.position || ''}
+                  {accountErrors.workTitle || ''}
                 </p>
               </div>
 
@@ -250,17 +315,17 @@ export default function SettingsPage() {
                 </label>
                 <input
                   type="tel"
-                  name="phone"
-                  value={accountInfo.phone}
+                  name="contactPhone"
+                  value={accountInfo.contactPhone}
                   onChange={handleAccountInfoChange}
-                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${accountErrors.phone ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${accountErrors.contactPhone ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                   placeholder="Nhập số điện thoại"
                 />
                 <p
                   className={`text-red-500 text-xs mt-1 transition-all`}
                   style={{ minHeight: '20px' }}
                 >
-                  {accountErrors.phone || ''}
+                  {accountErrors.contactPhone || ''}
                 </p>
               </div>
 
@@ -275,7 +340,7 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {activeTab === 'password' && (
+        {!loading && activeTab === 'password' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
@@ -375,7 +440,7 @@ export default function SettingsPage() {
 
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <p className="text-sm text-green-800">
-                  <strong>Lưu ý:</strong> Mật khẩu phải có ít nhất 6 ký tự và nên bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt để đảm bảo an toàn.
+                  <strong>Lưu ý:</strong> Mật khẩu phải có ít nhất 8 ký tự và bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt để đảm bảo an toàn.
                 </p>
               </div>
 
