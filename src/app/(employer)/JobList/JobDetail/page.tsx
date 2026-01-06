@@ -198,7 +198,7 @@ function JobDetailContent_Inner() {
           title: 'Xác nhận kết thúc',
           message: 'Bạn có chắc chắn muốn kết thúc công việc này không?',
           confirmText: 'Kết thúc',
-          confirmClass: 'bg-blue-600 hover:bg-blue-700'
+          confirmClass: 'bg-green-600 hover:bg-green-700'
         };
       case 'hide':
         return {
@@ -483,7 +483,7 @@ function JobDetailContent_Inner() {
               onClick={() => setActiveTab('detail')}
               className={`pb-3 font-medium ${
                 activeTab === 'detail' 
-                  ? 'border-b-2 border-blue-600 text-blue-600' 
+                  ? 'border-b-2 border-green-600 text-green-600' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -493,7 +493,7 @@ function JobDetailContent_Inner() {
               onClick={() => setActiveTab('applicants')}
               className={`pb-3 font-medium ${
                 activeTab === 'applicants' 
-                  ? 'border-b-2 border-blue-600 text-blue-600' 
+                  ? 'border-b-2 border-green-600 text-green-600' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >

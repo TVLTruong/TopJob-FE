@@ -143,7 +143,7 @@ export default function SettingsPage() {
                 onClick={() => setActiveTab('account')}
                 className={`pb-4 px-1 text-sm font-medium transition border-b-2 ${
                   activeTab === 'account'
-                    ? 'border-blue-600 text-blue-600'
+                    ? 'border-green-600 text-green-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -153,7 +153,7 @@ export default function SettingsPage() {
                 onClick={() => setActiveTab('password')}
                 className={`pb-4 px-1 text-sm font-medium transition border-b-2 ${
                   activeTab === 'password'
-                    ? 'border-blue-600 text-blue-600'
+                    ? 'border-green-600 text-green-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -190,7 +190,7 @@ export default function SettingsPage() {
                   name="fullName"
                   value={accountInfo.fullName}
                   onChange={handleAccountInfoChange}
-                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${accountErrors.fullName ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${accountErrors.fullName ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                   placeholder="Nhập tên của bạn"
                 />
                 <p
@@ -211,7 +211,7 @@ export default function SettingsPage() {
                   name="email"
                   value={accountInfo.email}
                   onChange={handleAccountInfoChange}
-                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${accountErrors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${accountErrors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                   placeholder="Nhập email công việc"
                 />
                 <p
@@ -232,7 +232,7 @@ export default function SettingsPage() {
                   name="position"
                   value={accountInfo.position}
                   onChange={handleAccountInfoChange}
-                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${accountErrors.position ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${accountErrors.position ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                   placeholder="Nhập chức vụ của bạn"
                 />
                 <p
@@ -253,7 +253,7 @@ export default function SettingsPage() {
                   name="phone"
                   value={accountInfo.phone}
                   onChange={handleAccountInfoChange}
-                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${accountErrors.phone ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${accountErrors.phone ? 'border-red-500 focus:ring-red-200' : 'border-gray-300'}`}
                   placeholder="Nhập số điện thoại"
                 />
                 <p
@@ -266,7 +266,7 @@ export default function SettingsPage() {
 
               <button
                 onClick={handleSaveAccountClick}
-                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
               >
                 <Save className="w-4 h-4" />
                 Lưu thay đổi
@@ -279,7 +279,7 @@ export default function SettingsPage() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                <Lock className="w-5 h-5 text-blue-600" />
+                <Lock className="w-5 h-5 text-green-600" />
                 Đổi mật khẩu
               </h2>
               <p className="text-sm text-gray-600 mt-1">Cập nhật mật khẩu để bảo mật tài khoản</p>
@@ -296,7 +296,7 @@ export default function SettingsPage() {
                     name="currentPassword"
                     value={passwordInfo.currentPassword}
                     onChange={handlePasswordChange}
-                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12 ${passwordErrors.currentPassword ? 'border-red-500' : 'border-gray-300'}`}
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-12 ${passwordErrors.currentPassword ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="Nhập mật khẩu hiện tại"
                   />
                   <button
@@ -325,7 +325,7 @@ export default function SettingsPage() {
                     name="newPassword"
                     value={passwordInfo.newPassword}
                     onChange={handlePasswordChange}
-                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12 ${passwordErrors.newPassword ? 'border-red-500' : 'border-gray-300'}`}
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-12 ${passwordErrors.newPassword ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
                   />
                   <button
@@ -354,7 +354,7 @@ export default function SettingsPage() {
                     name="confirmPassword"
                     value={passwordInfo.confirmPassword}
                     onChange={handlePasswordChange}
-                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12 ${passwordErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-12 ${passwordErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="Nhập lại mật khẩu mới"
                   />
                   <button
@@ -373,15 +373,15 @@ export default function SettingsPage() {
                 </p>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-800">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p className="text-sm text-green-800">
                   <strong>Lưu ý:</strong> Mật khẩu phải có ít nhất 6 ký tự và nên bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt để đảm bảo an toàn.
                 </p>
               </div>
 
               <button
                 onClick={handleChangePasswordClick}
-                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
               >
                 <Lock className="w-4 h-4" />
                 Đổi mật khẩu
