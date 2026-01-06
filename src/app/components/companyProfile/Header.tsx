@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEmployerProfile } from '@/contexts/EmployerProfileContext';
+import { useEmployerProfile } from '@/app/(employer)/companyProfilePage/page';
 import JobFormModal from '@/app/components/job/JobFormModal';
 import Toast from '@/app/components/profile/Toast';
 import type { JobDetailData } from '@/app/components/job/JobDetailContents';
