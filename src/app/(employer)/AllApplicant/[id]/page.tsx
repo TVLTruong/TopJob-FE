@@ -173,13 +173,6 @@ export default function ApplicantDetailPage() {
                 <p className="text-gray-600 text-sm mb-4">{candidateData.title || 'Ứng viên'}</p>
               </div>
 
-              <div className="space-y-3 mb-6">
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Trình độ kinh nghiệm</p>
-                  <p className="font-medium">{candidateData.experienceLevel || 'Chưa cập nhật'}</p>
-                  <p className="text-sm text-gray-600">{candidateData.experienceYears ? `${candidateData.experienceYears} năm kinh nghiệm` : ''}</p>
-                </div>
-              </div>
 
               {/* Status Progress Bar */}
               <div>
@@ -296,12 +289,6 @@ export default function ApplicantDetailPage() {
                           >
                             {candidateData.personalUrl}
                           </a>
-                        </div>
-                      )}
-                      {getFullAddress() && (
-                        <div className="col-span-2">
-                          <h4 className="text-sm text-gray-500 mb-1">Địa chỉ</h4>
-                          <p className="font-medium whitespace-pre-line">{getFullAddress()}</p>
                         </div>
                       )}
                     </div>
