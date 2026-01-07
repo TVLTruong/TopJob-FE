@@ -29,6 +29,11 @@ export default function AdminSidebar() {
       label: 'Duyệt tin tuyển dụng'
     },
     {
+      href: '/job-management',
+      icon: Briefcase,
+      label: 'Quản lý tin tuyển dụng'
+    },
+    {
       href: '/account-management',
       icon: Users,
       label: 'Quản lý tài khoản'
