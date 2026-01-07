@@ -24,6 +24,26 @@ const getAuthHeaders = () => {
   };
 };
 
+// ==================== DASHBOARD APIs ====================
+
+// Get dashboard statistics
+export const getDashboardStats = async () => {
+  try {
+    console.log('API_BASE_URL:', API_BASE_URL);
+    console.log('Full URL:', `${API_BASE_URL}/admin/dashboard/stats`);
+    console.log('Headers:', getAuthHeaders());
+    
+    const response = await axios.get(
+      `${API_BASE_URL}/admin/dashboard/stats`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    throw error;
+  }
+};
+
 // ==================== INTERFACES ====================
 
 export interface EmployerApprovalPayload {
@@ -222,12 +242,26 @@ export const getEmployerAccounts = async (
     params.append('limit', limit.toString());
 
     const response = await axios.get(
-      `${API_BASE_URL}/admin/accounts/employers?${params.toString()}`,
+      `${API_BASE_URL}/admin/employers?${params.toString()}`,
       { headers: getAuthHeaders() }
     );
     return response.data;
   } catch (error) {
     console.error('Error fetching employer accounts:', error);
+    throw error;
+  }
+};
+
+// Get employer detail
+export const getEmployerDetail = async (employerId: string) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/admin/employers/${employerId}`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching employer detail:', error);
     throw error;
   }
 };
@@ -245,7 +279,7 @@ export const getCandidateAccounts = async (
     params.append('limit', limit.toString());
 
     const response = await axios.get(
-      `${API_BASE_URL}/admin/accounts/candidates?${params.toString()}`,
+      `${API_BASE_URL}/admin/candidates?${params.toString()}`,
       { headers: getAuthHeaders() }
     );
     return response.data;
@@ -255,39 +289,122 @@ export const getCandidateAccounts = async (
   }
 };
 
-// Toggle account lock/unlock
-export const toggleAccountLock = async (accountId: string, accountType: 'employer' | 'candidate') => {
+// Get candidate detail
+export const getCandidateDetail = async (candidateId: string) => {
   try {
-    const endpoint = accountType === 'employer' 
-      ? `${API_BASE_URL}/admin/accounts/employers/${accountId}/toggle-lock`
-      : `${API_BASE_URL}/admin/accounts/candidates/${accountId}/toggle-lock`;
-    
+    const response = await axios.get(
+      `${API_BASE_URL}/admin/candidates/${candidateId}`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching candidate detail:', error);
+    throw error;
+  }
+};
+
+// Ban employer account
+export const banEmployer = async (employerId: string, reason: string) => {
+  try {
     const response = await axios.post(
-      endpoint,
+      `${API_BASE_URL}/admin/employers/${employerId}/ban`,
+      { reason },
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error banning employer:', error);
+    throw error;
+  }
+};
+
+// Unban employer account
+export const unbanEmployer = async (employerId: string) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/admin/employers/${employerId}/unban`,
       {},
       { headers: getAuthHeaders() }
     );
     return response.data;
   } catch (error) {
-    console.error('Error toggling account lock:', error);
+    console.error('Error unbanning employer:', error);
     throw error;
   }
 };
 
-// Delete account
-export const deleteAccount = async (accountId: string, accountType: 'employer' | 'candidate') => {
+// Delete employer account
+export const deleteEmployer = async (employerId: string) => {
   try {
-    const endpoint = accountType === 'employer'
-      ? `${API_BASE_URL}/admin/accounts/employers/${accountId}`
-      : `${API_BASE_URL}/admin/accounts/candidates/${accountId}`;
-    
     const response = await axios.delete(
-      endpoint,
+      `${API_BASE_URL}/admin/employers/${employerId}`,
       { headers: getAuthHeaders() }
     );
     return response.data;
   } catch (error) {
-    console.error('Error deleting account:', error);
+    console.error('Error deleting employer:', error);
+    throw error;
+  }
+};
+
+// Ban candidate account
+export const banCandidate = async (candidateId: string, reason: string) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/admin/candidates/${candidateId}/ban`,
+      { reason },
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error banning candidate:', error);
+    throw error;
+  }
+};
+
+// Unban candidate account
+export const unbanCandidate = async (candidateId: string) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/admin/candidates/${candidateId}/unban`,
+      {},
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error unbanning candidate:', error);
+    throw error;
+  }
+};
+
+// Update candidate information
+export const updateCandidate = async (
+  candidateId: string,
+  data: { fullName?: string; phoneNumber?: string; avatarUrl?: string }
+) => {
+  try {
+    const response = await axios.put(
+      `${API_BASE_URL}/admin/candidates/${candidateId}`,
+      data,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error updating candidate:', error);
+    throw error;
+  }
+};
+
+// Delete candidate account
+export const deleteCandidate = async (candidateId: string) => {
+  try {
+    const response = await axios.delete(
+      `${API_BASE_URL}/admin/candidates/${candidateId}`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting candidate:', error);
     throw error;
   }
 };

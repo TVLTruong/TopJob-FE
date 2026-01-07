@@ -1,66 +1,63 @@
 'use client'
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Users, Briefcase, FileCheck, Clock, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart } from 'recharts';
+import { getDashboardStats } from '@/utils/api/admin-api';
 
 export default function AdminDashboard() {
-  // Dữ liệu cho biểu đồ 4 tháng gần nhất - Người dùng
-  const userGrowthData = [
-    { month: 'Tháng 9', candidates: 92, employers: 28 },
-    { month: 'Tháng 10', candidates: 89, employers: 24 },
-    { month: 'Tháng 11', candidates: 105, employers: 31 },
-    { month: 'Tháng 12', candidates: 78, employers: 22 },
-  ];
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Dữ liệu cho biểu đồ 4 tháng gần nhất - Tin đăng
-  const jobPostingData = [
-    { month: 'Tháng 9', active: 82 },
-    { month: 'Tháng 10', active: 89 },
-    { month: 'Tháng 11', active: 108 },
-    { month: 'Tháng 12', active: 95 },
-  ];
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
 
-  const totalAccounts = 122 + 458; // employers + candidates
-  const totalCandidates = 458;
-  const totalEmployers = 122;
-  const newEmployersThisMonth = 22; // New employers in current month
-  const pendingEmployers = 18;
-  const totalJobPostings = 324;
-  const newJobPostingsThisMonth = 95; // New job postings in current month
-  const pendingJobPostings = 24;
-
-  const stats = [
-    {
-      title: 'Tin đăng mới',
-      count: 156,
-      icon: Briefcase,
-      color: 'bg-blue-100 text-blue-600',
-      description: 'PENDING & ACTIVE'
-    },
-    {
-      title: 'Tổng hồ sơ NTD',
-      count: 122,
-      icon: Users,
-      color: 'bg-purple-100 text-purple-600',
-      description: 'Đã đăng ký'
-    },
-    {
-      title: 'Hồ sơ NTD chờ duyệt',
-      count: 18,
-      icon: Clock,
-      color: 'bg-orange-100 text-orange-600',
-      href: '/employer-approval'
-    },
-    {
-      title: 'Tin tuyển dụng chờ duyệt',
-      count: 24,
-      icon: FileCheck,
-      color: 'bg-green-100 text-green-600',
-      href: '/job-posting-approval'
+  const fetchDashboardStats = async () => {
+    try {
+      const data = await getDashboardStats();
+      setStats(data);
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  if (loading) {
+    return (
+      <div className="p-8 space-y-8 bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="p-8 space-y-8 bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Không thể tải dữ liệu thống kê</p>
+        </div>
+      </div>
+    );
+  }
+
+  const {
+    totalAccounts = 0,
+    totalCandidates = 0,
+    totalEmployers = 0,
+    newEmployersThisMonth = 0,
+    pendingEmployers = 0,
+    totalJobPostings = 0,
+    newJobPostingsThisMonth = 0,
+    pendingJobPostings = 0,
+    userGrowthData = [],
+    jobPostingData = [],
+  } = stats;
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -151,11 +148,6 @@ export default function AdminDashboard() {
               <Legend 
                 wrapperStyle={{ paddingTop: '20px' }}
                 iconType="circle"
-                payload={[
-                  { value: 'Ứng viên', type: 'square', color: '#fb923c' },
-                  { value: 'Nhà tuyển dụng', type: 'square', color: '#a855f7' },
-                  { value: 'Tổng', type: 'line', color: '#3b82f6' }
-                ]}
               />
               <Bar 
                 dataKey="employers" 
@@ -281,10 +273,6 @@ export default function AdminDashboard() {
               <Legend 
                 wrapperStyle={{ paddingTop: '20px' }}
                 iconType="circle"
-                payload={[
-                  { value: 'Đang hoạt động', type: 'square', color: '#22c55e' },
-                  { value: 'Xu hướng', type: 'line', color: '#3b82f6' }
-                ]}
               />
               <Bar 
                 dataKey="active" 

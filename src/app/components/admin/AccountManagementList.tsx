@@ -4,264 +4,29 @@ import { Search, ChevronLeft, ChevronRight, Lock, LockOpen, Trash2, Users, Filte
 import Toast from '@/app/components/profile/Toast';
 import AccountDetailModal from './AccountDetailModal';
 import EmployerDetailModal from './EmployerDetailModal';
+import {
+  getEmployerAccounts,
+  getCandidateAccounts,
+  getEmployerDetail,
+  getCandidateDetail,
+  banEmployer,
+  unbanEmployer,
+  deleteEmployer,
+  banCandidate,
+  unbanCandidate,
+  deleteCandidate,
+} from '@/utils/api/admin-api';
 
 interface Account {
   id: string;
   name: string;
   email: string;
   phone?: string;
+  avatar?: string;
   isActive: boolean;
   createdAt: string;
   lastLogin?: string;
 }
-
-// Mock employer profile data with full details
-const MOCK_EMPLOYER_PROFILES: Record<string, any> = {
-  '1': {
-    id: 1,
-    companyName: 'Công ty TNHH FPT Software',
-    companyLogo: 'https://via.placeholder.com/150',
-    email: 'hr@fpt-software.com',
-    phone: '024 7300 8800',
-    taxCode: '0100861959',
-    status: 'approved' as const,
-    createdDate: '15/01/2024',
-    registrationType: 'new' as const,
-    description: 'FPT Software là công ty thành viên của Tập đoàn FPT. Được thành lập từ năm 1999, FPT Software hiện là công ty cung cấp dịch vụ công nghệ thông tin lớn nhất Việt Nam với hơn 28,000 nhân viên.',
-    address: 'Tòa nhà FPT, Đường Duy Tân, Phường Dịch Vọng Hậu, Quận Cầu Giấy, Hà Nội',
-    website: 'https://fptsoftware.com',
-    foundingDate: '1999-01-13',
-    industries: ['Công nghệ thông tin', 'Phần mềm', 'Dịch vụ IT'],
-    technologies: ['Java', 'React', 'Node.js', 'Python', 'AI/ML', 'Cloud Computing'],
-    benefits: [
-      'Lương thưởng cạnh tranh, đánh giá tăng lương 2 lần/năm',
-      'Chế độ bảo hiểm đầy đủ theo quy định',
-      'Du lịch công ty hàng năm',
-      'Đào tạo và phát triển kỹ năng chuyên môn',
-      'Môi trường làm việc năng động, sáng tạo'
-    ],
-    contactEmail: 'tuyendung@fpt.com.vn',
-    facebookUrl: 'https://facebook.com/fptsoftware',
-    linkedlnUrl: 'https://linkedin.com/company/fpt-software',
-    xUrl: 'https://twitter.com/fptsoftware',
-    locations: [
-      {
-        province: 'Hà Nội',
-        district: 'Cầu Giấy',
-        detailedAddress: 'Tòa nhà FPT, Đường Duy Tân, Phường Dịch Vọng Hậu',
-        isHeadquarters: true
-      },
-      {
-        province: 'Hồ Chí Minh',
-        district: 'Quận 7',
-        detailedAddress: 'Lô E2a-7, Đường D1, Khu Công nghệ cao',
-        isHeadquarters: false
-      }
-    ]
-  },
-  '2': {
-    id: 2,
-    companyName: 'Công ty Cổ phần Viettel Solutions',
-    companyLogo: 'https://via.placeholder.com/150',
-    email: 'tuyendung@viettel.com.vn',
-    phone: '024 6273 9999',
-    taxCode: '0100109106',
-    status: 'approved' as const,
-    createdDate: '20/02/2024',
-    registrationType: 'new' as const,
-    description: 'Viettel Solutions là công ty công nghệ thông tin hàng đầu tại Việt Nam, chuyên cung cấp các giải pháp chuyển đổi số toàn diện cho doanh nghiệp và chính phủ.',
-    address: 'Tòa nhà Viettel, Đường Phạm Hùng, Mỹ Đình, Nam Từ Liêm, Hà Nội',
-    website: 'https://viettelsolutions.vn',
-    foundingDate: '2015-06-01',
-    industries: ['Công nghệ thông tin', 'Chuyển đổi số', 'Viễn thông'],
-    technologies: ['Java', 'Angular', '.NET', 'Oracle', 'Big Data', 'IoT'],
-    benefits: [
-      'Mức lương hấp dẫn với các chế độ thưởng',
-      'Bảo hiểm sức khỏe cao cấp cho nhân viên và gia đình',
-      'Cơ hội đào tạo và phát triển nghề nghiệp',
-      'Môi trường làm việc chuyên nghiệp'
-    ],
-    contactEmail: 'hr@viettelsolutions.vn',
-    linkedlnUrl: 'https://linkedin.com/company/viettel-solutions',
-    locations: [
-      {
-        province: 'Hà Nội',
-        district: 'Nam Từ Liêm',
-        detailedAddress: 'Tòa nhà Viettel, Đường Phạm Hùng, Mỹ Đình',
-        isHeadquarters: true
-      }
-    ]
-  }
-};
-
-// Mock data
-const MOCK_EMPLOYERS: Account[] = [
-  {
-    id: '1',
-    name: 'Công ty TNHH FPT Software',
-    email: 'hr@fpt-software.com',
-    phone: '024 7300 8800',
-    isActive: true,
-    createdAt: '15/01/2024',
-    lastLogin: '29/12/2024',
-  },
-  {
-    id: '2',
-    name: 'Công ty Cổ phần Viettel Solutions',
-    email: 'tuyendung@viettel.com.vn',
-    phone: '024 6273 9999',
-    isActive: true,
-    createdAt: '20/02/2024',
-    lastLogin: '28/12/2024',
-  },
-  {
-    id: '3',
-    name: 'Công ty TNHH VNG Corporation',
-    email: 'recruitment@vng.com.vn',
-    phone: '028 7300 8000',
-    isActive: false,
-    createdAt: '05/03/2024',
-    lastLogin: '15/12/2024',
-  },
-  {
-    id: '4',
-    name: 'Tập đoàn Công nghệ MISA',
-    email: 'hr@misa.com.vn',
-    phone: '024 3562 8868',
-    isActive: true,
-    createdAt: '10/04/2024',
-    lastLogin: '29/12/2024',
-  },
-  {
-    id: '5',
-    name: 'Công ty CP Giải pháp Công nghệ TMA',
-    email: 'jobs@tma.com.vn',
-    phone: '028 3997 2222',
-    isActive: true,
-    createdAt: '25/04/2024',
-    lastLogin: '27/12/2024',
-  },
-  {
-    id: '6',
-    name: 'Ngân hàng TMCP Techcombank',
-    email: 'hr.tech@techcombank.com.vn',
-    phone: '1800 588 822',
-    isActive: true,
-    createdAt: '01/05/2024',
-    lastLogin: '29/12/2024',
-  },
-  {
-    id: '7',
-    name: 'Công ty TNHH Samsung Electronics',
-    email: 'careers@samsung.vn',
-    phone: '1800 588 889',
-    isActive: false,
-    createdAt: '15/06/2024',
-    lastLogin: '10/12/2024',
-  },
-  {
-    id: '8',
-    name: 'Tập đoàn Vingroup',
-    email: 'tuyendung@vingroup.net',
-    phone: '024 3974 9999',
-    isActive: true,
-    createdAt: '20/07/2024',
-    lastLogin: '28/12/2024',
-  },
-];
-
-const MOCK_CANDIDATES: Account[] = [
-  {
-    id: '1',
-    name: 'Nguyễn Văn An',
-    email: 'nguyenvanan@gmail.com',
-    phone: '0912345678',
-    isActive: true,
-    createdAt: '10/01/2024',
-    lastLogin: '29/12/2024',
-  },
-  {
-    id: '2',
-    name: 'Trần Thị Bình',
-    email: 'tranthibinh@yahoo.com',
-    phone: '0923456789',
-    isActive: true,
-    createdAt: '15/02/2024',
-    lastLogin: '28/12/2024',
-  },
-  {
-    id: '3',
-    name: 'Lê Hoàng Cường',
-    email: 'lehoangcuong@outlook.com',
-    phone: '0934567890',
-    isActive: false,
-    createdAt: '20/03/2024',
-    lastLogin: '20/12/2024',
-  },
-  {
-    id: '4',
-    name: 'Phạm Minh Đức',
-    email: 'phamminhduc@gmail.com',
-    phone: '0945678901',
-    isActive: true,
-    createdAt: '25/03/2024',
-    lastLogin: '29/12/2024',
-  },
-  {
-    id: '5',
-    name: 'Hoàng Thị Em',
-    email: 'hoangthiem@yahoo.com',
-    phone: '0956789012',
-    isActive: true,
-    createdAt: '05/04/2024',
-    lastLogin: '27/12/2024',
-  },
-  {
-    id: '6',
-    name: 'Vũ Đức Giang',
-    email: 'vuducgiang@gmail.com',
-    phone: '0967890123',
-    isActive: false,
-    createdAt: '10/05/2024',
-    lastLogin: '15/12/2024',
-  },
-  {
-    id: '7',
-    name: 'Đỗ Thị Hà',
-    email: 'dothiha@outlook.com',
-    phone: '0978901234',
-    isActive: true,
-    createdAt: '20/06/2024',
-    lastLogin: '29/12/2024',
-  },
-  {
-    id: '8',
-    name: 'Bùi Văn Hùng',
-    email: 'buivanhung@gmail.com',
-    phone: '0989012345',
-    isActive: true,
-    createdAt: '25/07/2024',
-    lastLogin: '28/12/2024',
-  },
-  {
-    id: '9',
-    name: 'Ngô Thị Lan',
-    email: 'ngothilan@yahoo.com',
-    phone: '0990123456',
-    isActive: true,
-    createdAt: '30/08/2024',
-    lastLogin: '29/12/2024',
-  },
-  {
-    id: '10',
-    name: 'Đinh Văn Khoa',
-    email: 'dinhvankhoa@gmail.com',
-    phone: '0901234567',
-    isActive: false,
-    createdAt: '05/09/2024',
-    lastLogin: '18/12/2024',
-  },
-];
 
 export default function AccountManagementList() {
   const [activeTab, setActiveTab] = useState<'employer' | 'candidate'>('employer');
@@ -269,8 +34,9 @@ export default function AccountManagementList() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'locked'>('all');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [employerAccounts, setEmployerAccounts] = useState<Account[]>(MOCK_EMPLOYERS);
-  const [candidateAccounts, setCandidateAccounts] = useState<Account[]>(MOCK_CANDIDATES);
+  const [employerAccounts, setEmployerAccounts] = useState<Account[]>([]);
+  const [candidateAccounts, setCandidateAccounts] = useState<Account[]>([]);
+  const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -283,11 +49,72 @@ export default function AccountManagementList() {
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [showEmployerDetailModal, setShowEmployerDetailModal] = useState(false);
   const [selectedEmployerProfile, setSelectedEmployerProfile] = useState<any | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
 
   const showToast = (message: string, type: 'error' | 'success' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
+
+  // Fetch accounts data
+  const fetchAccounts = async () => {
+    setLoading(true);
+    try {
+      const response = activeTab === 'employer' 
+        ? await getEmployerAccounts(searchQuery, currentPage, 10)
+        : await getCandidateAccounts(searchQuery, currentPage, 10);
+      
+      if (response?.data) {
+        const mappedData = response.data.map((item: any) => ({
+          id: item.id,
+          name: activeTab === 'employer' 
+            ? (item.employer?.companyName || 'N/A')
+            : (item.candidate?.fullName || 'N/A'),
+          email: item.email || 'N/A',
+          phone: activeTab === 'employer'
+            ? (item.employer?.phoneNumber || '')
+            : (item.candidate?.phoneNumber || ''),
+          avatar: activeTab === 'employer'
+            ? (item.employer?.logoUrl || '')
+            : (item.candidate?.avatarUrl || ''),
+          isActive: item.status === 'active',
+          createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString('vi-VN') : 'N/A',
+          lastLogin: item.lastLogin ? new Date(item.lastLogin).toLocaleDateString('vi-VN') : undefined,
+        }));
+
+        if (activeTab === 'employer') {
+          setEmployerAccounts(mappedData);
+        } else {
+          setCandidateAccounts(mappedData);
+        }
+        
+        // Backend returns meta: { total, page, limit, totalPages }
+        setTotalCount(response.meta?.total || response.total || response.data.length);
+      }
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Không thể tải danh sách tài khoản', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch accounts when tab, search, or page changes
+  useEffect(() => {
+    fetchAccounts();
+  }, [activeTab, currentPage]);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (currentPage === 1) {
+        fetchAccounts();
+      } else {
+        setCurrentPage(1);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const accounts = activeTab === 'employer' ? employerAccounts : candidateAccounts;
   // Tổng số tài khoản hoạt động bao gồm cả NTD và ứng viên
@@ -305,68 +132,104 @@ export default function AccountManagementList() {
     return option?.label || 'Tất cả';
   };
 
-  const handleToggleLock = (accountId: string, currentStatus: boolean) => {
-    if (activeTab === 'employer') {
-      setEmployerAccounts(prev =>
-        prev.map(acc =>
-          acc.id === accountId ? { ...acc, isActive: !currentStatus } : acc
-        )
-      );
-    } else {
-      setCandidateAccounts(prev =>
-        prev.map(acc =>
-          acc.id === accountId ? { ...acc, isActive: !currentStatus } : acc
-        )
-      );
-    }
-    showToast(currentStatus ? 'Đã khóa tài khoản' : 'Đã mở khóa tài khoản', 'success');
-    setConfirmModal(null);
-  };
-
-  const handleDelete = (accountId: string) => {
-    if (activeTab === 'employer') {
-      setEmployerAccounts(prev => prev.filter(acc => acc.id !== accountId));
-    } else {
-      setCandidateAccounts(prev => prev.filter(acc => acc.id !== accountId));
-    }
-    showToast('Đã xóa tài khoản', 'success');
-    setConfirmModal(null);
-  };
-
-  const handleViewDetails = (account: Account) => {
-    if (activeTab === 'employer') {
-      // For employers: show full EmployerDetailModal with mock data
-      const employerProfile = MOCK_EMPLOYER_PROFILES[account.id];
-      if (employerProfile) {
-        setSelectedEmployerProfile(employerProfile);
-        setShowEmployerDetailModal(true);
+  const handleToggleLock = async (accountId: string, currentStatus: boolean) => {
+    try {
+      if (currentStatus) {
+        // Ban/Lock account
+        const reason = 'Khóa bởi quản trị viên';
+        if (activeTab === 'employer') {
+          await banEmployer(accountId, reason);
+        } else {
+          await banCandidate(accountId, reason);
+        }
+        showToast('Đã khóa tài khoản', 'success');
       } else {
-        showToast('Không tìm thấy thông tin chi tiết nhà tuyển dụng', 'error');
+        // Unban/Unlock account
+        if (activeTab === 'employer') {
+          await unbanEmployer(accountId);
+        } else {
+          await unbanCandidate(accountId);
+        }
+        showToast('Đã mở khóa tài khoản', 'success');
       }
-    } else {
-      // For candidates: show simple AccountDetailModal
-      setSelectedAccount(account);
-      setShowDetailModal(true);
+      
+      // Refresh the list
+      await fetchAccounts();
+      setConfirmModal(null);
+    } catch (error: any) {
+      showToast(error?.response?.data?.message || 'Không thể thực hiện thao tác', 'error');
+    }
+  };
+
+  const handleDelete = async (accountId: string) => {
+    try {
+      if (activeTab === 'employer') {
+        await deleteEmployer(accountId);
+      } else {
+        await deleteCandidate(accountId);
+      }
+      showToast('Đã xóa tài khoản', 'success');
+      
+      // Refresh the list
+      await fetchAccounts();
+      setConfirmModal(null);
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      showToast(error?.response?.data?.message || 'Không thể xóa tài khoản', 'error');
+    }
+  };
+
+  const handleViewDetails = async (account: Account) => {
+    try {
+      if (activeTab === 'employer') {
+        // Fetch employer details
+        const employerData = await getEmployerDetail(account.id);
+        if (employerData) {
+          // Transform API response to match EmployerDetailModal props
+          const transformedData = {
+            id: employerData.profile?.id || employerData.user?.id,
+            companyName: employerData.profile?.companyName || 'N/A',
+            companyLogo: employerData.profile?.logoUrl || '',
+            email: employerData.user?.email || account.email,
+            phone: employerData.profile?.contactPhone || account.phone || '',
+            status: employerData.profile?.status === 'approved' ? 'approved' : 'pending_new',
+            createdDate: employerData.user?.createdAt 
+              ? new Date(employerData.user.createdAt).toLocaleDateString('vi-VN')
+              : account.createdAt,
+            registrationType: 'new' as const,
+            description: employerData.profile?.description || '',
+            website: employerData.profile?.website || '',
+            foundingDate: employerData.profile?.foundedDate 
+              ? employerData.profile.foundedDate.toString()
+              : '',
+            contactEmail: employerData.profile?.contactEmail || employerData.user?.email || '',
+          };
+          setSelectedEmployerProfile(transformedData);
+          setShowEmployerDetailModal(true);
+        }
+      } else {
+        // For candidates: show simple AccountDetailModal
+        setSelectedAccount(account);
+        setShowDetailModal(true);
+      }
+    } catch (error: any) {
+      console.error('Error fetching account details:', error);
+      showToast(error?.response?.data?.message || 'Không thể tải thông tin chi tiết', 'error');
     }
   };
 
   const filteredAccounts = useMemo(() => {
     return accounts.filter(acc => {
-      const matchesSearch = acc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           acc.email.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === 'all' ||
                            (statusFilter === 'active' && acc.isActive) ||
                            (statusFilter === 'locked' && !acc.isActive);
-      return matchesSearch && matchesStatus;
+      return matchesStatus;
     });
-  }, [accounts, searchQuery, statusFilter]);
+  }, [accounts, statusFilter]);
 
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(filteredAccounts.length / itemsPerPage);
-  const paginatedAccounts = filteredAccounts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+  const paginatedAccounts = filteredAccounts;
 
   return (
     <div className="bg-white rounded-lg border">
@@ -544,9 +407,6 @@ export default function AccountManagementList() {
                 Email
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Số điện thoại
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Ngày tạo
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -558,7 +418,16 @@ export default function AccountManagementList() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {paginatedAccounts.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                    Đang tải...
+                  </div>
+                </td>
+              </tr>
+            ) : paginatedAccounts.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                   Không tìm thấy tài khoản
@@ -571,7 +440,6 @@ export default function AccountManagementList() {
                     <div className="font-medium text-gray-900">{account.name}</div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{account.email}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{account.phone || '-'}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{account.createdAt}</td>
                   <td className="px-6 py-4">
                     <span
@@ -638,14 +506,20 @@ export default function AccountManagementList() {
       {/* Pagination - Always show */}
       <div className="flex items-center justify-between px-6 py-4 border-t">
         <div className="text-sm text-gray-500">
-          Hiển thị {filteredAccounts.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} -{' '}
-          {Math.min(currentPage * itemsPerPage, filteredAccounts.length)} trong tổng số{' '}
-          {filteredAccounts.length} tài khoản
+          {loading ? (
+            'Đang tải...'
+          ) : (
+            <>
+              Hiển thị {filteredAccounts.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} -{' '}
+              {Math.min(currentPage * itemsPerPage, totalCount)} trong tổng số{' '}
+              {totalCount} tài khoản
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
+            disabled={currentPage === 1 || loading}
             className="p-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -667,11 +541,12 @@ export default function AccountManagementList() {
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
+                disabled={loading}
                 className={`px-3 py-1 rounded-lg ${
                   currentPage === page
                     ? 'bg-blue-600 text-white'
                     : 'hover:bg-gray-100 text-gray-700'
-                }`}
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {page}
               </button>
@@ -679,7 +554,7 @@ export default function AccountManagementList() {
           </div>
           <button
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages || totalPages === 0}
+            disabled={currentPage === totalPages || totalPages === 0 || loading}
             className="p-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronRight className="w-5 h-5" />
@@ -771,9 +646,6 @@ export default function AccountManagementList() {
             setShowEmployerDetailModal(false);
             setSelectedEmployerProfile(null);
           }}
-          onApprove={() => {}}
-          onReject={() => {}}
-          isViewOnly={true}
         />
       )}
     </div>

@@ -7,6 +7,7 @@ interface Account {
   name: string;
   email: string;
   phone?: string;
+  avatar?: string;
   isActive: boolean;
   createdAt: string;
   lastLogin?: string;
@@ -72,10 +73,14 @@ export default function AccountDetailModal({ account, accountType, onClose }: Ac
         <div className="p-6 space-y-6">
           {/* Account Header */}
           <div className="flex items-start gap-4 pb-6 border-b border-gray-200">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <span className="text-3xl font-bold text-white">
-                {account.name.charAt(0).toUpperCase()}
-              </span>
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {account.avatar ? (
+                <img src={account.avatar} alt={account.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-3xl font-bold text-white">
+                  {account.name.charAt(0).toUpperCase()}
+                </span>
+              )}
             </div>
             <div className="flex-1">
               <h3 className="text-2xl font-bold text-gray-900 mb-2">{account.name}</h3>
