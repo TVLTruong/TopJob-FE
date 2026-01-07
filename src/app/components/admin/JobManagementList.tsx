@@ -16,7 +16,7 @@ interface JobPostingAPI {
   salaryMax?: number;
   isNegotiable?: boolean;
   experienceLevel?: string;
-  status: 'PENDING_APPROVAL' | 'ACTIVE' | 'REJECTED' | 'HIDDEN' | 'INACTIVE' | 'REMOVED_BY_ADMIN' | 'REMOVED_BY_EMPLOYER';
+  status: 'pending_approval' | 'active' | 'rejected' | 'hidden' | 'expired' | 'closed' | 'draft' | 'removed_by_admin' | 'removed_by_employer';
   createdAt: string;
   description?: string;
   requirements?: string[];
@@ -134,28 +134,30 @@ export default function JobManagementList() {
       
       // Map BE data to FE format
       const mappedJobs = response.data.map((job: JobPostingAPI) => {
-        // Convert BE status to FE status
+        // Convert BE status to FE status (backend returns lowercase snake_case)
         let feStatus: 'pending' | 'approved' | 'rejected' | 'hidden' | 'inactive' | 'removed_by_admin' | 'removed_by_employer';
         switch (job.status) {
-          case 'PENDING_APPROVAL':
+          case 'pending_approval':
             feStatus = 'pending';
             break;
-          case 'ACTIVE':
+          case 'active':
             feStatus = 'approved';
             break;
-          case 'REJECTED':
+          case 'rejected':
             feStatus = 'rejected';
             break;
-          case 'HIDDEN':
+          case 'hidden':
             feStatus = 'hidden';
             break;
-          case 'INACTIVE':
+          case 'expired':
+          case 'closed':
+          case 'draft':
             feStatus = 'inactive';
             break;
-          case 'REMOVED_BY_ADMIN':
+          case 'removed_by_admin':
             feStatus = 'removed_by_admin';
             break;
-          case 'REMOVED_BY_EMPLOYER':
+          case 'removed_by_employer':
             feStatus = 'removed_by_employer';
             break;
           default:
@@ -221,17 +223,18 @@ export default function JobManagementList() {
     inactive: { label: 'Không hoạt động', color: 'bg-gray-100 text-gray-600 border-gray-300' },
     removed_by_admin: { label: 'Đã xóa bởi Admin', color: 'bg-red-100 text-red-700 border-red-300' },
     removed_by_employer: { label: 'Đã xóa bởi NTD', color: 'bg-red-100 text-red-700 border-red-300' },
-  };
+  } as const;
 
   const filterOptions = [
     { value: 'all', label: 'Tất cả', count: totalCount },
-    { value: 'ACTIVE', label: 'Đang hoạt động', count: jobPostings.filter(j => j.status === 'approved').length },
-    { value: 'HIDDEN', label: 'Đã ẩn', count: jobPostings.filter(j => j.status === 'hidden').length },
-    { value: 'INACTIVE', label: 'Không hoạt động', count: jobPostings.filter(j => j.status === 'inactive').length },
-    { value: 'PENDING_APPROVAL', label: 'Chờ duyệt', count: jobPostings.filter(j => j.status === 'pending').length },
-    { value: 'REJECTED', label: 'Từ chối', count: jobPostings.filter(j => j.status === 'rejected').length },
-    { value: 'REMOVED_BY_ADMIN', label: 'Đã xóa bởi Admin', count: jobPostings.filter(j => j.status === 'removed_by_admin').length },
-    { value: 'REMOVED_BY_EMPLOYER', label: 'Đã xóa bởi NTD', count: jobPostings.filter(j => j.status === 'removed_by_employer').length },
+    { value: 'active', label: 'Đang hoạt động', count: jobPostings.filter(j => j.status === 'approved').length },
+    { value: 'pending_approval', label: 'Chờ duyệt', count: jobPostings.filter(j => j.status === 'pending').length },
+    { value: 'rejected', label: 'Từ chối', count: jobPostings.filter(j => j.status === 'rejected').length },
+    { value: 'hidden', label: 'Đã ẩn', count: jobPostings.filter(j => j.status === 'hidden').length },
+    { value: 'expired', label: 'Hết hạn', count: jobPostings.filter(j => j.status === 'inactive').length },
+    { value: 'closed', label: 'Đã đóng', count: jobPostings.filter(j => j.status === 'inactive').length },
+    { value: 'removed_by_admin', label: 'Đã xóa bởi Admin', count: jobPostings.filter(j => j.status === 'removed_by_admin').length },
+    { value: 'removed_by_employer', label: 'Đã xóa bởi NTD', count: jobPostings.filter(j => j.status === 'removed_by_employer').length },
   ];
 
   const filteredJobs = useMemo(() => {
@@ -273,7 +276,7 @@ export default function JobManagementList() {
 
   const handleToggleVisibility = async (job: JobPosting) => {
     try {
-      const newStatus = job.status === 'approved' ? 'HIDDEN' : 'ACTIVE';
+      const newStatus = job.status === 'approved' ? 'hidden' : 'active';
       await updateJobStatus(job.id.toString(), newStatus);
       showToast(
         job.status === 'approved' ? 'Đã ẩn tin tuyển dụng' : 'Đã hiển thị tin tuyển dụng',

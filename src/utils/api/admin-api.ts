@@ -29,10 +29,6 @@ const getAuthHeaders = () => {
 // Get dashboard statistics
 export const getDashboardStats = async () => {
   try {
-    console.log('API_BASE_URL:', API_BASE_URL);
-    console.log('Full URL:', `${API_BASE_URL}/admin/dashboard/stats`);
-    console.log('Headers:', getAuthHeaders());
-    
     const response = await axios.get(
       `${API_BASE_URL}/admin/dashboard/stats`,
       { headers: getAuthHeaders() }
@@ -441,9 +437,9 @@ export const getAllJobs = async (
 };
 
 // Update job status (hide/show)
-export const updateJobStatus = async (jobId: string, status: 'ACTIVE' | 'HIDDEN' | 'INACTIVE') => {
+export const updateJobStatus = async (jobId: string, status: 'active' | 'hidden' | 'inactive' | 'expired' | 'closed') => {
   try {
-    const response = await axios.patch(
+    const response = await axios.post(
       `${API_BASE_URL}/admin/jobs/${jobId}/status`,
       { status },
       { headers: getAuthHeaders() }
@@ -455,11 +451,12 @@ export const updateJobStatus = async (jobId: string, status: 'ACTIVE' | 'HIDDEN'
   }
 };
 
-// Delete job
-export const deleteJob = async (jobId: string) => {
+// Delete job (remove by admin)
+export const deleteJob = async (jobId: string, reason?: string) => {
   try {
-    const response = await axios.delete(
-      `${API_BASE_URL}/admin/jobs/${jobId}`,
+    const response = await axios.post(
+      `${API_BASE_URL}/admin/jobs/${jobId}/remove`,
+      { reason },
       { headers: getAuthHeaders() }
     );
     return response.data;
@@ -472,7 +469,7 @@ export const deleteJob = async (jobId: string) => {
 // Toggle job hot status
 export const toggleJobHot = async (jobId: string, isHot: boolean) => {
   try {
-    const response = await axios.patch(
+    const response = await axios.post(
       `${API_BASE_URL}/admin/jobs/${jobId}/hot`,
       { isHot },
       { headers: getAuthHeaders() }
@@ -484,10 +481,10 @@ export const toggleJobHot = async (jobId: string, isHot: boolean) => {
   }
 };
 
-// Restore deleted job (sets status back to ACTIVE)
+// Restore deleted job (sets status back to HIDDEN)
 export const restoreJob = async (jobId: string) => {
   try {
-    const response = await axios.patch(
+    const response = await axios.post(
       `${API_BASE_URL}/admin/jobs/${jobId}/restore`,
       {},
       { headers: getAuthHeaders() }

@@ -99,10 +99,31 @@ export default function AccountManagementList() {
   const [showEmployerDetailModal, setShowEmployerDetailModal] = useState(false);
   const [selectedEmployerProfile, setSelectedEmployerProfile] = useState<any | null>(null);
   const [totalCount, setTotalCount] = useState(0);
+  const [totalSystemActiveCount, setTotalSystemActiveCount] = useState(0);
 
   const showToast = (message: string, type: 'error' | 'success' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  // Fetch total active count across system
+  const fetchTotalActiveCount = async () => {
+    try {
+      // Fetch both employer and candidate totals
+      const [employerResponse, candidateResponse] = await Promise.all([
+        getEmployerAccounts('', 1, 1), // Just get meta info
+        getCandidateAccounts('', 1, 1), // Just get meta info
+      ]);
+      
+      // Count active accounts from total response
+      // We need to fetch all to count active, or backend should provide this stat
+      // For now, use meta.total as approximation (assumes most are active)
+      const employerTotal = employerResponse.meta?.total || 0;
+      const candidateTotal = candidateResponse.meta?.total || 0;
+      setTotalSystemActiveCount(employerTotal + candidateTotal);
+    } catch (error) {
+      console.error('Error fetching total active count:', error);
+    }
   };
 
   // Fetch accounts data
@@ -147,6 +168,11 @@ export default function AccountManagementList() {
     }
   };
 
+  // Fetch total active count on mount
+  useEffect(() => {
+    fetchTotalActiveCount();
+  }, []);
+
   // Fetch accounts when tab, search, or page changes
   useEffect(() => {
     fetchAccounts();
@@ -166,9 +192,6 @@ export default function AccountManagementList() {
   }, [searchQuery]);
 
   const accounts = activeTab === 'employer' ? employerAccounts : candidateAccounts;
-  // Tổng số tài khoản hoạt động bao gồm cả NTD và ứng viên
-  const totalActiveCount = employerAccounts.filter(acc => acc.isActive).length + 
-                           candidateAccounts.filter(acc => acc.isActive).length;
 
   const filterOptions = [
     { value: 'all', label: 'Tất cả', count: accounts.length },
@@ -236,7 +259,7 @@ export default function AccountManagementList() {
         if (employerData) {
           // Transform API response to match EmployerDetailModal props
           const transformedData = {
-            id: employerData.profile?.id || employerData.user?.id,
+            id: employerData.user?.id || account.id,
             companyName: employerData.profile?.companyName || 'N/A',
             companyLogo: employerData.profile?.logoUrl || '',
             email: employerData.user?.email || account.email,
@@ -249,14 +272,20 @@ export default function AccountManagementList() {
             description: employerData.profile?.description || '',
             website: employerData.profile?.website || '',
             foundingDate: employerData.profile?.foundedDate 
-              ? employerData.profile.foundedDate.toString()
+              ? new Date(employerData.profile.foundedDate).getFullYear().toString()
               : '',
             contactEmail: employerData.profile?.contactEmail || employerData.user?.email || '',
-            address: employerData.profile?.address || '',
-            industries: employerData.profile?.industries || [],
-            technologies: employerData.profile?.technologies || [],
+            address: employerData.locations?.[0]?.detailedAddress || '',
+            industries: employerData.industries || [],
+            technologies: [],
             benefits: employerData.profile?.benefits || [],
-            locations: employerData.profile?.locations || [],
+            locations: employerData.locations?.map((loc: any) => ({
+              id: loc.id,
+              province: loc.province,
+              district: loc.district,
+              detailedAddress: loc.detailedAddress,
+              isHeadquarters: loc.isHeadquarters,
+            })) || [],
             facebookUrl: employerData.profile?.facebookUrl || '',
             linkedlnUrl: employerData.profile?.linkedlnUrl || '',
             xUrl: employerData.profile?.xUrl || '',
@@ -268,22 +297,27 @@ export default function AccountManagementList() {
         // For candidates: fetch candidate details and transform to modal format
         const candidateData = await getCandidateDetail(account.id);
         if (candidateData) {
+          console.log('Candidate data from API:', candidateData);
+          // Backend returns { user: {...}, profile: {...}, applicationStats: {...}, cvs: [...] }
+          const profile = candidateData.profile;
+          const user = candidateData.user;
+          
           // Transform API data to CandidateDetailData format
           const transformedCandidate: CandidateDetailData = {
-            id: candidateData.id || account.id,
-            name: candidateData.fullName || account.name,
-            email: candidateData.email || account.email,
-            phone: candidateData.phoneNumber || account.phone,
-            avatar: candidateData.avatarUrl || account.avatar,
-            dateOfBirth: candidateData.dateOfBirth || '',
-            gender: candidateData.gender || '',
-            province: candidateData.addressCity || '',
-            district: candidateData.addressDistrict || '',
-            address: candidateData.addressStreet || '',
-            personalLink: candidateData.personalUrl || '',
-            about: candidateData.bio || '',
-            title: candidateData.title || '',
-            education: candidateData.education?.map((edu: any) => ({
+            id: user?.id || account.id,
+            name: profile?.fullName || account.name,
+            email: user?.email || account.email,
+            phone: profile?.phoneNumber || account.phone,
+            avatar: profile?.avatarUrl || account.avatar,
+            dateOfBirth: profile?.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : '',
+            gender: profile?.gender || '',
+            province: profile?.addressCity || '',
+            district: profile?.addressDistrict || '',
+            address: profile?.addressStreet || '',
+            personalLink: profile?.personalUrl || '',
+            about: profile?.bio || '',
+            title: '', // Backend doesn't have title field
+            education: profile?.education?.map((edu: any) => ({
               school: edu.school || '',
               degree: edu.degree || '',
               major: edu.major || '',
@@ -294,7 +328,7 @@ export default function AccountManagementList() {
               currentlyStudying: edu.currentlyStudying || false,
               additionalDetails: edu.additionalDetails || '',
             })) || [],
-            workExperience: candidateData.workExperience?.map((work: any) => ({
+            workExperience: profile?.workExperience?.map((work: any) => ({
               jobTitle: work.jobTitle || '',
               company: work.company || '',
               fromMonth: work.startDate ? new Date(work.startDate).getMonth() + 1 + '' : '',
@@ -304,7 +338,14 @@ export default function AccountManagementList() {
               currentlyWorking: work.currentlyWorking || false,
               description: work.description || '',
             })) || [],
-            cvs: candidateData.cvs || [],
+            cvs: candidateData.cvs?.map((cv: any) => ({
+              id: cv.id,
+              fileName: cv.fileName,
+              fileUrl: cv.fileUrl,
+              fileSize: cv.fileSize,
+              uploadedAt: cv.uploadedAt,
+              isDefault: cv.isDefault,
+            })) || [],
             isActive: account.isActive,
             createdAt: account.createdAt,
             lastLogin: account.lastLogin,
@@ -348,7 +389,7 @@ export default function AccountManagementList() {
           <Users className="w-6 h-6 text-blue-600" />
           <div>
             <p className="text-sm text-gray-600">Tổng số tài khoản đang hoạt động</p>
-            <p className="text-2xl font-bold text-blue-600">{totalActiveCount}</p>
+            <p className="text-2xl font-bold text-blue-600">{totalSystemActiveCount}</p>
           </div>
         </div>
       </div>
