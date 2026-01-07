@@ -408,3 +408,93 @@ export const deleteCandidate = async (candidateId: string) => {
     throw error;
   }
 };
+
+// ==================== JOB MANAGEMENT APIs ====================
+
+// Get all jobs (for job management page)
+export const getAllJobs = async (
+  search?: string,
+  status?: string,
+  categoryId?: string,
+  employerId?: string,
+  page: number = 1,
+  limit: number = 10
+) => {
+  try {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (status) params.append('status', status);
+    if (categoryId) params.append('categoryId', categoryId);
+    if (employerId) params.append('employerId', employerId);
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+
+    const response = await axios.get(
+      `${API_BASE_URL}/admin/jobs?${params.toString()}`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching all jobs:', error);
+    throw error;
+  }
+};
+
+// Update job status (hide/show)
+export const updateJobStatus = async (jobId: string, status: 'ACTIVE' | 'HIDDEN' | 'INACTIVE') => {
+  try {
+    const response = await axios.patch(
+      `${API_BASE_URL}/admin/jobs/${jobId}/status`,
+      { status },
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error updating job status:', error);
+    throw error;
+  }
+};
+
+// Delete job
+export const deleteJob = async (jobId: string) => {
+  try {
+    const response = await axios.delete(
+      `${API_BASE_URL}/admin/jobs/${jobId}`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting job:', error);
+    throw error;
+  }
+};
+
+// Toggle job hot status
+export const toggleJobHot = async (jobId: string, isHot: boolean) => {
+  try {
+    const response = await axios.patch(
+      `${API_BASE_URL}/admin/jobs/${jobId}/hot`,
+      { isHot },
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error toggling job hot status:', error);
+    throw error;
+  }
+};
+
+// Restore deleted job (sets status back to ACTIVE)
+export const restoreJob = async (jobId: string) => {
+  try {
+    const response = await axios.patch(
+      `${API_BASE_URL}/admin/jobs/${jobId}/restore`,
+      {},
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error restoring job:', error);
+    throw error;
+  }
+};
