@@ -8,8 +8,8 @@ interface CompanyCardProps {
 }
 
 export default function CompanyCard({ company }: CompanyCardProps) {
-  // const companyLink = `/cong-ty/${company.id}-${company.name.toLowerCase().replace(/\s+/g, '-')}`;
-  const companyLink = `/companyProfilePage`;
+  // Link to company profile with employerId parameter
+  const companyLink = `/companyProfilePage?id=${company.id}`;
 
   // Logic xử lý hiển thị địa điểm
   const displayLocations = (): string => {

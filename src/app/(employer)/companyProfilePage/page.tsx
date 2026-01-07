@@ -36,6 +36,7 @@ export default function CompanyProfilePage() {
 
   const isRecruiter = user?.role === 'employer';
   const isCandidate = user?.role === 'candidate';
+  const isGuest = !user; // User not logged in
   const isViewingOwnProfile = isRecruiter && !employerId;
 
   // Show toast helper
@@ -49,9 +50,15 @@ export default function CompanyProfilePage() {
       // Wait for auth to load
       if (authLoading) return;
 
-      // Candidate viewing company profile - allow access
-      if (isCandidate && employerId) {
+      // Candidate or Guest viewing company profile - allow access
+      if ((isCandidate || isGuest) && employerId) {
         setChecking(false);
+        return;
+      }
+
+      // Guest without employerId - redirect to login
+      if (isGuest && !employerId) {
+        router.push('/login');
         return;
       }
 
@@ -93,7 +100,7 @@ export default function CompanyProfilePage() {
     };
 
     checkAccess();
-  }, [user, authLoading, router, isCandidate, isRecruiter, employerId]);
+  }, [user, authLoading, router, isCandidate, isRecruiter, isGuest, employerId]);
 
   // Fetch profile data
   useEffect(() => {

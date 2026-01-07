@@ -50,6 +50,7 @@ export default function CompanyHeader() {
   const { profile, isLoading, refreshProfile } = useEmployerProfile()
   const isRecruiter = user?.role === 'employer'
   const isCandidate = user?.role === 'candidate'
+  const isGuest = !user
   const canEdit = isRecruiter
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [formData, setFormData] = useState<CompanyBasicInfo>({
@@ -364,8 +365,8 @@ export default function CompanyHeader() {
           </div>
         ) : (
           <>
-            {/* Nút Back cho Candidate */}
-            {isCandidate && (
+            {/* Nút Back cho Candidate và Guest */}
+            {(isCandidate || isGuest) && (
               <button
                 onClick={() => router.back()}
                 className="flex items-center gap-2 px-4 py-2 mb-4 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
