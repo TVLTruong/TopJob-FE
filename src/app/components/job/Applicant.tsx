@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Search, MoreVertical, Trash2, ChevronLeft, ChevronRight, Filter, X, AlertCircle } from 'lucide-react';
 import StatusChangeModal from '@/app/components/common/StatusChangeModal';
 import { getJobApplications, type ApplicationFromAPI } from '@/utils/api/job-api';
+import Toast from '@/app/components/profile/Toast';
 
 type ApplicationStatus = 'new' | 'viewed' | 'shortlisted' | 'rejected' | 'hired' | 'withdrawn';
 
@@ -42,6 +43,13 @@ export default function ApplicantsTab({ jobId, source = 'allApplicants' }: Appli
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  // Show toast helper function
+  const showToast = (message: string, type: 'error' | 'success' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Map BE status to lowercase for frontend
   const mapApplicationStatus = (beStatus: ApplicationFromAPI['status']): ApplicationStatus => {
@@ -210,9 +218,10 @@ export default function ApplicantsTab({ jobId, source = 'allApplicants' }: Appli
       
       setShowStatusModal(false);
       setSelectedApplicant(null);
+      showToast('Cập nhật trạng thái thành công!', 'success');
     } catch (error) {
       console.error('Error updating status:', error);
-      alert(error instanceof Error ? error.message : 'Không thể cập nhật trạng thái');
+      showToast(error instanceof Error ? error.message : 'Không thể cập nhật trạng thái', 'error');
     }
   };
 
@@ -555,6 +564,15 @@ export default function ApplicantsTab({ jobId, source = 'allApplicants' }: Appli
             setSelectedApplicant(null);
           }}
           onConfirm={handleStatusChange}
+        />
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
         />
       )}
     </div>

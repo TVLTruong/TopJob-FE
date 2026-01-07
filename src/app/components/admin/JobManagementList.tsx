@@ -5,6 +5,7 @@ import { Search, ChevronLeft, ChevronRight, Filter, Eye, MoreVertical, EyeOff, T
 import JobDetailModal from './JobDetailModal';
 import { getAllJobs, getJobDetail, updateJobStatus, deleteJob, toggleJobHot, restoreJob } from '@/utils/api/admin-api';
 import Toast from '@/app/components/profile/Toast';
+import ConfirmModal from '@/app/components/companyProfile/ConfirmModal';
 
 interface JobPostingAPI {
   id: string;
@@ -111,6 +112,12 @@ export default function JobManagementList() {
   
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+  
+  // Confirm modal states
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState<JobPosting | null>(null);
+  const [jobToRestore, setJobToRestore] = useState<JobPosting | null>(null);
 
   // Show toast helper
   const showToast = (message: string, type: 'error' | 'success' = 'success') => {
@@ -290,37 +297,51 @@ export default function JobManagementList() {
     }
   };
 
-  const handleDeleteJob = async (job: JobPosting) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa tin tuyển dụng này?')) {
-      return;
-    }
+  const handleDeleteJob = (job: JobPosting) => {
+    setJobToDelete(job);
+    setShowDeleteConfirm(true);
+    setShowActionMenu(null);
+  };
+
+  const confirmDeleteJob = async () => {
+    if (!jobToDelete) return;
 
     try {
       // Backend will set status to REMOVED_BY_ADMIN
-      await deleteJob(job.id.toString());
+      await deleteJob(jobToDelete.id.toString());
       showToast('Đã xóa tin tuyển dụng thành công', 'success');
       fetchJobs(); // Refresh to get updated status from backend
-      setShowActionMenu(null);
+      setShowDeleteConfirm(false);
+      setJobToDelete(null);
     } catch (err) {
       console.error('Error deleting job:', err);
       showToast('Không thể xóa tin tuyển dụng', 'error');
+      setShowDeleteConfirm(false);
+      setJobToDelete(null);
     }
   };
 
-  const handleRestoreJob = async (job: JobPosting) => {
-    if (!confirm('Bạn có chắc chắn muốn khôi phục tin tuyển dụng này?')) {
-      return;
-    }
+  const handleRestoreJob = (job: JobPosting) => {
+    setJobToRestore(job);
+    setShowRestoreConfirm(true);
+    setShowActionMenu(null);
+  };
+
+  const confirmRestoreJob = async () => {
+    if (!jobToRestore) return;
 
     try {
       // Backend will set status to ACTIVE
-      await restoreJob(job.id.toString());
+      await restoreJob(jobToRestore.id.toString());
       showToast('Đã khôi phục tin tuyển dụng thành công', 'success');
       fetchJobs(); // Refresh to get updated status from backend
-      setShowActionMenu(null);
+      setShowRestoreConfirm(false);
+      setJobToRestore(null);
     } catch (err) {
       console.error('Error restoring job:', err);
       showToast('Không thể khôi phục tin tuyển dụng', 'error');
+      setShowRestoreConfirm(false);
+      setJobToRestore(null);
     }
   };
 
@@ -705,6 +726,34 @@ export default function JobManagementList() {
           onClose={() => setShowDetailModal(false)}
         />
       )}
+      
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        open={showDeleteConfirm}
+        title="Xác nhận xóa tin tuyển dụng"
+        message={`Bạn có chắc chắn muốn xóa tin tuyển dụng "${jobToDelete?.jobTitle}"? Tin này sẽ được đánh dấu là đã xóa bởi Admin.`}
+        confirmText="Xóa"
+        cancelText="Hủy"
+        onConfirm={confirmDeleteJob}
+        onCancel={() => {
+          setShowDeleteConfirm(false);
+          setJobToDelete(null);
+        }}
+      />
+      
+      {/* Restore Confirmation Modal */}
+      <ConfirmModal
+        open={showRestoreConfirm}
+        title="Xác nhận khôi phục tin tuyển dụng"
+        message={`Bạn có chắc chắn muốn khôi phục tin tuyển dụng "${jobToRestore?.jobTitle}"? Tin này sẽ được đặt về trạng thái hoạt động.`}
+        confirmText="Khôi phục"
+        cancelText="Hủy"
+        onConfirm={confirmRestoreJob}
+        onCancel={() => {
+          setShowRestoreConfirm(false);
+          setJobToRestore(null);
+        }}
+      />
       
       {/* Toast Notification */}
       {toast && (
