@@ -28,6 +28,54 @@ interface Account {
   lastLogin?: string;
 }
 
+interface CandidateDetailData {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  avatar?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  province?: string;
+  district?: string;
+  address?: string;
+  personalLink?: string;
+  about?: string;
+  title?: string;
+  education: Array<{
+    school: string;
+    degree: string;
+    major: string;
+    fromMonth: string;
+    fromYear: string;
+    toMonth: string;
+    toYear: string;
+    currentlyStudying: boolean;
+    additionalDetails: string;
+  }>;
+  workExperience: Array<{
+    jobTitle: string;
+    company: string;
+    fromMonth: string;
+    fromYear: string;
+    toMonth: string;
+    toYear: string;
+    currentlyWorking: boolean;
+    description: string;
+  }>;
+  cvs: Array<{
+    id: string;
+    fileName: string;
+    fileUrl: string;
+    fileSize: number;
+    uploadedAt: string;
+    isDefault: boolean;
+  }>;
+  isActive: boolean;
+  createdAt: string;
+  lastLogin?: string;
+}
+
 export default function AccountManagementList() {
   const [activeTab, setActiveTab] = useState<'employer' | 'candidate'>('employer');
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,6 +95,7 @@ export default function AccountManagementList() {
   } | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [selectedCandidateDetail, setSelectedCandidateDetail] = useState<CandidateDetailData | null>(null);
   const [showEmployerDetailModal, setShowEmployerDetailModal] = useState(false);
   const [selectedEmployerProfile, setSelectedEmployerProfile] = useState<any | null>(null);
   const [totalCount, setTotalCount] = useState(0);
@@ -203,14 +252,67 @@ export default function AccountManagementList() {
               ? employerData.profile.foundedDate.toString()
               : '',
             contactEmail: employerData.profile?.contactEmail || employerData.user?.email || '',
+            address: employerData.profile?.address || '',
+            industries: employerData.profile?.industries || [],
+            technologies: employerData.profile?.technologies || [],
+            benefits: employerData.profile?.benefits || [],
+            locations: employerData.profile?.locations || [],
+            facebookUrl: employerData.profile?.facebookUrl || '',
+            linkedlnUrl: employerData.profile?.linkedlnUrl || '',
+            xUrl: employerData.profile?.xUrl || '',
           };
           setSelectedEmployerProfile(transformedData);
           setShowEmployerDetailModal(true);
         }
       } else {
-        // For candidates: show simple AccountDetailModal
-        setSelectedAccount(account);
-        setShowDetailModal(true);
+        // For candidates: fetch candidate details and transform to modal format
+        const candidateData = await getCandidateDetail(account.id);
+        if (candidateData) {
+          // Transform API data to CandidateDetailData format
+          const transformedCandidate: CandidateDetailData = {
+            id: candidateData.id || account.id,
+            name: candidateData.fullName || account.name,
+            email: candidateData.email || account.email,
+            phone: candidateData.phoneNumber || account.phone,
+            avatar: candidateData.avatarUrl || account.avatar,
+            dateOfBirth: candidateData.dateOfBirth || '',
+            gender: candidateData.gender || '',
+            province: candidateData.addressCity || '',
+            district: candidateData.addressDistrict || '',
+            address: candidateData.addressStreet || '',
+            personalLink: candidateData.personalUrl || '',
+            about: candidateData.bio || '',
+            title: candidateData.title || '',
+            education: candidateData.education?.map((edu: any) => ({
+              school: edu.school || '',
+              degree: edu.degree || '',
+              major: edu.major || '',
+              fromMonth: edu.startDate ? new Date(edu.startDate).getMonth() + 1 + '' : '',
+              fromYear: edu.startDate ? new Date(edu.startDate).getFullYear() + '' : '',
+              toMonth: edu.endDate && !edu.currentlyStudying ? new Date(edu.endDate).getMonth() + 1 + '' : '',
+              toYear: edu.endDate && !edu.currentlyStudying ? new Date(edu.endDate).getFullYear() + '' : '',
+              currentlyStudying: edu.currentlyStudying || false,
+              additionalDetails: edu.additionalDetails || '',
+            })) || [],
+            workExperience: candidateData.workExperience?.map((work: any) => ({
+              jobTitle: work.jobTitle || '',
+              company: work.company || '',
+              fromMonth: work.startDate ? new Date(work.startDate).getMonth() + 1 + '' : '',
+              fromYear: work.startDate ? new Date(work.startDate).getFullYear() + '' : '',
+              toMonth: work.endDate && !work.currentlyWorking ? new Date(work.endDate).getMonth() + 1 + '' : '',
+              toYear: work.endDate && !work.currentlyWorking ? new Date(work.endDate).getFullYear() + '' : '',
+              currentlyWorking: work.currentlyWorking || false,
+              description: work.description || '',
+            })) || [],
+            cvs: candidateData.cvs || [],
+            isActive: account.isActive,
+            createdAt: account.createdAt,
+            lastLogin: account.lastLogin,
+          };
+          setSelectedCandidateDetail(transformedCandidate);
+          setSelectedAccount(account);
+          setShowDetailModal(true);
+        }
       }
     } catch (error: any) {
       console.error('Error fetching account details:', error);
@@ -630,11 +732,16 @@ export default function AccountManagementList() {
       )}
 
       {/* Account Detail Modal */}
-      {showDetailModal && selectedAccount && (
+      {showDetailModal && selectedAccount && selectedCandidateDetail && (
         <AccountDetailModal
           account={selectedAccount}
+          candidateDetail={selectedCandidateDetail}
           accountType={activeTab}
-          onClose={() => setShowDetailModal(false)}
+          onClose={() => {
+            setShowDetailModal(false);
+            setSelectedAccount(null);
+            setSelectedCandidateDetail(null);
+          }}
         />
       )}
 
