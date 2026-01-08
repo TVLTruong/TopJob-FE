@@ -42,8 +42,8 @@ export default function EmployerDetailModal({ employer, onClose }: EmployerDetai
   const statusConfig = {
     pending_new: { label: 'Chờ duyệt (Mới)', color: 'bg-orange-100 text-orange-600 border-orange-300' },
     pending_edit: { label: 'Chờ duyệt (Sửa đổi)', color: 'bg-yellow-100 text-yellow-600 border-yellow-300' },
-    approved: { label: 'Đã duyệt', color: 'bg-green-100 text-green-600 border-green-300' },
-    rejected: { label: 'Từ chối', color: 'bg-red-100 text-red-600 border-red-300' },
+    approved: { label: 'Đã duyệt - Hoạt động', color: 'bg-green-100 text-green-600 border-green-300' },
+    rejected: { label: 'Đã khóa', color: 'bg-red-100 text-red-600 border-red-300' },
   };
 
   const isEditType = employer.registrationType === 'edit';

@@ -257,6 +257,31 @@ export default function AccountManagementList() {
         // Fetch employer details
         const employerData = await getEmployerDetail(account.id);
         if (employerData) {
+          // Map backend status to frontend status format
+          const mapEmployerStatus = (): 'pending_new' | 'pending_edit' | 'approved' | 'rejected' => {
+            // Backend: UserStatus = 'active' | 'banned' | 'pending_approval'
+            // EmployerProfileStatus = 'approved' | 'pending_edit_approval' | 'pending_new_approval'
+            
+            const userStatus = employerData.user?.status;
+            const profileStatus = employerData.profile?.status;
+            
+            // Priority 1: Check if user is banned (overrides profile status)
+            if (userStatus === 'banned') return 'rejected';
+            
+            // Priority 2: Check profile status for pending approvals
+            if (profileStatus === 'pending_new_approval') return 'pending_new';
+            if (profileStatus === 'pending_edit_approval') return 'pending_edit';
+            
+            // Priority 3: If user is active and profile is approved
+            if (userStatus === 'active' && profileStatus === 'approved') return 'approved';
+            
+            // Priority 4: Pending approval
+            if (userStatus === 'pending_approval') return 'pending_new';
+            
+            // Default fallback
+            return 'pending_new';
+          };
+          
           // Transform API response to match EmployerDetailModal props
           const transformedData = {
             id: employerData.user?.id || account.id,
@@ -264,7 +289,7 @@ export default function AccountManagementList() {
             companyLogo: employerData.profile?.logoUrl || '',
             email: employerData.user?.email || account.email,
             phone: employerData.profile?.contactPhone || account.phone || '',
-            status: employerData.profile?.status === 'approved' ? 'approved' : 'pending_new',
+            status: mapEmployerStatus(),
             createdDate: employerData.user?.createdAt 
               ? new Date(employerData.user.createdAt).toLocaleDateString('vi-VN')
               : account.createdAt,
