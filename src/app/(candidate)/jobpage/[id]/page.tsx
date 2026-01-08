@@ -3,6 +3,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import JobDetailContent, { JobDetailData } from '@/app/components/job/JobDetailContents';
 import Toast from '@/app/components/profile/Toast';
 import LoginRequiredModal from '@/app/components/common/LoginRequiredModal';
+import SelectCvModal from '@/app/components/common/SelectCvModal';
 import { Heart, X } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,6 +19,7 @@ function JobDetailContent_Inner() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'apply' | 'unapply' | null>(null);
+  const [showCvModal, setShowCvModal] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
@@ -151,10 +153,11 @@ function JobDetailContent_Inner() {
         return;
       }
       setConfirmAction('unapply');
+      setShowConfirmModal(true);
     } else {
-      setConfirmAction('apply');
+      // Thay vì xác nhận ngay, yêu cầu chọn CV để ứng tuyển
+      setShowCvModal(true);
     }
-    setShowConfirmModal(true);
   };
 
   const canUnapply = () => {
@@ -221,6 +224,26 @@ function JobDetailContent_Inner() {
     } finally {
       setShowConfirmModal(false);
       setConfirmAction(null);
+    }
+  };
+
+  const handleApplyWithCv = async (cvId: string) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        showToast('Vui lòng đăng nhập để ứng tuyển', 'error');
+        return;
+      }
+      await CandidateApi.applyJob(token, jobId, { cvId });
+      setHasApplied(true);
+      setApplicationStatus('new');
+      showToast('Đã ứng tuyển bằng CV đã chọn!');
+    } catch (error: any) {
+      console.error('Error applying with CV:', error);
+      const msg = error?.message || error?.response?.data?.message || 'Vui lòng thử lại';
+      showToast(msg, 'error');
+    } finally {
+      setShowCvModal(false);
     }
   };
 
@@ -380,6 +403,16 @@ function JobDetailContent_Inner() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Select CV Modal for applying */}
+        {showCvModal && (
+          <SelectCvModal
+            isOpen={showCvModal}
+            onClose={() => setShowCvModal(false)}
+            token={typeof window !== 'undefined' ? (localStorage.getItem('accessToken') || '') : ''}
+            onConfirm={handleApplyWithCv}
+          />
         )}
 
         {/* Login Required Modal */}

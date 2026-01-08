@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import Jobcard from "@/app/components/job/Jobcard"; // Import Jobcard
 import LoginRequiredModal from "@/app/components/common/LoginRequiredModal";
 import { Job } from "@/app/components/types/job.types"; // Import kiểu Job
@@ -66,6 +67,7 @@ function transformJobFromAPI(apiJob: JobFromAPI): Job {
 
 export default function FeaturedJobs() {
   const router = useRouter();
+  const { user } = useAuth();
   const { isSaved, saveJobToFavorites, unsaveJobFromFavorites } = useSavedJobs();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -199,6 +201,9 @@ export default function FeaturedJobs() {
                 onClick={handleJobClick}
                 onSave={!loadingSaveIds.has(job.id) ? handleSaveJob : undefined}
                 isSaved={isSaved(job.id)}
+                isLoggedIn={!!user}
+                onLoginRequired={handleLoginRequired}
+                source="landing"
               />
             ))}
           </div>
