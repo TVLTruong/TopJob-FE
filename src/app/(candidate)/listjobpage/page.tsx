@@ -32,6 +32,7 @@ interface ApplicationRow {
   position: string;
   date: string;
   status: ApplicationStatus;
+  logo?: string;
 }
 
 const STATUS_LABEL: Record<ApplicationStatus, string> = {
@@ -54,6 +55,8 @@ const STATUS_STYLE: Record<ApplicationStatus, string> = {
 
 const cancelableStatuses: ApplicationStatus[] = ['new', 'viewed', 'shortlisted'];
 
+const ITEMS_PER_PAGE = 10;
+
 export default function JobApplicationHistory() {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [selectedJobs, setSelectedJobs] = useState<string[]>([]);
@@ -63,6 +66,7 @@ export default function JobApplicationHistory() {
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [applications, setApplications] = useState<ApplicationRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const dropdownRefs = useRef<Record<string, { top: number; right: number }>>({});
 
   const tabs = useMemo(() => {
@@ -80,6 +84,20 @@ export default function JobApplicationHistory() {
       { id: 'withdrawn', label: 'Đã rút', count: counts.withdrawn || 0 },
     ];
   }, [applications]);
+
+  // Get filtered applications based on active tab
+  const filteredApplications = useMemo(() => {
+    return activeTab === 'all' 
+      ? applications 
+      : applications.filter(a => a.status === activeTab);
+  }, [applications, activeTab]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredApplications.length / ITEMS_PER_PAGE);
+  const paginatedApplications = useMemo(() => {
+    const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredApplications.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+  }, [filteredApplications, currentPage]);
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -100,6 +118,7 @@ export default function JobApplicationHistory() {
             position: job.title || 'Không rõ',
             date: a.appliedAt ? new Date(a.appliedAt).toLocaleDateString('vi-VN') : '',
             status: status,
+            logo: job.employer?.logoUrl,
           };
         });
         setApplications(mapped);
@@ -112,6 +131,11 @@ export default function JobApplicationHistory() {
     fetchApplications();
   }, []);
 
+  // Reset page when tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
   // Show toast notification
   const showToast = (message: string, type: 'error' | 'success' = 'success') => {
     setToast({ message, type });
@@ -120,7 +144,7 @@ export default function JobApplicationHistory() {
 
   const handleSelectAll = (e: { target: { checked: boolean; }; }) => {
     if (e.target.checked) {
-      setSelectedJobs(applications.map(app => app.id));
+      setSelectedJobs(paginatedApplications.map(app => app.id));
     } else {
       setSelectedJobs([]);
     }
@@ -146,7 +170,7 @@ export default function JobApplicationHistory() {
     );
 
     if (cancelableSelected.length === 0) {
-      showToast('Bạn không thể hủy ứng tuyển ở trạng thái này, vui lòng thao tác lại!', 'error');
+      showToast('Bạn đã thực hiện thao tác hủy, không thể hủy thêm lần nữa!', 'error');
       setShowBulkDeleteModal(false);
       return;
     }
@@ -298,7 +322,7 @@ export default function JobApplicationHistory() {
                   <th className="px-6 py-3 text-left">
                     <input
                       type="checkbox"
-                      checked={selectedJobs.length === applications.length && applications.length > 0}
+                      checked={selectedJobs.length === paginatedApplications.length && paginatedApplications.length > 0}
                       onChange={handleSelectAll}
                       className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
                     />
@@ -329,114 +353,193 @@ export default function JobApplicationHistory() {
                     <td className="px-6 py-4 text-sm text-gray-500" colSpan={7}>Đang tải...</td>
                   </tr>
                 )}
-                {!loading && applications.filter(a => activeTab === 'all' ? true : a.status === activeTab).length === 0 && (
+                {!loading && paginatedApplications.length === 0 && (
                   <tr>
                     <td className="px-6 py-6 text-center text-gray-500" colSpan={7}>Không có dữ liệu</td>
                   </tr>
                 )}
-                {(!loading ? applications.filter(a => activeTab === 'all' ? true : a.status === activeTab) : []).map((app, index) => (
-                  <tr key={app.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedJobs.includes(app.id)}
-                        onChange={() => handleSelectJob(app.id)}
-                        className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
-                      />
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {index + 1}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <span className="font-medium text-gray-900">{app.company}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {app.position}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {app.date}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 text-xs font-medium rounded-full border ${STATUS_STYLE[app.status]}`}>
-                        {STATUS_LABEL[app.status]}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                          dropdownRefs.current[app.id] = {
-                            top: rect.bottom + 8,
-                            right: window.innerWidth - rect.right,
-                          };
-                          setShowDropdown(showDropdown === app.id ? null : app.id);
-                        }}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        aria-label="Mở menu thao tác"
-                      >
-                        <MoreIcon />
-                      </button>
-
-                      {showDropdown === app.id && (
-                        <>
-                          <div className="fixed inset-0 z-[60]" onClick={() => setShowDropdown(null)} />
-                          <div
-                            className="fixed w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[70]"
-                            style={{
-                              top: dropdownRefs.current[app.id]?.top || 0,
-                              right: dropdownRefs.current[app.id]?.right || 0,
-                            }}
-                          >
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCancelClick(app);
+                {paginatedApplications.map((app, index) => {
+                  const displayIndex = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
+                  return (
+                    <tr key={app.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedJobs.includes(app.id)}
+                          onChange={() => handleSelectJob(app.id)}
+                          className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                        />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {displayIndex}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          {app.logo ? (
+                            <img 
+                              src={app.logo} 
+                              alt={app.company}
+                              className="w-10 h-10 rounded-lg object-cover bg-gray-100"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
                               }}
-                              className={`w-full px-4 py-2 text-left text-sm transition-colors flex items-center gap-2 ${
-                                canCancelApplication(app.status)
-                                  ? 'text-red-600 hover:bg-red-50'
-                                  : 'text-gray-500 hover:bg-gray-50'
-                              }`}
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center text-gray-400 text-sm font-medium">
+                              {app.company.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <span className="font-medium text-gray-900">{app.company}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {app.position}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {app.date}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 text-xs font-medium rounded-full border ${STATUS_STYLE[app.status]}`}>
+                          {STATUS_LABEL[app.status]}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                            dropdownRefs.current[app.id] = {
+                              top: rect.bottom + 8,
+                              right: window.innerWidth - rect.right,
+                            };
+                            setShowDropdown(showDropdown === app.id ? null : app.id);
+                          }}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          aria-label="Mở menu thao tác"
+                        >
+                          <MoreIcon />
+                        </button>
+
+                        {showDropdown === app.id && (
+                          <>
+                            <div className="fixed inset-0 z-[60]" onClick={() => setShowDropdown(null)} />
+                            <div
+                              className="fixed w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[70]"
+                              style={{
+                                top: dropdownRefs.current[app.id]?.top || 0,
+                                right: dropdownRefs.current[app.id]?.right || 0,
+                              }}
                             >
-                              <CloseIcon />
-                              Hủy ứng tuyển
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCancelClick(app);
+                                }}
+                                className={`w-full px-4 py-2 text-left text-sm transition-colors flex items-center gap-2 ${
+                                  canCancelApplication(app.status)
+                                    ? 'text-red-600 hover:bg-red-50'
+                                    : 'text-gray-500 hover:bg-gray-50'
+                                }`}
+                              >
+                                <CloseIcon />
+                                Hủy ứng tuyển
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
           {/* Pagination */}
           <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-center gap-2">
-            <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium">
-              1
+            <button 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ←
             </button>
-            <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-              2
-            </button>
-            <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-              3
-            </button>
-            <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-              4
-            </button>
-            <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-              5
-            </button>
-            <span className="px-2 text-gray-500">...</span>
-            <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-              33
-            </button>
-            <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+            
+            {/* Show page numbers with ellipsis */}
+            {totalPages <= 7 ? (
+              // Show all pages if 7 or fewer
+              Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    currentPage === page
+                      ? 'bg-emerald-600 text-white'
+                      : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))
+            ) : (
+              <>
+                {/* First page */}
+                <button
+                  onClick={() => setCurrentPage(1)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    currentPage === 1
+                      ? 'bg-emerald-600 text-white'
+                      : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  1
+                </button>
+
+                {/* Left ellipsis */}
+                {currentPage > 3 && <span className="px-2 text-gray-500">...</span>}
+
+                {/* Page numbers around current */}
+                {Array.from({ length: 5 }, (_, i) => {
+                  const page = currentPage - 2 + i;
+                  if (page > 1 && page < totalPages) return page;
+                  return null;
+                }).filter(Boolean).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page as number)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                      currentPage === page
+                        ? 'bg-emerald-600 text-white'
+                        : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                {/* Right ellipsis */}
+                {currentPage < totalPages - 2 && <span className="px-2 text-gray-500">...</span>}
+
+                {/* Last page */}
+                <button
+                  onClick={() => setCurrentPage(totalPages)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    currentPage === totalPages
+                      ? 'bg-emerald-600 text-white'
+                      : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {totalPages}
+                </button>
+              </>
+            )}
+
+            <button 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               →
             </button>
           </div>
