@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { ChevronDown, X, SlidersHorizontal, Briefcase, DollarSign, Clock, Layers, Award } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import HeroSearcher from "@/app/components/landing/searcher";
 import Jobcard from "@/app/components/job/Jobcard";
+import LoginRequiredModal from "@/app/components/common/LoginRequiredModal";
 import { Job } from "@/app/components/types/job.types";
 
 // Mock data cho demo
@@ -335,6 +337,7 @@ function SalaryFilter({ minSalary, maxSalary, tempMin, tempMax, onTempChange }: 
 // Main Component
 export default function JobSearchPage() {
   const router = useRouter();
+  const { user } = useAuth();
   
   // Applied filters (actual filters being used)
   const [selectedWorkTypes, setSelectedWorkTypes] = useState<string[]>([]);
@@ -357,6 +360,7 @@ export default function JobSearchPage() {
   const [tempMaxSalary, setTempMaxSalary] = useState(100);
   
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleSaveJob = (jobId: string) => {
     setSavedJobs(prev =>
@@ -366,6 +370,10 @@ export default function JobSearchPage() {
 
   const handleApplyJob = (jobId: string) => {
     console.log("Applying for job:", jobId);
+  };
+  
+  const handleLoginRequired = () => {
+    setShowLoginModal(true);
   };
 
   const handleTempSalaryChange = (min: number, max: number) => {
@@ -513,6 +521,8 @@ export default function JobSearchPage() {
                 onSave={handleSaveJob}
                 isSaved={savedJobs.includes(job.id)}
                 onClick={handleJobClick}
+                isLoggedIn={!!user}
+                onLoginRequired={handleLoginRequired}
               />
             ))}
           </div>
@@ -535,6 +545,13 @@ export default function JobSearchPage() {
           </div>
         </div>
       </div>
+      
+      {/* Login Required Modal */}
+      <LoginRequiredModal 
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="Bạn cần đăng nhập để ứng tuyển hoặc lưu công việc yêu thích"
+      />
     </div>
   );
 }

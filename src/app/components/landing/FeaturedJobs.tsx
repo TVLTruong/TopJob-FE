@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import Jobcard from "@/app/components/job/Jobcard"; // Import Jobcard
+import LoginRequiredModal from "@/app/components/common/LoginRequiredModal";
 import { Job } from "@/app/components/types/job.types"; // Import kiểu Job
 import { ArrowRight } from "lucide-react"; // Import icon mũi tên
 
@@ -32,9 +34,11 @@ async function fetchFeaturedJobs(): Promise<Job[]> {
 
 export default function FeaturedJobs() {
   const router = useRouter();
+  const { user } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleJobClick = (jobId: string) => {
     router.push(`/jobpage/${jobId}`);
@@ -44,6 +48,10 @@ export default function FeaturedJobs() {
     setSavedJobs(prev =>
       prev.includes(jobId) ? prev.filter(id => id !== jobId) : [...prev, jobId]
     );
+  };
+  
+  const handleLoginRequired = () => {
+    setShowLoginModal(true);
   };
 
   useEffect(() => {
@@ -112,11 +120,20 @@ export default function FeaturedJobs() {
                 onClick={handleJobClick}
                 onSave={handleSaveJob}
                 isSaved={savedJobs.includes(job.id)}
+                isLoggedIn={!!user}
+                onLoginRequired={handleLoginRequired}
               />
             ))}
           </div>
         )}
       </div>
+      
+      {/* Login Required Modal */}
+      <LoginRequiredModal 
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="Bạn cần đăng nhập để ứng tuyển hoặc lưu công việc yêu thích"
+      />
     </div>
   );
 }
