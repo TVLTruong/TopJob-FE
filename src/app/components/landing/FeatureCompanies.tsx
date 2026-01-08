@@ -13,14 +13,14 @@ async function fetchFeaturedCompanies(): Promise<Company[]> {
 
   // --- DỮ LIỆU GIẢ LẬP (COMPANY) ---
   const mockCompanies: Company[] = [
-    { id: 'comp-1', name: "Gameloft", locations: ["TP.HCM", "Đà Nẵng"], technologies: ["Unity", "C++", "Game"], jobCount: 15, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-2', name: "Viggle", locations: ["Đà Nẵng", "Remote"], technologies: ["AI", "Machine Learning", "Python"], jobCount: 8, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-3', name: "Base.vn", locations: ["Hà Nội", "TP.HCM"], technologies: ["PHP", "ReactJS", "NodeJS", "SaaS"], jobCount: 22, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-4', name: "Eureka", locations: ["TP.HCM"], technologies: ["Software Outsourcing", ".NET", "Java", "Cloud", "Security", "NLP", "LLM"], jobCount: 5, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-5', name: "DXC Technology", locations: ["TP.HCM", "Hà Nội", "Đà Nẵng", "Cần Thơ"], technologies: ["Cloud", "Security", "Consulting", "Java"], jobCount: 30, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-6', name: "Corsair", locations: ["Hà Nội", "Đài Loan"], technologies: ["Gaming Gear", "Hardware", "Firmware"], jobCount: 3, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-7', name: "Shopee", locations: ["TP.HCM", "Hà Nội"], technologies: ["E-commerce", "Go", "Python", "React"], jobCount: 40, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-8', name: "Zalo", locations: ["TP.HCM", "Hà Nội"], technologies: ["Messaging", "AI", "Mobile", "Zing MP3"], jobCount: 0, logoUrl: "/placeholder-logo.png" }, // Ví dụ công ty không có job
+    { id: '1', name: "Gameloft", locations: ["TP.HCM", "Đà Nẵng"], technologies: ["Unity", "C++", "Game"], jobCount: 15, logoUrl: "/placeholder-logo.png" },
+    { id: '2', name: "Viggle", locations: ["Đà Nẵng", "Remote"], technologies: ["AI", "Machine Learning", "Python"], jobCount: 8, logoUrl: "/placeholder-logo.png" },
+    { id: '3', name: "Base.vn", locations: ["Hà Nội", "TP.HCM"], technologies: ["PHP", "ReactJS", "NodeJS", "SaaS"], jobCount: 22, logoUrl: "/placeholder-logo.png" },
+    { id: '4', name: "Eureka", locations: ["TP.HCM"], technologies: ["Software Outsourcing", ".NET", "Java", "Cloud", "Security", "NLP", "LLM"], jobCount: 5, logoUrl: "/placeholder-logo.png" },
+    { id: '5', name: "DXC Technology", locations: ["TP.HCM", "Hà Nội", "Đà Nẵng", "Cần Thơ"], technologies: ["Cloud", "Security", "Consulting", "Java"], jobCount: 30, logoUrl: "/placeholder-logo.png" },
+    { id: '6', name: "Corsair", locations: ["Hà Nội", "Đài Loan"], technologies: ["Gaming Gear", "Hardware", "Firmware"], jobCount: 3, logoUrl: "/placeholder-logo.png" },
+    { id: '7', name: "Shopee", locations: ["TP.HCM", "Hà Nội"], technologies: ["E-commerce", "Go", "Python", "React"], jobCount: 40, logoUrl: "/placeholder-logo.png" },
+    { id: '8', name: "Zalo", locations: ["TP.HCM", "Hà Nội"], technologies: ["Messaging", "AI", "Mobile", "Zing MP3"], jobCount: 0, logoUrl: "/placeholder-logo.png" }, // Ví dụ công ty không có job
   ];
 
   return mockCompanies;
