@@ -8,6 +8,7 @@ import { ChevronDown, Power, Edit, Eye, EyeOff, Trash2, X, Heart } from 'lucide-
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateJob, getEmployerJobDetail, getCandidateJobDetail, hideJob, unhideJob, deleteJob, closeJob, type JobFromAPI } from '@/utils/api/job-api';
+import { CandidateApi } from '@/utils/api/candidate-api';
 import type { CreateJobPayload } from '@/utils/api/job-api';
 import { jobCategoryApi } from '@/utils/api/categories-api';
 import { technologyApi } from '@/utils/api/technology-api';
@@ -175,11 +176,23 @@ function JobDetailContent_Inner() {
         showToast('Đã xóa công việc thành công!');
         router.push('/JobList');
       } else if (confirmAction === 'apply') {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          showToast('Vui lòng đăng nhập để ứng tuyển', 'error');
+          return;
+        }
+        await CandidateApi.applyJob(token, jobId, {});
         setHasApplied(true);
-        console.log('Đã ứng tuyển');
+        showToast('Đã ứng tuyển thành công!');
       } else if (confirmAction === 'unapply') {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          showToast('Vui lòng đăng nhập để hủy ứng tuyển', 'error');
+          return;
+        }
+        await CandidateApi.unapplyJob(token, jobId);
         setHasApplied(false);
-        console.log('Đã hủy ứng tuyển');
+        showToast('Đã hủy ứng tuyển thành công!');
       }
     } catch (error: any) {
       console.error('Error performing action:', error);
@@ -400,12 +413,12 @@ function JobDetailContent_Inner() {
                   onClick={handleApply}
                   className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors ${
                     hasApplied 
-                      ? 'bg-gray-400 text-white cursor-pointer hover:bg-gray-500' 
+                      ? 'bg-red-600 text-white cursor-pointer hover:bg-red-700' 
                       : 'bg-emerald-600 text-white hover:bg-emerald-700'
                   }`}
                 >
                   <span className="text-sm">
-                    {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển'}
+                    {hasApplied ? 'Hủy ứng tuyển' : 'Ứng tuyển'}
                   </span>
                 </button>
                 

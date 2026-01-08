@@ -6,6 +6,7 @@ import { Heart, X } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { getCandidateJobDetail, type JobFromAPI } from '@/utils/api/job-api';
+import { CandidateApi } from '@/utils/api/candidate-api';
 
 function JobDetailContent_Inner() {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ function JobDetailContent_Inner() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'apply' | 'unapply' | null>(null);
   const [hasApplied, setHasApplied] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,8 +107,41 @@ function JobDetailContent_Inner() {
     fetchJobDetail();
   }, [jobId]);
 
+  // Initialize applied/saved states
+  useEffect(() => {
+    const initStates = async () => {
+      try {
+        if (!user) return;
+        const token = localStorage.getItem('accessToken');
+        if (!token) return;
+
+        // Fetch applications to check if applied
+        const applications = await CandidateApi.getApplications(token);
+        const matched = applications.find(app => app.jobId === jobId);
+        setHasApplied(!!matched);
+        setApplicationStatus(matched?.status || null);
+
+        // Fetch saved jobs to check if saved
+        const savedJobs = await CandidateApi.getSavedJobs(token);
+        const saved = savedJobs.some(j => j.id === jobId);
+        setIsSaved(saved);
+      } catch (e) {
+        // Silent failure for init states
+      }
+    };
+    initStates();
+  }, [user, jobId]);
+
   const handleApply = () => {
-    if (hasApplied) {
+    // withdrawn status = chưa ứng tuyển, cho phép ứng tuyển lại
+    const isAppliedAndActive = hasApplied && applicationStatus && !['withdrawn'].includes(applicationStatus);
+    
+    if (isAppliedAndActive) {
+      const cancelable = ['new', 'viewed', 'shortlisted'];
+      if (!cancelable.includes(applicationStatus)) {
+        showToast('Không thể hủy ở trạng thái hiện tại', 'error');
+        return;
+      }
       setConfirmAction('unapply');
     } else {
       setConfirmAction('apply');
@@ -114,23 +149,61 @@ function JobDetailContent_Inner() {
     setShowConfirmModal(true);
   };
 
-  const handleSaveJob = () => {
-    setIsSaved(!isSaved);
-    showToast(isSaved ? 'Đã bỏ lưu công việc' : 'Đã lưu công việc');
+  const canUnapply = () => {
+    const cancelable = ['new', 'viewed', 'shortlisted'];
+    // Có thể hủy nếu status ở trạng thái cancelable
+    return hasApplied && applicationStatus && cancelable.includes(applicationStatus);
+  };
+
+  const isBlockedStatus = () => {
+    // Block apply nếu status là hired hoặc rejected
+    const blocked = ['hired', 'rejected'];
+    return hasApplied && applicationStatus && blocked.includes(applicationStatus);
+  };
+
+  const handleSaveJob = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        showToast('Vui lòng đăng nhập để lưu công việc', 'error');
+        return;
+      }
+      const res = await CandidateApi.toggleSavedJob(token, jobId);
+      setIsSaved(res.saved);
+      showToast(res.saved ? 'Đã lưu công việc' : 'Đã bỏ lưu công việc');
+    } catch (e: any) {
+      showToast(e?.message || 'Không thể lưu công việc', 'error');
+    }
   };
 
   const confirmHandler = async () => {
     try {
       if (confirmAction === 'apply') {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          showToast('Vui lòng đăng nhập để ứng tuyển', 'error');
+          return;
+        }
+        // Call apply API (use default CV if not specified)
+        await CandidateApi.applyJob(token, jobId, {});
         setHasApplied(true);
+        setApplicationStatus('new');
         showToast('Đã ứng tuyển thành công!');
       } else if (confirmAction === 'unapply') {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          showToast('Vui lòng đăng nhập để hủy ứng tuyển', 'error');
+          return;
+        }
+        await CandidateApi.unapplyJob(token, jobId);
         setHasApplied(false);
+        setApplicationStatus('withdrawn');
         showToast('Đã hủy ứng tuyển thành công!');
       }
     } catch (error: any) {
       console.error('Error performing action:', error);
-      showToast(error.response?.data?.message || error.message || 'Vui lòng thử lại', 'error');
+      const msg = error?.message || error?.response?.data?.message || 'Vui lòng thử lại';
+      showToast(msg, 'error');
     } finally {
       setShowConfirmModal(false);
       setConfirmAction(null);
@@ -222,18 +295,27 @@ function JobDetailContent_Inner() {
             
             {/* Candidate Actions */}
             <div className="flex items-center gap-3">
-              <button 
-                onClick={handleApply}
-                className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors ${
-                  hasApplied 
-                    ? 'bg-gray-400 text-white cursor-pointer hover:bg-gray-500' 
-                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                }`}
-              >
-                <span className="text-sm">
-                  {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển'}
-                </span>
-              </button>
+              {isBlockedStatus() ? (
+                <div className="px-6 py-2 rounded-lg font-medium text-gray-600 bg-gray-100">
+                  <span className="text-sm">
+                    {applicationStatus === 'hired' ? 'Đã tuyển' : 'Từ chối'}
+                  </span>
+                </div>
+              ) : canUnapply() ? (
+                <button 
+                  onClick={handleApply}
+                  className="flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors bg-red-600 text-white hover:bg-red-700"
+                >
+                  <span className="text-sm">Hủy ứng tuyển</span>
+                </button>
+              ) : (
+                <button 
+                  onClick={handleApply}
+                  className="flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors bg-emerald-600 text-white hover:bg-emerald-700"
+                >
+                  <span className="text-sm">Ứng tuyển</span>
+                </button>
+              )}
               
               {/* Nút Lưu công việc (trái tim) */}
               <button

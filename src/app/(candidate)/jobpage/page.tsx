@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { ChevronDown, X, SlidersHorizontal, Briefcase, DollarSign, Clock, Layers, Award } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import HeroSearcher from "@/app/components/landing/searcher";
@@ -8,6 +8,7 @@ import Jobcard from "@/app/components/job/Jobcard";
 import { Job } from "@/app/components/types/job.types";
 import { getPublicJobs, JobFromAPI, PublicJobsFilters, getAllJobCategories, JobCategory } from "@/utils/api/job-api";
 import { useSavedJobs } from "@/contexts/SavedJobsContext";
+import Toast from "@/app/components/profile/Toast";
 
 // Transform API job to Job type for Jobcard
 function transformJobFromAPI(apiJob: JobFromAPI): Job {
@@ -242,10 +243,15 @@ function SalaryFilter({ minSalary, maxSalary, tempMin, tempMax, onTempChange }: 
 }
 
 // Main Component
-export default function JobSearchPage() {
+function JobSearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isSaved, saveJobToFavorites } = useSavedJobs();
+  const { isSaved, saveJobToFavorites, unsaveJobFromFavorites } = useSavedJobs();
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+  const showToast = (message: string, type: 'error' | 'success' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
   
   // Get search params from URL
   const searchQuery = searchParams.get('q') || '';
@@ -302,16 +308,23 @@ export default function JobSearchPage() {
   const [loadingSaveIds, setLoadingSaveIds] = useState<Set<string>>(new Set());
 
   const handleSaveJob = async (jobId: string) => {
-    // Only allow saving, not unsaving (user must go to favorites page to unsave)
-    if (isSaved(jobId)) {
-      return; // Already saved, do nothing
-    }
-    
     try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        showToast('Vui lòng đăng nhập để lưu công việc', 'error');
+        return;
+      }
       setLoadingSaveIds(prev => new Set(prev).add(jobId));
-      await saveJobToFavorites(jobId);
-    } catch (error) {
-      console.error('Error saving job:', error);
+      if (isSaved(jobId)) {
+        await unsaveJobFromFavorites(jobId);
+        showToast('Đã bỏ lưu công việc');
+      } else {
+        await saveJobToFavorites(jobId);
+        showToast('Đã lưu công việc');
+      }
+    } catch (error: any) {
+      console.error('Error toggling saved job:', error);
+      showToast(error?.message || 'Không thể lưu công việc', 'error');
     } finally {
       setLoadingSaveIds(prev => {
         const updated = new Set(prev);
@@ -461,6 +474,9 @@ export default function JobSearchPage() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 max-w-[1400px] py-8 bg-gray-50">
+        {toast && (
+          <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+        )}
         {/* Horizontal Filters Bar */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6 relative z-10">
           <div className="flex flex-wrap items-center gap-3">
@@ -664,5 +680,13 @@ export default function JobSearchPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" />}> 
+      <JobSearchContent />
+    </Suspense>
   );
 }

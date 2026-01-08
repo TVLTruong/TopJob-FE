@@ -89,7 +89,6 @@ export interface UploadCvDto {
 
 export interface ApplyJobDto {
   cvId?: string; // Optional, uses default CV if not provided
-  coverLetter?: string;
 }
 
 export interface Application {
@@ -377,7 +376,7 @@ export const CandidateApi = {
     token: string,
     jobId: string,
     data: ApplyJobDto
-  ): Promise<{ message: string; application: Application }> => {
+  ): Promise<{ message: string; applicationId: string }> => {
     const response = await fetch(
       `${API_BASE_URL}/candidates/jobs/${jobId}/apply`,
       {
@@ -386,11 +385,32 @@ export const CandidateApi = {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        // BE only accepts cvId in DTO; ignore other fields
+        body: JSON.stringify({ cvId: data.cvId }),
       }
     );
     
-    return handleResponse<{ message: string; application: Application }>(response);
+    return handleResponse<{ message: string; applicationId: string }>(response);
+  },
+
+  /**
+   * Hủy ứng tuyển công việc
+   * DELETE /candidates/jobs/:jobId/apply
+   */
+  unapplyJob: async (
+    token: string,
+    jobId: string
+  ): Promise<{ message: string }> => {
+    const response = await fetch(
+      `${API_BASE_URL}/candidates/jobs/${jobId}/apply`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      }
+    );
+    return handleResponse<{ message: string }>(response);
   },
 
   /**

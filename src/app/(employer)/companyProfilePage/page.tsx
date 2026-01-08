@@ -88,15 +88,14 @@ export default function CompanyProfilePage() {
             router.push('/login?message=' + encodeURIComponent('Tài khoản chưa được kích hoạt'));
             return;
           }
-
-          setChecking(false);
         } catch (error) {
-          // If profile not found, might need to complete profile
-          router.push('/completeProfile');
+          console.error('Error checking profile status:', error);
+          router.push('/login');
+          return;
         }
-      } else {
-        setChecking(false);
       }
+
+      setChecking(false);
     };
 
     checkAccess();

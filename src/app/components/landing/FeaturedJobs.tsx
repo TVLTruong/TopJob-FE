@@ -8,6 +8,7 @@ import { Job } from "@/app/components/types/job.types"; // Import kiểu Job
 import { ArrowRight } from "lucide-react"; // Import icon mũi tên
 import { getHotJobs, JobFromAPI } from "@/utils/api/job-api";
 import { useSavedJobs } from "@/contexts/SavedJobsContext";
+import Toast from "@/app/components/profile/Toast";
 
 // Transform API job to Job type for Jobcard
 function transformJobFromAPI(apiJob: JobFromAPI): Job {
@@ -66,27 +67,41 @@ function transformJobFromAPI(apiJob: JobFromAPI): Job {
 
 export default function FeaturedJobs() {
   const router = useRouter();
-  const { isSaved, saveJobToFavorites } = useSavedJobs();
+  const { isSaved, saveJobToFavorites, unsaveJobFromFavorites } = useSavedJobs();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadingSaveIds, setLoadingSaveIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  const showToast = (message: string, type: 'error' | 'success' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const handleJobClick = (jobId: string) => {
     router.push(`/jobpage/${jobId}`);
   };
 
   const handleSaveJob = async (jobId: string) => {
-    // Only allow saving, not unsaving
-    if (isSaved(jobId)) {
-      return; // Already saved, do nothing
-    }
-    
     try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        showToast('Vui lòng đăng nhập để lưu công việc', 'error');
+        return;
+      }
+
       setLoadingSaveIds(prev => new Set(prev).add(jobId));
-      await saveJobToFavorites(jobId);
-    } catch (error) {
-      console.error('Error saving job:', error);
+      if (isSaved(jobId)) {
+        await unsaveJobFromFavorites(jobId);
+        showToast('Đã bỏ lưu công việc');
+      } else {
+        await saveJobToFavorites(jobId);
+        showToast('Đã lưu công việc');
+      }
+    } catch (error: any) {
+      console.error('Error toggling saved job:', error);
+      showToast(error?.message || 'Không thể lưu công việc', 'error');
     } finally {
       setLoadingSaveIds(prev => {
         const updated = new Set(prev);
@@ -119,6 +134,9 @@ export default function FeaturedJobs() {
   return (
     <div className="w-full py-3 md:py-3">
       <div className=" mx-auto px-1">
+        {toast && (
+          <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+        )}
         {/* Header Section */}
         <div className="w-full flex justify-between items-center mb-8">
           <h2 className="text-2xl md:text-3xl font-semibold text-gray-800">

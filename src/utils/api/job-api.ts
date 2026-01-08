@@ -228,22 +228,9 @@ export const updateJob = async (jobId: string, payload: Partial<CreateJobPayload
 export const getJobDetail = async (jobId: string): Promise<JobFromAPI> => {
   try {
     const response = await axios.get(
-      `${API_BASE_URL}/jobs`,
-      { 
-        params: { id: jobId },
-        headers: getAuthHeaders() 
-      }
+      `${API_BASE_URL}/jobs/${jobId}`
     );
-    
-    // Backend might return array or single object
-    const data = response.data;
-    const job = Array.isArray(data) ? data[0] : data;
-    
-    if (!job) {
-      throw new Error(`Job with ID ${jobId} not found`);
-    }
-    
-    return job;
+    return response.data as JobFromAPI;
   } catch (error) {
     console.error('Error fetching job detail:', error);
     throw error;
@@ -256,24 +243,11 @@ export const getJobDetail = async (jobId: string): Promise<JobFromAPI> => {
  */
 export const getCandidateJobDetail = async (jobId: string): Promise<JobFromAPI> => {
   try {
-    // Use /jobs endpoint with ID filter
+    // BE supports GET /jobs/:identifier (ID or slug)
     const response = await axios.get(
-      `${API_BASE_URL}/jobs`,
-      { 
-        params: { id: jobId },
-        headers: getAuthHeaders() 
-      }
+      `${API_BASE_URL}/jobs/${jobId}`
     );
-    
-    // Backend might return array or single object
-    const data = response.data;
-    const job = Array.isArray(data) ? data[0] : data;
-    
-    if (!job) {
-      throw new Error(`Job with ID ${jobId} not found`);
-    }
-    
-    return job;
+    return response.data as JobFromAPI;
   } catch (error: any) {
     console.error('Error fetching candidate job detail:', error);
     throw error;
