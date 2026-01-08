@@ -17,14 +17,14 @@ async function fetchFeaturedJobs(): Promise<Job[]> {
 
   // --- DỮ LIỆU GIẢ LẬP ---
   const mockJobs: Job[] = [
-    { id: 'uuid-1', title: "Project Manager", companyName: "Gameloft", location: "TP.HCM", type: "Full Time", experience: "Senior", salary: "40 - 50 triệu / tháng", tags: ["Gaming", "Management"], logoUrl: "/placeholder-logo.png" }, // Nhớ đặt ảnh vào /public/images/
-    { id: 'uuid-2', title: "Frontend Developer", companyName: "Viggle", location: "Đà Nẵng", type: "Remote", experience: "Junior", salary: "Thoả thuận", tags: ["React", "TypeScript"], logoUrl: "/placeholder-logo.png" },
-    { id: 'uuid-3', title: "Backend Engineer", companyName: "Base.vn", location: "Hà Nội", type: "Full Time", experience: "Fresher", salary: "15 - 25 triệu", tags: ["NodeJS", "PHP"], logoUrl: "/placeholder-logo.png" },
-    { id: 'uuid-4', title: "UI/UX Designer", companyName: "Eureka", location: "TP.HCM", type: "Part Time", experience: "Junior", salary: "Thoả thuận", tags: ["Figma", "Design"], logoUrl: "/placeholder-logo.png" },
-    { id: 'uuid-5', title: "DevOps Engineer", companyName: "DXC Technology", location: "TP.HCM", type: "Full Time", experience: "Senior", salary: "Verry High", tags: ["AWS", "CI/CD"], logoUrl: "/placeholder-logo.png" },
-    { id: 'uuid-6', title: "QA Tester", companyName: "Corsair", location: "Hà Nội", type: "Full Time", experience: "Fresher", salary: "Thoả thuận", tags: ["Testing", "Manual"], logoUrl: "/placeholder-logo.png" },
-    { id: 'uuid-7', title: "Data Scientist", companyName: "Shopee", location: "TP.HCM", type: "Full Time", experience: "Senior", salary: "2500 USD+", tags: ["Python", "Machine Learning"], logoUrl: "/placeholder-logo.png" },
-    { id: 'uuid-8', title: "Mobile Developer (iOS)", companyName: "Zalo", location: "TP.HCM", type: "Full Time", experience: "Junior", salary: "1800 - 2200 USD", tags: ["Swift", "iOS"], logoUrl: "/placeholder-logo.png" },
+    { id: '1', title: "Project Manager", companyName: "Gameloft", location: "TP.HCM", type: "Full Time", experience: "Senior", salary: "40 - 50 triệu / tháng", tags: ["Gaming", "Management"], logoUrl: "/placeholder-logo.png" }, // Nhớ đặt ảnh vào /public/images/
+    { id: '2', title: "Frontend Developer", companyName: "Viggle", location: "Đà Nẵng", type: "Remote", experience: "Junior", salary: "Thoả thuận", tags: ["React", "TypeScript"], logoUrl: "/placeholder-logo.png" },
+    { id: '3', title: "Backend Engineer", companyName: "Base.vn", location: "Hà Nội", type: "Full Time", experience: "Fresher", salary: "15 - 25 triệu", tags: ["NodeJS", "PHP"], logoUrl: "/placeholder-logo.png" },
+    { id: '4', title: "UI/UX Designer", companyName: "Eureka", location: "TP.HCM", type: "Part Time", experience: "Junior", salary: "Thoả thuận", tags: ["Figma", "Design"], logoUrl: "/placeholder-logo.png" },
+    { id: '5', title: "DevOps Engineer", companyName: "DXC Technology", location: "TP.HCM", type: "Full Time", experience: "Senior", salary: "Verry High", tags: ["AWS", "CI/CD"], logoUrl: "/placeholder-logo.png" },
+    { id: '6', title: "QA Tester", companyName: "Corsair", location: "Hà Nội", type: "Full Time", experience: "Fresher", salary: "Thoả thuận", tags: ["Testing", "Manual"], logoUrl: "/placeholder-logo.png" },
+    { id: '7', title: "Data Scientist", companyName: "Shopee", location: "TP.HCM", type: "Full Time", experience: "Senior", salary: "2500 USD+", tags: ["Python", "Machine Learning"], logoUrl: "/placeholder-logo.png" },
+    { id: '8', title: "Mobile Developer (iOS)", companyName: "Zalo", location: "TP.HCM", type: "Full Time", experience: "Junior", salary: "1800 - 2200 USD", tags: ["Swift", "iOS"], logoUrl: "/placeholder-logo.png" },
   ];
   // -------------------------
 

@@ -60,8 +60,9 @@ export default function Jobcard({
      } else if (onApply) {
        onApply(job.id);
      } else {
-       // Hành động mặc định nếu không có prop onApply (ví dụ: mở link job)
-       console.log("Applying for job:", job.id);
+       // Hành động mặc định: navigate với source tracking
+       const url = source ? `/jobpage/${job.id}?from=${source}` : `/jobpage/${job.id}`;
+       router.push(url);
      }
   };
 
