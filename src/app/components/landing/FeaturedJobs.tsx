@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Jobcard from "@/app/components/job/Jobcard"; // Import Jobcard
+import LoginRequiredModal from "@/app/components/common/LoginRequiredModal";
 import { Job } from "@/app/components/types/job.types"; // Import kiểu Job
-import { ArrowRight } from "lucide-react"; // Import icon mũi tên
 import { getHotJobs, JobFromAPI } from "@/utils/api/job-api";
 import { useSavedJobs } from "@/contexts/SavedJobsContext";
 import Toast from "@/app/components/profile/Toast";
@@ -73,6 +72,7 @@ export default function FeaturedJobs() {
   const [loadingSaveIds, setLoadingSaveIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const showToast = (message: string, type: 'error' | 'success' = 'success') => {
     setToast({ message, type });
@@ -80,7 +80,7 @@ export default function FeaturedJobs() {
   };
 
   const handleJobClick = (jobId: string) => {
-    router.push(`/jobpage/${jobId}`);
+    router.push(`/jobpage/${jobId}?from=landing`);
   };
 
   const handleSaveJob = async (jobId: string) => {
@@ -110,6 +110,10 @@ export default function FeaturedJobs() {
       });
     }
   };
+  
+  const handleLoginRequired = () => {
+    setShowLoginModal(true);
+  };
 
   useEffect(() => {
     async function loadJobs() {
@@ -138,18 +142,10 @@ export default function FeaturedJobs() {
           <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
         )}
         {/* Header Section */}
-        <div className="w-full flex justify-between items-center mb-8">
+        <div className="w-full mb-8">
           <h2 className="text-2xl md:text-3xl font-semibold text-gray-800">
             Việc làm nổi bật
           </h2>
-          {/* Nút Xem tất cả */}
-          <Link
-            href="/jobpage" // Link trực tiếp
-            className="px-5 py-2 bg-jobcard-button text-white rounded-lg space-x-2 flex items-center hover:bg-jobcard-button-hover transition-all transform hover:scale-105 text-sm font-medium"
-          >
-            <span>Xem tất cả</span>
-            <ArrowRight size={18} /> {/* Icon mũi tên */}
-          </Link>
         </div>
 
         {/* Grid hiển thị Jobs */}
@@ -208,6 +204,13 @@ export default function FeaturedJobs() {
           </div>
         )}
       </div>
+      
+      {/* Login Required Modal */}
+      <LoginRequiredModal 
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="Bạn cần đăng nhập để ứng tuyển hoặc lưu công việc yêu thích"
+      />
     </div>
   );
 }

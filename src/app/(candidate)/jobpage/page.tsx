@@ -5,6 +5,7 @@ import { ChevronDown, X, SlidersHorizontal, Briefcase, DollarSign, Clock, Layers
 import { useRouter, useSearchParams } from "next/navigation";
 import HeroSearcher from "@/app/components/landing/searcher";
 import Jobcard from "@/app/components/job/Jobcard";
+import LoginRequiredModal from "@/app/components/common/LoginRequiredModal";
 import { Job } from "@/app/components/types/job.types";
 import { getPublicJobs, JobFromAPI, PublicJobsFilters, getAllJobCategories, JobCategory } from "@/utils/api/job-api";
 import { useSavedJobs } from "@/contexts/SavedJobsContext";
@@ -294,7 +295,7 @@ function JobSearchContent() {
   const [maxSalary, setMaxSalary] = useState(100);
   
   const handleJobClick = (jobId: string) => {
-    router.push(`/jobpage/${jobId}`);
+    router.push(`/jobpage/${jobId}?from=jobpage`);
   };
   
   // Temporary filters (being edited)
@@ -336,6 +337,12 @@ function JobSearchContent() {
 
   const handleApplyJob = (jobId: string) => {
     console.log("Applying for job:", jobId);
+  };
+  
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  
+  const handleLoginRequired = () => {
+    setShowLoginModal(true);
   };
 
   const handleTempSalaryChange = (min: number, max: number) => {
@@ -679,6 +686,13 @@ function JobSearchContent() {
           )}
         </div>
       </div>
+      
+      {/* Login Required Modal */}
+      <LoginRequiredModal 
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="Bạn cần đăng nhập để ứng tuyển hoặc lưu công việc yêu thích"
+      />
     </div>
   );
 }

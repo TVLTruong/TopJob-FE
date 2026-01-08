@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { useEmployerProfile } from '@/app/(employer)/companyProfilePage/page';
+import { useEmployerProfile } from '@/contexts/EmployerProfileContext';
 import TechStack from './TechStack';
 import OfficeLocations from './OfficeLocations';
 

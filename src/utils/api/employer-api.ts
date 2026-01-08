@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('accessToken');
@@ -206,17 +206,29 @@ export const updateApplicationStatus = async (
 
 /**
  * Get public employer profile (for candidates to view)
- * GET /employers/:employerId/profile
+ * GET /employers/:employerId
+ * No auth required for public viewing
  */
 export const getPublicEmployerProfile = async (employerId: string) => {
   try {
-    const response = await axios.get(
-      `${API_BASE_URL}/employers/${employerId}/profile`,
-      { headers: getAuthHeaders() }
-    );
+    // Optional auth - send token if available, but don't require it
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    
+    const url = `${API_BASE_URL}/employers/${employerId}`;
+    console.log('Calling API:', url); // Debug log
+    
+    const response = await axios.get(url, { headers });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      console.error('API Error:', error.response?.status, error.response?.data);
       throw new Error(error.response?.data?.message || 'Failed to fetch employer profile');
     }
     throw error;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, createContext, useContext } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -11,18 +11,7 @@ import Contact from '@/app/components/companyProfile/Contact';
 import JobListings from '@/app/components/companyProfile/JobListings';
 import { getMyEmployerProfile, getPublicEmployerProfile, updateMyEmployerProfile } from '@/utils/api/employer-api';
 import Toast from '@/app/components/profile/Toast';
-
-// Create a local context for this page to provide profile to child components
-const EmployerProfileContext = createContext<any>(undefined);
-
-// Export the hook so child components can use it
-export function useEmployerProfile() {
-  const context = useContext(EmployerProfileContext);
-  if (context === undefined) {
-    throw new Error('useEmployerProfile must be used within CompanyProfilePage');
-  }
-  return context;
-}
+import { EmployerProfileContext } from '@/contexts/EmployerProfileContext';
 
 export default function CompanyProfilePage() {
   const router = useRouter();
@@ -205,7 +194,10 @@ export default function CompanyProfilePage() {
               <Contact canEdit={canEdit} />
             </div>
             <div>
-              <JobListings employerId={profile?.id || employerId || ''} />
+              <JobListings 
+                employerId={profile?.id || employerId || ''} 
+                companySlug={profile?.companyName ? profile.companyName.toLowerCase().replace(/\s+/g, '-') : undefined}
+              />
             </div>
           </div>
 

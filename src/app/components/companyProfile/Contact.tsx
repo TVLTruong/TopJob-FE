@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Edit, X } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEmployerProfile } from '@/app/(employer)/companyProfilePage/page';
+import { useEmployerProfile } from '@/contexts/EmployerProfileContext';
 
 type ContactLink = {
   url: string;

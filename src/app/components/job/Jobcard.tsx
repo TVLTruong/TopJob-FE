@@ -1,6 +1,7 @@
 import { Job } from "@/app/components/types/job.types";
 import Image from "next/image";
 import { Heart } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface JobcardProps {
   job: Job;
@@ -8,13 +9,35 @@ interface JobcardProps {
   onSave?: (jobId: string) => void;
   isSaved?: boolean;
   onClick?: (jobId: string) => void;
+  isLoggedIn?: boolean;
+  onLoginRequired?: () => void;
+  source?: string; // Tracking source: 'landing', 'jobpage', etc.
 }
 
-export default function Jobcard({ job, onApply, onSave, isSaved = false, onClick }: JobcardProps) {
+export default function Jobcard({ 
+  job, 
+  onApply, 
+  onSave, 
+  isSaved = false, 
+  onClick,
+  isLoggedIn = false,
+  onLoginRequired,
+  source 
+}: JobcardProps) {
+  const router = useRouter();
   
   // Hàm xử lý khi nhấn nút Lưu
   const handleSaveClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Ngăn sự kiện click lan ra card cha (nếu card cha có link)
+    
+    // Kiểm tra đăng nhập
+    if (!isLoggedIn) {
+      if (onLoginRequired) {
+        onLoginRequired();
+      }
+      return;
+    }
+    
     if (onSave) {
       onSave(job.id);
     }
@@ -23,13 +46,23 @@ export default function Jobcard({ job, onApply, onSave, isSaved = false, onClick
   // Hàm xử lý khi nhấn nút Ứng tuyển
   const handleApplyClick = (e: React.MouseEvent) => {
      e.stopPropagation();
+     
+     // Kiểm tra đăng nhập
+     if (!isLoggedIn) {
+       if (onLoginRequired) {
+         onLoginRequired();
+       }
+       return;
+     }
+     
      if (onClick) {
        onClick(job.id);
      } else if (onApply) {
        onApply(job.id);
      } else {
-       // Hành động mặc định nếu không có prop onApply (ví dụ: mở link job)
-       console.log("Applying for job:", job.id);
+       // Hành động mặc định: navigate với source tracking
+       const url = source ? `/jobpage/${job.id}?from=${source}` : `/jobpage/${job.id}`;
+       router.push(url);
      }
   };
 
@@ -37,6 +70,10 @@ export default function Jobcard({ job, onApply, onSave, isSaved = false, onClick
   const handleCardClick = () => {
     if (onClick) {
       onClick(job.id);
+    } else {
+      // Navigate với source tracking
+      const url = source ? `/jobpage/${job.id}?from=${source}` : `/jobpage/${job.id}`;
+      router.push(url);
     }
   };
 

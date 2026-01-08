@@ -2,6 +2,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import JobDetailContent, { JobDetailData } from '@/app/components/job/JobDetailContents';
 import Toast from '@/app/components/profile/Toast';
+import LoginRequiredModal from '@/app/components/common/LoginRequiredModal';
 import { Heart, X } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,6 +16,7 @@ function JobDetailContent_Inner() {
   const jobId = params.id as string;
   
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'apply' | 'unapply' | null>(null);
   const [hasApplied, setHasApplied] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
@@ -133,6 +135,12 @@ function JobDetailContent_Inner() {
   }, [user, jobId]);
 
   const handleApply = () => {
+    // Kiểm tra đăng nhập trước
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    
     // withdrawn status = chưa ứng tuyển, cho phép ứng tuyển lại
     const isAppliedAndActive = hasApplied && applicationStatus && !['withdrawn'].includes(applicationStatus);
     
@@ -162,6 +170,12 @@ function JobDetailContent_Inner() {
   };
 
   const handleSaveJob = async () => {
+    // Kiểm tra đăng nhập trước
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) {
@@ -367,6 +381,13 @@ function JobDetailContent_Inner() {
             </div>
           </div>
         )}
+
+        {/* Login Required Modal */}
+        <LoginRequiredModal 
+          isOpen={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+          message="Bạn cần đăng nhập để ứng tuyển hoặc lưu công việc"
+        />
 
         {/* Toast Notification */}
         {toast && (

@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import CompanyCard from "@/app/components/company/CompanyCard";
 import { Company } from "@/app/components/types/company.types";
-import { ArrowRight } from "lucide-react";
 import { getFeaturedCompanies, FeaturedCompany } from "@/utils/api/employer-api";
 
 // Transform API company to Company type for CompanyCard
@@ -48,17 +46,10 @@ export default function FeaturedCompanies() {
     <div className="w-full py-3 md:py-3">
       <div className="mx-auto px-1">
         {/* Header Section */}
-        <div className="w-full flex justify-between items-center mb-8">
+        <div className="w-full mb-8">
           <h2 className="text-2xl md:text-3xl font-semibold text-gray-800">
             Công ty nổi bật
           </h2>
-          <Link
-            href="/companypage" // Link tới trang danh sách công ty
-            className="px-5 py-2 bg-jobcard-button text-white rounded-lg space-x-2 flex items-center hover:bg-jobcard-button-hover transition-all transform hover:scale-105 text-sm font-medium"
-          >
-            <span>Xem tất cả</span>
-            <ArrowRight size={18} />
-          </Link>
         </div>
 
         {/* Grid hiển thị Companies */}
@@ -99,7 +90,7 @@ export default function FeaturedCompanies() {
           // --- HIỂN THỊ DANH SÁCH COMPANY ---
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {companies.slice(0, 6).map((company) => (
-              <CompanyCard key={company.id} company={company} />
+              <CompanyCard key={company.id} company={company} source="landing" />
             ))}
           </div>
         )}

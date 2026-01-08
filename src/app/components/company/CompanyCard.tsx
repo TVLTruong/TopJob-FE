@@ -5,11 +5,14 @@ import { MapPin } from "lucide-react"; // Chỉ cần icon MapPin
 
 interface CompanyCardProps {
   company: Company;
+  source?: string; // Tracking source: 'landing', 'companypage', etc.
 }
 
-export default function CompanyCard({ company }: CompanyCardProps) {
-  // const companyLink = `/cong-ty/${company.id}-${company.companyName.toLowerCase().replace(/\s+/g, '-')}`;
-  const companyLink = `/companyProfilePage`;
+export default function CompanyCard({ company, source }: CompanyCardProps) {
+  // Link to public company profile page for candidates/guests
+  const companyLink = source 
+    ? `/companypage/companyProfilePage?id=${company.id}&from=${source}`
+    : `/companypage/companyProfilePage?id=${company.id}`;
 
   // Logic xử lý hiển thị địa điểm
   const displayLocations = (): string => {

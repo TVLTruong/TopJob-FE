@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import ConfirmModal from './ConfirmModal'
 import { Users, Globe, Edit, X, Plus, ArrowLeft } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useEmployerProfile } from '@/app/(employer)/companyProfilePage/page'
+import { useEmployerProfile } from '@/contexts/EmployerProfileContext'
 import locationData from "@/app/assets/danh-sach-3321-xa-phuong.json";
 import { updateMyEmployerProfile } from '@/utils/api/employer-api'
 import { employerCategoryApi } from "@/utils/api/categories-api";
