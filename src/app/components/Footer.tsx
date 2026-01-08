@@ -1,7 +1,16 @@
+"use client";
 import Image from 'next/image';
 import Link from 'next/link';
+import React, { useState } from 'react';
+import ComingSoonModal from '@/app/components/common/ComingSoonModal';
 
 export default function Footer() {
+  const [showComingSoon, setShowComingSoon] = useState(false);
+  const openComingSoon = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    setShowComingSoon(true);
+  };
+
   return (
     // Dùng màu 'footer-bg' đã định nghĩa trong tailwind.config.ts
     <footer className="w-full bg-jobcard-button text-white pt-16 pb-8">
@@ -33,9 +42,11 @@ export default function Footer() {
           <div className="space-y-3">
             <h5 className="font-bold text-lg">Về TopJob</h5>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/viec-lam" className="hover:underline">Việc làm</Link></li>
-              <li><Link href="/cong-ty-it" className="hover:underline">Công ty IT</Link></li>
-              <li><Link href="/ho-so-cv" className="hover:underline">Hồ sơ & CV</Link></li>
+              {/* Map tới trang hiện có */}
+              <li><Link href="/jobpage" className="hover:underline">Việc làm</Link></li>
+              <li><Link href="/companypage" className="hover:underline">Công ty IT</Link></li>
+              <li><Link href="/cv" className="hover:underline">Hồ sơ & CV</Link></li>
+              {/* Chưa có: Blog IT */}
               {/* <li><Link href="/blog-it" className="hover:underline">Blog IT</Link></li> */}
             </ul>
           </div>
@@ -44,10 +55,12 @@ export default function Footer() {
           <div className="space-y-3">
             <h5 className="font-bold text-lg">Trợ giúp</h5>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/ho-tro" className="hover:underline">Hỗ trợ khách hàng</Link></li>
-              <li><Link href="/lien-he" className="hover:underline">Liên hệ chúng tôi</Link></li>
-              <li><Link href="/dieu-khoan" className="hover:underline">Điều khoản & Điều kiện</Link></li>
-              <li><Link href="/chinh-sach" className="hover:underline">Chính sách bảo mật</Link></li>
+              {/* Liên hệ đã có */}
+              <li><Link href="/contact" className="hover:underline">Liên hệ chúng tôi</Link></li>
+              {/* Các mục chưa có: mở modal Coming Soon */}
+              <li><a href="#" onClick={openComingSoon} className="hover:underline">Hỗ trợ khách hàng</a></li>
+              <li><a href="#" onClick={openComingSoon} className="hover:underline">Điều khoản & Điều kiện</a></li>
+              <li><a href="#" onClick={openComingSoon} className="hover:underline">Chính sách bảo mật</a></li>
             </ul>
           </div>
 
@@ -55,10 +68,11 @@ export default function Footer() {
           <div className="space-y-3">
             <h5 className="font-bold text-lg">Xây dựng sự nghiệp</h5>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/viec-lam-tot-nhat" className="hover:underline">Việc làm tốt nhất</Link></li>
-              <li><Link href="/viec-lam-luong-cao" className="hover:underline">Việc làm lương cao</Link></li>
-              <li><Link href="/viec-lam-senior" className="hover:underline">Việc làm Senior</Link></li>
-              <li><Link href="/viec-lam-ban-thoi-gian" className="hover:underline">Việc làm bán thời gian</Link></li>
+              {/* Nếu có filter ở trang jobpage, có thể dùng query sau khi triển khai */}
+              <li><a href="#" onClick={openComingSoon} className="hover:underline">Việc làm tốt nhất</a></li>
+              <li><a href="#" onClick={openComingSoon} className="hover:underline">Việc làm lương cao</a></li>
+              <li><a href="#" onClick={openComingSoon} className="hover:underline">Việc làm Senior</a></li>
+              <li><a href="#" onClick={openComingSoon} className="hover:underline">Việc làm bán thời gian</a></li>
             </ul>
           </div>
 
@@ -88,6 +102,13 @@ export default function Footer() {
           </div> */}
         </div>
       </div>
+      {/* Coming Soon Modal */}
+      <ComingSoonModal
+        isOpen={showComingSoon}
+        onClose={() => setShowComingSoon(false)}
+        title="Trang đang phát triển"
+        message="Một số liên kết chưa khả dụng. Vui lòng khám phá các trang hiện có hoặc quay lại sau."
+      />
     </footer>
   );
 }

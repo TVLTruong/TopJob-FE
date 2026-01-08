@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { ChevronDown, X, SlidersHorizontal, Briefcase, DollarSign, Clock, Layers, Award } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import HeroSearcher from "@/app/components/landing/searcher";
 import Jobcard from "@/app/components/job/Jobcard";
 import LoginRequiredModal from "@/app/components/common/LoginRequiredModal";
@@ -247,6 +248,7 @@ function SalaryFilter({ minSalary, maxSalary, tempMin, tempMax, onTempChange }: 
 function JobSearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   const { isSaved, saveJobToFavorites, unsaveJobFromFavorites } = useSavedJobs();
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const showToast = (message: string, type: 'error' | 'success' = 'success') => {
@@ -607,6 +609,9 @@ function JobSearchContent() {
                     onSave={handleSaveJob}
                     isSaved={isSaved(job.id)}
                     onClick={handleJobClick}
+                    isLoggedIn={!!user}
+                    onLoginRequired={handleLoginRequired}
+                    source="jobpage"
                   />
                 ))}
               </div>

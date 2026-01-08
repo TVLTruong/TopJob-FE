@@ -4,6 +4,8 @@ import { useState, useRef, DragEvent, ChangeEvent, useEffect } from "react";
 import { CandidateApi } from "@/utils/api/candidate-api";
 import type { CandidateCV } from "@/utils/api/candidate-api";
 import Toast from "@/app/components/profile/Toast";
+import LoginRequiredModal from "@/app/components/common/LoginRequiredModal";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Icons
 const UploadIcon = () => (
@@ -67,6 +69,7 @@ const EyeIcon = () => (
 );
 
 export default function CVManagementPage() {
+  const { user } = useAuth();
   const [cvList, setCvList] = useState<CandidateCV[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -75,6 +78,7 @@ export default function CVManagementPage() {
   const [editingName, setEditingName] = useState<string>("");
   const [previewCV, setPreviewCV] = useState<CandidateCV | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
@@ -85,17 +89,23 @@ export default function CVManagementPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // Load CVs on mount
+  // Load CVs or show login modal depending on auth state
   useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      setShowLoginModal(true);
+      return;
+    }
     loadCVs();
-  }, []);
+  }, [user]);
 
   const loadCVs = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('accessToken');
-      if (!token) {
-        showToast('Vui lòng đăng nhập để xem CV', 'error');
+      if (!token || !user) {
+        setShowLoginModal(true);
+        setLoading(false);
         return;
       }
       const cvs = await CandidateApi.getMyCvs(token);
@@ -275,6 +285,23 @@ export default function CVManagementPage() {
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
           <p className="mt-4 text-gray-600">Đang tải danh sách CV...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Guest view: show login-required modal and minimal message
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Quản lý CV</h1>
+          <p className="text-gray-600 mb-6">Bạn cần đăng nhập để xem và quản lý CV của mình.</p>
+          <LoginRequiredModal
+            isOpen={showLoginModal}
+            onClose={() => setShowLoginModal(false)}
+            message="Vui lòng đăng nhập để truy cập trang Quản lý CV"
+          />
         </div>
       </div>
     );
@@ -524,6 +551,12 @@ export default function CVManagementPage() {
           onClose={() => setToast(null)}
         />
       )}
+      {/* Login Required Modal (for edge cases) */}
+      <LoginRequiredModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="Vui lòng đăng nhập để truy cập trang Quản lý CV"
+      />
     </div>
   );
 }
