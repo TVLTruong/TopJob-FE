@@ -348,7 +348,7 @@ export default function JobSearchPage() {
   const [maxSalary, setMaxSalary] = useState(100);
   
   const handleJobClick = (jobId: string) => {
-    router.push(`/jobpage/${jobId}`);
+    router.push(`/jobpage/${jobId}?from=jobpage`);
   };
   
   // Temporary filters (being edited)
@@ -523,6 +523,7 @@ export default function JobSearchPage() {
                 onClick={handleJobClick}
                 isLoggedIn={!!user}
                 onLoginRequired={handleLoginRequired}
+                source="jobpage"
               />
             ))}
           </div>

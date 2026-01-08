@@ -1,6 +1,7 @@
 import { Job } from "@/app/components/types/job.types";
 import Image from "next/image";
 import { Heart } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface JobcardProps {
   job: Job;
@@ -10,6 +11,7 @@ interface JobcardProps {
   onClick?: (jobId: string) => void;
   isLoggedIn?: boolean;
   onLoginRequired?: () => void;
+  source?: string; // Tracking source: 'landing', 'jobpage', etc.
 }
 
 export default function Jobcard({ 
@@ -19,8 +21,10 @@ export default function Jobcard({
   isSaved = false, 
   onClick,
   isLoggedIn = false,
-  onLoginRequired 
+  onLoginRequired,
+  source 
 }: JobcardProps) {
+  const router = useRouter();
   
   // Hàm xử lý khi nhấn nút Lưu
   const handleSaveClick = (e: React.MouseEvent) => {
@@ -65,6 +69,10 @@ export default function Jobcard({
   const handleCardClick = () => {
     if (onClick) {
       onClick(job.id);
+    } else {
+      // Navigate với source tracking
+      const url = source ? `/jobpage/${job.id}?from=${source}` : `/jobpage/${job.id}`;
+      router.push(url);
     }
   };
 

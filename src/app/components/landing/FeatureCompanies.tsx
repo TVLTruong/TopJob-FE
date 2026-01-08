@@ -85,7 +85,7 @@ export default function FeaturedCompanies() {
           // --- HIỂN THỊ DANH SÁCH COMPANY ---
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {companies.slice(0, 6).map((company) => (
-              <CompanyCard key={company.id} company={company} />
+              <CompanyCard key={company.id} company={company} source="landing" />
             ))}
           </div>
         )}

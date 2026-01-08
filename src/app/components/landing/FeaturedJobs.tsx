@@ -41,7 +41,7 @@ export default function FeaturedJobs() {
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleJobClick = (jobId: string) => {
-    router.push(`/jobpage/${jobId}`);
+    router.push(`/jobpage/${jobId}?from=landing`);
   };
 
   const handleSaveJob = (jobId: string) => {
@@ -122,6 +122,7 @@ export default function FeaturedJobs() {
                 isSaved={savedJobs.includes(job.id)}
                 isLoggedIn={!!user}
                 onLoginRequired={handleLoginRequired}
+                source="landing"
               />
             ))}
           </div>
