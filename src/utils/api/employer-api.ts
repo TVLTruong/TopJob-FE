@@ -206,7 +206,7 @@ export const updateApplicationStatus = async (
 
 /**
  * Get public employer profile (for candidates to view)
- * GET /employers/:employerId/profile
+ * GET /employers/:employerId
  * No auth required for public viewing
  */
 export const getPublicEmployerProfile = async (employerId: string) => {
@@ -221,7 +221,7 @@ export const getPublicEmployerProfile = async (employerId: string) => {
       headers.Authorization = `Bearer ${token}`;
     }
     
-    const url = `${API_BASE_URL}/employers/${employerId}/profile`;
+    const url = `${API_BASE_URL}/employers/${employerId}`;
     console.log('Calling API:', url); // Debug log
     
     const response = await axios.get(url, { headers });
