@@ -1,53 +1,114 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
 import Jobcard from "@/app/components/job/Jobcard"; // Import Jobcard
 import LoginRequiredModal from "@/app/components/common/LoginRequiredModal";
 import { Job } from "@/app/components/types/job.types"; // Import kiểu Job
-import { ArrowRight } from "lucide-react"; // Import icon mũi tên
+import { getHotJobs, JobFromAPI } from "@/utils/api/job-api";
+import { useSavedJobs } from "@/contexts/SavedJobsContext";
+import Toast from "@/app/components/profile/Toast";
 
-// Hàm giả lập fetch API (bạn sẽ thay bằng API thật)
-async function fetchFeaturedJobs(): Promise<Job[]> {
-  console.log("Fetching featured jobs...");
-  // Giả lập gọi API backend (ví dụ: /jobs?featured=true&limit=6)
-  await new Promise(resolve => setTimeout(resolve, 500)); // Giả lập độ trễ mạng
+// Transform API job to Job type for Jobcard
+function transformJobFromAPI(apiJob: JobFromAPI): Job {
+  const employmentTypeMap: Record<string, string> = {
+    'full_time': 'Full-time',
+    'part_time': 'Part-time',
+    'freelance': 'Freelance',
+    'internship': 'Internship',
+    'contract': 'Contract',
+  };
 
-  // --- DỮ LIỆU GIẢ LẬP ---
-  const mockJobs: Job[] = [
-    { id: '1', title: "Project Manager", companyName: "Gameloft", location: "TP.HCM", type: "Full Time", experience: "Senior", salary: "40 - 50 triệu / tháng", tags: ["Gaming", "Management"], logoUrl: "/placeholder-logo.png" }, // Nhớ đặt ảnh vào /public/images/
-    { id: '2', title: "Frontend Developer", companyName: "Viggle", location: "Đà Nẵng", type: "Remote", experience: "Junior", salary: "Thoả thuận", tags: ["React", "TypeScript"], logoUrl: "/placeholder-logo.png" },
-    { id: '3', title: "Backend Engineer", companyName: "Base.vn", location: "Hà Nội", type: "Full Time", experience: "Fresher", salary: "15 - 25 triệu", tags: ["NodeJS", "PHP"], logoUrl: "/placeholder-logo.png" },
-    { id: '4', title: "UI/UX Designer", companyName: "Eureka", location: "TP.HCM", type: "Part Time", experience: "Junior", salary: "Thoả thuận", tags: ["Figma", "Design"], logoUrl: "/placeholder-logo.png" },
-    { id: '5', title: "DevOps Engineer", companyName: "DXC Technology", location: "TP.HCM", type: "Full Time", experience: "Senior", salary: "Verry High", tags: ["AWS", "CI/CD"], logoUrl: "/placeholder-logo.png" },
-    { id: '6', title: "QA Tester", companyName: "Corsair", location: "Hà Nội", type: "Full Time", experience: "Fresher", salary: "Thoả thuận", tags: ["Testing", "Manual"], logoUrl: "/placeholder-logo.png" },
-    { id: '7', title: "Data Scientist", companyName: "Shopee", location: "TP.HCM", type: "Full Time", experience: "Senior", salary: "2500 USD+", tags: ["Python", "Machine Learning"], logoUrl: "/placeholder-logo.png" },
-    { id: '8', title: "Mobile Developer (iOS)", companyName: "Zalo", location: "TP.HCM", type: "Full Time", experience: "Junior", salary: "1800 - 2200 USD", tags: ["Swift", "iOS"], logoUrl: "/placeholder-logo.png" },
-  ];
-  // -------------------------
+  const experienceLevelMap: Record<string, string> = {
+    'intern': 'Intern',
+    'fresher': 'Fresher',
+    'junior': 'Junior',
+    'middle': 'Middle',
+    'senior': 'Senior',
+    'lead': 'Lead',
+    'manager': 'Manager',
+  };
 
-  return mockJobs;
+  // Format salary
+  let salaryText = 'Thỏa thuận';
+  if (apiJob.isSalaryVisible && apiJob.salaryMin && apiJob.salaryMax) {
+    const minInMillions = Math.round(apiJob.salaryMin / 1000000);
+    const maxInMillions = Math.round(apiJob.salaryMax / 1000000);
+    salaryText = `${minInMillions} - ${maxInMillions} triệu`;
+  } else if (apiJob.isNegotiable) {
+    salaryText = 'Thỏa thuận';
+  }
+
+  // Get first technology if available
+  const firstTechnology = apiJob.jobTechnologies?.[0]?.technology?.name;
+
+  // Get job categories
+  const categoryNames = apiJob.jobCategories?.map(jc => jc.category.name) || [];
+
+  // Combine tags: categories first, then technology
+  const tags = [...categoryNames];
+  if (firstTechnology) {
+    tags.push(firstTechnology);
+  }
+
+  return {
+    id: apiJob.id,
+    title: apiJob.title,
+    companyName: apiJob.employer?.companyName || 'Unknown Company',
+    location: apiJob.location?.city || apiJob.location?.address || 'Remote',
+    type: employmentTypeMap[apiJob.employmentType] || apiJob.employmentType,
+    experience: apiJob.experienceLevel ? experienceLevelMap[apiJob.experienceLevel] : 'All levels',
+    salary: salaryText,
+    tags: tags,
+    logoUrl: apiJob.employer?.logoUrl || '/placeholder-logo.png',
+  };
 }
-
 
 export default function FeaturedJobs() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { isSaved, saveJobToFavorites, unsaveJobFromFavorites } = useSavedJobs();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [savedJobs, setSavedJobs] = useState<string[]>([]);
+  const [loadingSaveIds, setLoadingSaveIds] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const showToast = (message: string, type: 'error' | 'success' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const handleJobClick = (jobId: string) => {
     router.push(`/jobpage/${jobId}?from=landing`);
   };
 
-  const handleSaveJob = (jobId: string) => {
-    setSavedJobs(prev =>
-      prev.includes(jobId) ? prev.filter(id => id !== jobId) : [...prev, jobId]
-    );
+  const handleSaveJob = async (jobId: string) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        showToast('Vui lòng đăng nhập để lưu công việc', 'error');
+        return;
+      }
+
+      setLoadingSaveIds(prev => new Set(prev).add(jobId));
+      if (isSaved(jobId)) {
+        await unsaveJobFromFavorites(jobId);
+        showToast('Đã bỏ lưu công việc');
+      } else {
+        await saveJobToFavorites(jobId);
+        showToast('Đã lưu công việc');
+      }
+    } catch (error: any) {
+      console.error('Error toggling saved job:', error);
+      showToast(error?.message || 'Không thể lưu công việc', 'error');
+    } finally {
+      setLoadingSaveIds(prev => {
+        const updated = new Set(prev);
+        updated.delete(jobId);
+        return updated;
+      });
+    }
   };
   
   const handleLoginRequired = () => {
@@ -57,12 +118,16 @@ export default function FeaturedJobs() {
   useEffect(() => {
     async function loadJobs() {
       setIsLoading(true);
+      setError(null);
       try {
-        const featuredJobs = await fetchFeaturedJobs();
-        setJobs(featuredJobs);
+        // Fetch hot jobs from API (isHot = true)
+        const response = await getHotJobs(8); // Get 8 hot jobs
+        const transformedJobs = response.data.map(transformJobFromAPI);
+        setJobs(transformedJobs);
       } catch (error) {
         console.error("Lỗi khi tải việc làm nổi bật:", error);
-        // Có thể thêm state lỗi để hiển thị thông báo
+        // Show empty state instead of error - API might be temporarily unavailable
+        setJobs([]);
       } finally {
         setIsLoading(false);
       }
@@ -73,6 +138,9 @@ export default function FeaturedJobs() {
   return (
     <div className="w-full py-3 md:py-3">
       <div className=" mx-auto px-1">
+        {toast && (
+          <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+        )}
         {/* Header Section */}
         <div className="w-full mb-8">
           <h2 className="text-2xl md:text-3xl font-semibold text-gray-800">
@@ -105,10 +173,21 @@ export default function FeaturedJobs() {
               </div>
             ))}
           </div>
+        ) : error ? (
+          // Hiển thị lỗi
+          <div className="text-center py-10">
+            <p className="text-red-500 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+            >
+              Thử lại
+            </button>
+          </div>
         ) : jobs.length === 0 ? (
           // Hiển thị khi không có job
           <p className="text-center text-gray-500 py-10">
-            Hiện chưa có việc làm nào.
+            Hiện chưa có việc làm nổi bật nào.
           </p>
         ) : (
           // Hiển thị danh sách job
@@ -118,11 +197,8 @@ export default function FeaturedJobs() {
                 key={job.id} 
                 job={job} 
                 onClick={handleJobClick}
-                onSave={handleSaveJob}
-                isSaved={savedJobs.includes(job.id)}
-                isLoggedIn={!!user}
-                onLoginRequired={handleLoginRequired}
-                source="landing"
+                onSave={!loadingSaveIds.has(job.id) ? handleSaveJob : undefined}
+                isSaved={isSaved(job.id)}
               />
             ))}
           </div>

@@ -234,3 +234,79 @@ export const getPublicEmployerProfile = async (employerId: string) => {
     throw error;
   }
 };
+// ==================== PUBLIC COMPANY APIs (For Candidates) ====================
+
+/**
+ * Get featured companies (top by job count)
+ * GET /companies/featured
+ */
+export interface FeaturedCompany {
+  id: string;
+  companyName: string;
+  logoUrl: string | null;
+  categories?: string[];
+  locations: string[];
+  jobCount: number;
+}
+
+export const getFeaturedCompanies = async (): Promise<FeaturedCompany[]> => {
+  try {
+    const response = await axios.get<FeaturedCompany[]>(
+      `${API_BASE_URL}/companies/featured`
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching featured companies:', error);
+    throw error;
+  }
+};
+
+/**
+ * Search filters for public companies
+ */
+export interface PublicCompaniesFilters {
+  keyword?: string;
+  city?: string;
+  industry?: string;
+  page?: number;
+  limit?: number;
+}
+
+/**
+ * Pagination response for companies
+ */
+export interface CompaniesPaginationResponse {
+  data: FeaturedCompany[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+/**
+ * Get all public companies with filters and pagination
+ * GET /companies
+ */
+export const getPublicCompanies = async (
+  filters: PublicCompaniesFilters = {}
+): Promise<CompaniesPaginationResponse> => {
+  try {
+    const params = new URLSearchParams();
+    
+    if (filters.keyword) params.append('keyword', filters.keyword);
+    if (filters.city) params.append('city', filters.city);
+    if (filters.industry) params.append('industry', filters.industry);
+    if (filters.page) params.append('page', filters.page.toString());
+    if (filters.limit) params.append('limit', filters.limit.toString());
+
+    const response = await axios.get<CompaniesPaginationResponse>(
+      `${API_BASE_URL}/companies?${params.toString()}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching public companies:', error);
+    throw error;
+  }
+};

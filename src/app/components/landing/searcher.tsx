@@ -1,34 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, MapPin, Check, ChevronsUpDown } from "lucide-react";
 import Image from "next/image";
 import images from "@/app/utils/images";
 import { Combobox, Transition } from '@headlessui/react';
 import { allOption, locationsWithAll } from '@/app/utils/vietnamLocations';
-
-const suggestions = [
-  "Java Developer",
-  "Frontend Engineer",
-  "Backend Developer",
-  "Full Stack Developer",
-  "DevOps Engineer",
-  "Data Scientist",
-  "Product Manager",
-  "UI/UX Designer",
-  "Mobile Developer",
-  "Game Developer"
-];
+import { getRandomJobCategories, JobCategory } from "@/utils/api/job-api";
+import { useRouter } from "next/navigation";
 
 export default function HeroSearcher() {
+  const router = useRouter();
   const [selectedLocation, setSelectedLocation] = useState<{ id: string; name: string } | null>(allOption);
   const [locationQuery, setLocationQuery] = useState('');
   const [searchTerm, setSearchTerm] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  
+  // Load random categories on mount
+  useEffect(() => {
+    const loadSuggestions = async () => {
+      try {
+        const categories = await getRandomJobCategories();
+        if (categories && categories.length > 0) {
+          setSuggestions(categories.map(cat => cat.name));
+        } else {
+          // Fallback nếu API chưa sẵn sàng
+          setSuggestions(['Java', 'Python', 'React', 'Node.js', 'DevOps']);
+        }
+      } catch (error) {
+        console.error('Failed to load suggestions:', error);
+        // Fallback nếu có lỗi
+        setSuggestions(['Java', 'Python', 'React', 'Node.js', 'DevOps']);
+      }
+    };
+    loadSuggestions();
+  }, []);
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Tìm kiếm:", { searchTerm, location: selectedLocation?.id });
+    
+    // Build query params
+    const params = new URLSearchParams();
+    if (searchTerm.trim()) {
+      params.set('q', searchTerm.trim());
+    }
+    if (selectedLocation && selectedLocation.id !== 'all') {
+      params.set('location', selectedLocation.id);
+    }
+    
+    // Navigate to jobpage with search params
+    const queryString = params.toString();
+    router.push(`/jobpage${queryString ? `?${queryString}` : ''}`);
   };
-  const handleSuggestionClick = (term: string) => { setSearchTerm(term); };
+  
+  const handleSuggestionClick = (term: string) => { 
+    setSearchTerm(term); 
+  };
   const filteredLocations =
     locationQuery === ''
       ? locationsWithAll
