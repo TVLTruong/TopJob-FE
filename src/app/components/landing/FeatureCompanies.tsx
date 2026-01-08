@@ -4,41 +4,39 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import CompanyCard from "@/app/components/company/CompanyCard";
 import { Company } from "@/app/components/types/company.types";
-// -------------------------
 import { ArrowRight } from "lucide-react";
+import { getFeaturedCompanies, FeaturedCompany } from "@/utils/api/employer-api";
 
-async function fetchFeaturedCompanies(): Promise<Company[]> {
-  console.log("Fetching featured companies...");
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  // --- DỮ LIỆU GIẢ LẬP (COMPANY) ---
-  const mockCompanies: Company[] = [
-    { id: 'comp-1', name: "Gameloft", locations: ["TP.HCM", "Đà Nẵng"], technologies: ["Unity", "C++", "Game"], jobCount: 15, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-2', name: "Viggle", locations: ["Đà Nẵng", "Remote"], technologies: ["AI", "Machine Learning", "Python"], jobCount: 8, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-3', name: "Base.vn", locations: ["Hà Nội", "TP.HCM"], technologies: ["PHP", "ReactJS", "NodeJS", "SaaS"], jobCount: 22, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-4', name: "Eureka", locations: ["TP.HCM"], technologies: ["Software Outsourcing", ".NET", "Java", "Cloud", "Security", "NLP", "LLM"], jobCount: 5, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-5', name: "DXC Technology", locations: ["TP.HCM", "Hà Nội", "Đà Nẵng", "Cần Thơ"], technologies: ["Cloud", "Security", "Consulting", "Java"], jobCount: 30, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-6', name: "Corsair", locations: ["Hà Nội", "Đài Loan"], technologies: ["Gaming Gear", "Hardware", "Firmware"], jobCount: 3, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-7', name: "Shopee", locations: ["TP.HCM", "Hà Nội"], technologies: ["E-commerce", "Go", "Python", "React"], jobCount: 40, logoUrl: "/placeholder-logo.png" },
-    { id: 'comp-8', name: "Zalo", locations: ["TP.HCM", "Hà Nội"], technologies: ["Messaging", "AI", "Mobile", "Zing MP3"], jobCount: 0, logoUrl: "/placeholder-logo.png" }, // Ví dụ công ty không có job
-  ];
-
-  return mockCompanies;
+// Transform API company to Company type for CompanyCard
+function transformCompanyFromAPI(apiCompany: FeaturedCompany): Company {
+  return {
+    id: apiCompany.id,
+    companyName: apiCompany.companyName,
+    logoUrl: apiCompany.logoUrl,
+    categories: apiCompany.categories,
+    locations: apiCompany.locations,
+    jobCount: apiCompany.jobCount,
+  };
 }
-
 
 export default function FeaturedCompanies() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadCompanies() {
       setIsLoading(true);
+      setError(null);
       try {
-        const featuredCompanies = await fetchFeaturedCompanies();
-        setCompanies(featuredCompanies);
+        // Fetch featured companies from API (top 6 by job count)
+        const featuredCompanies = await getFeaturedCompanies();
+        const transformedCompanies = featuredCompanies.map(transformCompanyFromAPI);
+        setCompanies(transformedCompanies);
       } catch (error) {
         console.error("Lỗi khi tải công ty nổi bật:", error);
+        // Show empty state instead of error - API might be temporarily unavailable
+        setCompanies([]);
       } finally {
         setIsLoading(false);
       }
@@ -52,10 +50,10 @@ export default function FeaturedCompanies() {
         {/* Header Section */}
         <div className="w-full flex justify-between items-center mb-8">
           <h2 className="text-2xl md:text-3xl font-semibold text-gray-800">
-            Nhà tuyển dụng nổi bật
+            Công ty nổi bật
           </h2>
           <Link
-            href="/companies" // Link tới trang danh sách công ty
+            href="/companypage" // Link tới trang danh sách công ty
             className="px-5 py-2 bg-jobcard-button text-white rounded-lg space-x-2 flex items-center hover:bg-jobcard-button-hover transition-all transform hover:scale-105 text-sm font-medium"
           >
             <span>Xem tất cả</span>
@@ -71,10 +69,8 @@ export default function FeaturedCompanies() {
               <div key={index} className="bg-white rounded-lg shadow-md p-6 border border-gray-100 animate-pulse flex flex-col items-center h-[280px]">
                 <div className="w-20 h-20 bg-gray-200 rounded-md mb-4"></div>
                 <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="flex gap-2 mb-5 w-full justify-center">
-                  <div className="h-5 bg-gray-200 rounded-full w-16"></div>
-                  <div className="h-5 bg-gray-200 rounded-full w-20"></div>
-                </div>
+                <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-2/3 mb-5"></div>
                 <div className="w-full border-t border-gray-100 my-4"></div>
                 <div className="flex justify-between w-full mt-auto">
                   <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -83,10 +79,21 @@ export default function FeaturedCompanies() {
               </div>
             ))}
           </div>
+        ) : error ? (
+          // Hiển thị lỗi
+          <div className="text-center py-10">
+            <p className="text-red-500 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+            >
+              Thử lại
+            </button>
+          </div>
         ) : companies.length === 0 ? (
           // --- THAY ĐỔI TEXT ---
           <p className="text-center text-gray-500 py-10">
-            Hiện chưa có nhà tuyển dụng nào.
+            Hiện chưa có công ty nổi bật nào.
           </p>
         ) : (
           // --- HIỂN THỊ DANH SÁCH COMPANY ---

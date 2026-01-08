@@ -3,6 +3,7 @@ import "@/app/globals.css";
 import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext"; // <-- 1. IMPORT
+import { SavedJobsProvider } from "@/contexts/SavedJobsContext";
 
 export const metadata: Metadata = {
   title: "TopJob",
@@ -16,11 +17,13 @@ export default function RootLayout({
 }>) {
   return (
     <AuthProvider>
-      <Header />
-      <main className="mt-0">
-        {children}
-      </main>
-      <Footer />
+      <SavedJobsProvider>
+        <Header />
+        <main className="mt-0">
+          {children}
+        </main>
+        <Footer />
+      </SavedJobsProvider>
     </AuthProvider>
   );
 }

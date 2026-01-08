@@ -17,6 +17,13 @@ export interface PaginationResponse<T> {
   meta: PaginationMeta;
 }
 
+export interface JobCategory {
+  id: string;
+  name: string;
+  slug: string;
+  parentId: string | null;
+}
+
 // Helper to get auth headers
 const getAuthHeaders = () => {
   if (typeof window !== 'undefined') {
@@ -445,4 +452,84 @@ export const getJobApplications = async (
     console.error('Error fetching job applications:', error);
     throw error;
   }
+};
+// ==================== PUBLIC JOB APIs (For Candidates) ====================
+
+/**
+ * Get public jobs with filters (for candidate job search)
+ * GET /jobs?keyword=...&location=...&isHot=true
+ */
+export interface PublicJobsFilters {
+  keyword?: string;
+  location?: string;
+  jobType?: 'full_time' | 'part_time' | 'freelance' | 'internship' | 'contract';
+  experienceLevel?: 'intern' | 'fresher' | 'junior' | 'middle' | 'senior' | 'lead' | 'manager';
+  categoryId?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  isHot?: boolean;
+  sort?: 'newest' | 'relevant';
+  page?: number;
+  limit?: number;
+}
+
+export const getPublicJobs = async (filters?: PublicJobsFilters): Promise<PaginationResponse<JobFromAPI>> => {
+  try {
+    const params = new URLSearchParams();
+    
+    if (filters?.keyword) params.append('keyword', filters.keyword);
+    if (filters?.location) params.append('location', filters.location);
+    if (filters?.jobType) params.append('jobType', filters.jobType);
+    if (filters?.experienceLevel) params.append('experienceLevel', filters.experienceLevel);
+    if (filters?.categoryId) params.append('categoryId', filters.categoryId);
+    if (filters?.salaryMin !== undefined) params.append('salaryMin', filters.salaryMin.toString());
+    if (filters?.salaryMax !== undefined) params.append('salaryMax', filters.salaryMax.toString());
+    if (filters?.isHot !== undefined) params.append('isHot', filters.isHot.toString());
+    if (filters?.sort) params.append('sort', filters.sort);
+    
+    params.append('page', (filters?.page ?? 1).toString());
+    params.append('limit', (filters?.limit ?? 10).toString());
+
+    const response = await axios.get<PaginationResponse<JobFromAPI>>(
+      `${API_BASE_URL}/jobs?${params.toString()}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching public jobs:', error);
+    throw error;
+  }
+};
+
+// ==================== CATEGORIES APIs ====================
+
+export const getRandomJobCategories = async (): Promise<JobCategory[]> => {
+  try {
+    const response = await axios.get<JobCategory[]>(
+      `${API_BASE_URL}/categories/job/random`
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching random job categories:', error);
+    return [];
+  }
+};
+
+export const getAllJobCategories = async (): Promise<JobCategory[]> => {
+  try {
+    const response = await axios.get<JobCategory[]>(
+      `${API_BASE_URL}/categories/job`
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching job categories:', error);
+    return [];
+  }
+};
+
+/**
+ * Get hot jobs (isHot = true) for homepage
+ * Convenience function that calls getPublicJobs with isHot filter
+ */
+export const getHotJobs = async (limit: number = 8): Promise<PaginationResponse<JobFromAPI>> => {
+  return getPublicJobs({ isHot: true, limit, page: 1, sort: 'newest' });
 };

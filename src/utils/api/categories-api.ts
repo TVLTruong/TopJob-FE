@@ -11,7 +11,7 @@ export interface JobCategory {
 export const jobCategoryApi = {
   getList(): Promise<JobCategory[]> {
     return axiosClient
-      .get<JobCategory[]>('/api/categories/job')
+      .get<JobCategory[]>('/categories/job')
       .then(res => res.data);
   },
 };
@@ -24,7 +24,7 @@ export interface EmployerCategory {
 export const employerCategoryApi = {
   getList(): Promise<EmployerCategory[]> {
     return axiosClient
-      .get<EmployerCategory[]>('/api/categories/employer')
+      .get<EmployerCategory[]>('/categories/employer')
       .then(res => res.data);
   },
 };
