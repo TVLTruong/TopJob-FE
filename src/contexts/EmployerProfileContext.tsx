@@ -120,6 +120,8 @@ interface EmployerProfileContextType {
 
 const EmployerProfileContext = createContext<EmployerProfileContextType | undefined>(undefined);
 
+export { EmployerProfileContext }; // Export context
+
 export function EmployerProfileProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<EmployerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);

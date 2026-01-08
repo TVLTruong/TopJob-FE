@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, createContext, useContext } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import CompanyHeader from '@/app/components/companyProfile/CompanyHeader';
@@ -9,18 +9,7 @@ import Benefits from '@/app/components/companyProfile/Benefits';
 import Contact from '@/app/components/companyProfile/Contact';
 import JobListings from '@/app/components/companyProfile/JobListings';
 import { getPublicEmployerProfile } from '@/utils/api/employer-api';
-
-// Create a context for company profile (read-only for candidates/guests)
-const EmployerProfileContext = createContext<any>(undefined);
-
-// Export the hook so child components can use it
-export function useEmployerProfile() {
-  const context = useContext(EmployerProfileContext);
-  if (context === undefined) {
-    throw new Error('useEmployerProfile must be used within CompanyProfilePage');
-  }
-  return context;
-}
+import { EmployerProfileContext } from '@/contexts/EmployerProfileContext';
 
 export default function PublicCompanyProfilePage() {
   const router = useRouter();
