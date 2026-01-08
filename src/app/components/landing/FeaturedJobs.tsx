@@ -66,18 +66,10 @@ export default function FeaturedJobs() {
     <div className="w-full py-3 md:py-3">
       <div className=" mx-auto px-1">
         {/* Header Section */}
-        <div className="w-full flex justify-between items-center mb-8">
+        <div className="w-full mb-8">
           <h2 className="text-2xl md:text-3xl font-semibold text-gray-800">
             Việc làm nổi bật
           </h2>
-          {/* Nút Xem tất cả */}
-          <Link
-            href="/itjob" // Link trực tiếp
-            className="px-5 py-2 bg-jobcard-button text-white rounded-lg space-x-2 flex items-center hover:bg-jobcard-button-hover transition-all transform hover:scale-105 text-sm font-medium"
-          >
-            <span>Xem tất cả</span>
-            <ArrowRight size={18} /> {/* Icon mũi tên */}
-          </Link>
         </div>
 
         {/* Grid hiển thị Jobs */}
