@@ -78,11 +78,14 @@ export default function Jobcard({ job, onApply, onSave, isSaved = false, onClick
           {job.type} 
         </span>
         <span className="px-3 py-1 text-xs font-medium border border-jobcard-tag-border text-jobcard-tag-text rounded-full">
-          {job.location}
-        </span>
-        <span className="px-3 py-1 text-xs font-medium border border-jobcard-tag-border text-jobcard-tag-text rounded-full">
           {job.experience}
         </span>
+        {/* Technology tag (nếu có) */}
+        {job.tags && job.tags.length > 0 && (
+          <span className="px-3 py-1 text-xs font-medium border border-emerald-500 text-emerald-700 bg-emerald-50 rounded-full">
+            {job.tags[0]}
+          </span>
+        )}
       </div>
 
       {/* Phần dưới: Nút Ứng tuyển và Lưu */}

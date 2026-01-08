@@ -8,7 +8,7 @@ interface CompanyCardProps {
 }
 
 export default function CompanyCard({ company }: CompanyCardProps) {
-  // const companyLink = `/cong-ty/${company.id}-${company.name.toLowerCase().replace(/\s+/g, '-')}`;
+  // const companyLink = `/cong-ty/${company.id}-${company.companyName.toLowerCase().replace(/\s+/g, '-')}`;
   const companyLink = `/companyProfilePage`;
 
   // Logic xử lý hiển thị địa điểm
@@ -33,7 +33,7 @@ export default function CompanyCard({ company }: CompanyCardProps) {
         <div className="w-20 h-20 relative border rounded-md overflow-hidden p-1 bg-white mb-3">
             <Image
             src={company.logoUrl || "/placeholder-logo.png"}
-            alt={`${company.name} logo`}
+            alt={`${company.companyName} logo`}
             fill
             className="object-contain"
             />
@@ -41,25 +41,27 @@ export default function CompanyCard({ company }: CompanyCardProps) {
 
         {/* Tên công ty (Căn giữa) */}
         <h3 className="text-lg font-bold text-gray-900 text-center truncate group-hover:text-emerald-700 transition-colors mb-2 w-full">
-            {company.name}
+            {company.companyName}
         </h3>
 
-        {/* Tags công nghệ (Căn giữa, wrap) */}
-        <div className="flex flex-wrap justify-center gap-1.5 mb-3 w-full">
-            {company.technologies.slice(0, 4).map((tech) => (
-            <span
-                key={tech}
+        {/* Categories (Lĩnh vực) */}
+        {company.categories && company.categories.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-1.5 mb-3 w-full">
+            {company.categories.slice(0, 3).map((category, index) => (
+              <span
+                key={index}
                 className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full"
-            >
-                {tech}
-            </span>
+              >
+                {category}
+              </span>
             ))}
-            {company.technologies.length > 4 && (
-            <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
-                +{company.technologies.length - 4}
-            </span>
+            {company.categories.length > 3 && (
+              <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+                +{company.categories.length - 3}
+              </span>
             )}
-        </div>
+          </div>
+        )}
 
         {/* Phần dưới: Địa điểm & Số Job */}
         <div className="flex justify-between items-center w-full text-xs text-gray-600 mt-auto h-[32px] border-t border-gray-100 pt-2">

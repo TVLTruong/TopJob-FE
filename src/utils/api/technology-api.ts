@@ -10,7 +10,7 @@ export interface Technology {
 export const technologyApi = {
   getList(): Promise<Technology[]> {
     return axiosClient
-      .get<Technology[]>('/api/categories/technology')
+      .get<Technology[]>('/categories/technology')
       .then(res => res.data);
   },
 };

@@ -1,7 +1,8 @@
 export interface Company {
   id: string;
-  name: string;
-  logoUrl: string;
+  companyName: string;
+  logoUrl: string | null;
+  categories?: string[];
   locations: string[];
   jobCount: number;
 }

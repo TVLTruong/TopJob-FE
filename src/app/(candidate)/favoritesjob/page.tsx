@@ -6,157 +6,147 @@ import Image from "next/image";
 import images from "@/app/utils/images";
 import Jobcard from "@/app/components/job/Jobcard";
 import { Job } from "@/app/components/types/job.types";
+import { getSavedJobs } from "@/utils/api/saved-jobs-api";
+import { JobFromAPI } from "@/utils/api/job-api";
+import { useRouter } from "next/navigation";
+import { useSavedJobs } from "@/contexts/SavedJobsContext";
 
-// Mock data - Sau này sẽ lấy từ localStorage hoặc API
-const mockSavedJobs: Job[] = [
-  {
-    id: "1",
-    title: "Senior Frontend Developer",
-    companyName: "Tech Corp",
-    salary: "25 - 40 triệu",
-    type: "Full-time",
-    location: "TP.HCM",
-    experience: "3+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "2",
-    title: "Backend Developer",
-    companyName: "Digital Solutions",
-    salary: "20 - 35 triệu",
-    type: "Remote",
-    location: "Hà Nội",
-    experience: "2+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "3",
-    title: "Full Stack Developer",
-    companyName: "Innovation Hub",
-    salary: "30 - 50 triệu",
-    type: "Hybrid",
-    location: "Đà Nẵng",
-    experience: "4+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "4",
-    title: "UI/UX Designer",
-    companyName: "Creative Agency",
-    salary: "15 - 25 triệu",
-    type: "Part-time",
-    location: "TP.HCM",
-    experience: "1+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "5",
-    title: "DevOps Engineer",
-    companyName: "Cloud Systems",
-    salary: "35 - 60 triệu",
-    type: "Full-time",
-    location: "Hà Nội",
-    experience: "5+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "6",
-    title: "Mobile Developer",
-    companyName: "App Studio",
-    salary: "22 - 38 triệu",
-    type: "Remote",
-    location: "TP.HCM",
-    experience: "3+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "7",
-    title: "Data Scientist",
-    companyName: "AI Analytics",
-    salary: "40 - 70 triệu",
-    type: "Full-time",
-    location: "Hà Nội",
-    experience: "3+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "8",
-    title: "Game Developer (Unity/Unreal)",
-    companyName: "Pixel Studio",
-    salary: "25 - 45 triệu",
-    type: "Hybrid",
-    location: "TP.HCM",
-    experience: "2+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "9",
-    title: "AI Engineer",
-    companyName: "DeepMind Asia",
-    salary: "45 - 80 triệu",
-    type: "Full-time",
-    location: "Đà Nẵng",
-    experience: "4+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
-  },
-  {
-    id: "10",
-    title: "Project Manager",
-    companyName: "NextGen Solutions",
-    salary: "30 - 55 triệu",
-    type: "Hybrid",
-    location: "TP.HCM",
-    experience: "5+ năm",
-    logoUrl: "/placeholder-logo.png",
-    tags: []
+// Transform API job to Job type for Jobcard
+function transformJobFromAPI(apiJob: JobFromAPI): Job {
+  const employmentTypeMap: Record<string, string> = {
+    'full_time': 'Full-time',
+    'part_time': 'Part-time',
+    'freelance': 'Freelance',
+    'internship': 'Internship',
+    'contract': 'Contract',
+  };
+
+  const experienceLevelMap: Record<string, string> = {
+    'intern': 'Intern',
+    'fresher': 'Fresher',
+    'junior': 'Junior',
+    'middle': 'Middle',
+    'senior': 'Senior',
+    'lead': 'Lead',
+    'manager': 'Manager',
+  };
+
+  // Format salary
+  let salaryText = 'Thỏa thuận';
+  if (apiJob.isSalaryVisible && apiJob.salaryMin && apiJob.salaryMax) {
+    const minInMillions = Math.round(apiJob.salaryMin / 1000000);
+    const maxInMillions = Math.round(apiJob.salaryMax / 1000000);
+    salaryText = `${minInMillions} - ${maxInMillions} triệu`;
+  } else if (apiJob.isNegotiable) {
+    salaryText = 'Thỏa thuận';
   }
-];
 
-const ITEMS_PER_PAGE = 8;
+  // Get job categories
+  const categoryNames = apiJob.jobCategories?.map(jc => jc.category.name) || [];
+
+  // Get first technology if available
+  const firstTechnology = apiJob.jobTechnologies?.[0]?.technology?.name;
+
+  // Combine tags: categories first, then technology
+  const tags = [...categoryNames];
+  if (firstTechnology) {
+    tags.push(firstTechnology);
+  }
+
+  return {
+    id: apiJob.id,
+    title: apiJob.title,
+    companyName: apiJob.employer?.companyName || 'Unknown Company',
+    location: apiJob.location?.city || apiJob.location?.address || 'Remote',
+    type: employmentTypeMap[apiJob.employmentType] || apiJob.employmentType,
+    experience: apiJob.experienceLevel ? experienceLevelMap[apiJob.experienceLevel] : 'All levels',
+    salary: salaryText,
+    tags: tags,
+    logoUrl: apiJob.employer?.logoUrl || '/placeholder-logo.png',
+  };
+}
+
+const ITEMS_PER_PAGE = 12;
 
 export default function SavedJobsPage() {
+  const router = useRouter();
+  const { unsaveJobFromFavorites, refreshSavedJobs } = useSavedJobs();
   const [savedJobs, setSavedJobs] = useState<Job[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalSaved, setTotalSaved] = useState(0);
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load saved jobs (demo: luôn dùng mock để hiển thị đầy đủ và có phân trang)
+  // Load saved jobs from API
   useEffect(() => {
+    loadSavedJobs();
+  }, [currentPage]);
+
+  const loadSavedJobs = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setSavedJobs(mockSavedJobs);
-      localStorage.setItem("savedJobs", JSON.stringify(mockSavedJobs.map(j => j.id)));
-    } catch (error) {
-      console.error("Error initializing saved jobs:", error);
-      setSavedJobs(mockSavedJobs);
+      const response = await getSavedJobs(currentPage, ITEMS_PER_PAGE);
+      console.log('Favoritesjob - Full API response:', JSON.stringify(response, null, 2));
+      
+      // Handle both response formats: 
+      // 1. Direct array from unwrapped axios response
+      // 2. Wrapped object { data: [...], meta: {...} }
+      let jobsFromApi: any[] = [];
+      let total = 0;
+      let totalPages = 1;
+      
+      if (Array.isArray(response)) {
+        // Direct array response (current case)
+        jobsFromApi = response;
+        total = response.length;
+        totalPages = 1;
+      } else if (response?.data && Array.isArray(response.data)) {
+        // Wrapped response
+        jobsFromApi = response.data;
+        total = response.meta?.total ?? 0;
+        totalPages = response.meta?.totalPages ?? 1;
+      }
+
+      console.log('Favoritesjob - jobs from API:', jobsFromApi.length);
+      const transformedJobs = jobsFromApi.map(transformJobFromAPI);
+      console.log('Favoritesjob - transformed jobs:', transformedJobs.length);
+      setSavedJobs(transformedJobs);
+      setTotalSaved(total);
+      setTotalPages(totalPages);
+    } catch (err: any) {
+      console.error("Error loading saved jobs:", err);
+      if (err.response?.status === 401) {
+        setError('Vui lòng đăng nhập để xem công việc yêu thích');
+      } else {
+        setError('Không thể tải danh sách công việc yêu thích');
+      }
+      setSavedJobs([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   // Handle unsave job
-  const handleUnsaveJob = (jobId: string) => {
-    const updatedJobs = savedJobs.filter(job => job.id !== jobId);
-    setSavedJobs(updatedJobs);
-    
-    // Cập nhật localStorage
-    const jobIds = updatedJobs.map(j => j.id);
-    localStorage.setItem("savedJobs", JSON.stringify(jobIds));
+  const handleUnsaveJob = async (jobId: string) => {
+    try {
+      await unsaveJobFromFavorites(jobId);
+      setSavedJobs(prev => prev.filter(job => job.id !== jobId));
+      setTotalSaved(prev => prev - 1);
+      showToast('Đã xóa khỏi công việc yêu thích', 'success');
+    } catch (err: any) {
+      console.error('Error unsaving job:', err);
+      showToast('Không thể xóa công việc yêu thích', 'error');
+    }
   };
 
   // Handle apply job
   const handleApplyJob = (jobId: string) => {
-    console.log("Applying for job:", jobId);
+    router.push(`/JobList/JobDetail?id=${jobId}`);
   };
 
   // Show toast notification
@@ -170,29 +160,25 @@ export default function SavedJobsPage() {
     setShowDeleteModal(true);
   };
 
-  const confirmClearAll = () => {
-    setSavedJobs([]);
-    localStorage.removeItem("savedJobs");
-    setShowDeleteModal(false);
-    showToast("Đã xóa tất cả công việc yêu thích", "success");
+  const confirmClearAll = async () => {
+    try {
+      // Delete each job from local list and call API
+      const jobIdsToDelete = savedJobs.map(job => job.id);
+      for (const jobId of jobIdsToDelete) {
+        await unsaveJobFromFavorites(jobId);
+      }
+      setSavedJobs([]);
+      setTotalSaved(0);
+      setShowDeleteModal(false);
+      showToast("Đã xóa tất cả công việc yêu thích", "success");
+      loadSavedJobs();
+    } catch (err: any) {
+      console.error('Error clearing all:', err);
+      showToast('Không thể xóa công việc yêu thích', 'error');
+    }
   };
 
-  // Filter jobs by search term
-  const filteredJobs = savedJobs.filter(job => {
-    const matchSearch = searchTerm === "" || 
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.companyName.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchSearch;
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentJobs = filteredJobs.slice(startIndex, endIndex);
-
-  // Reset to page 1 when filter changes
+  // Reset to page 1 when search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
@@ -203,6 +189,22 @@ export default function SavedJobsPage() {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Đang tải công việc đã lưu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={() => loadSavedJobs()}
+            className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+          >
+            Thử lại
+          </button>
         </div>
       </div>
     );
@@ -280,7 +282,7 @@ export default function SavedJobsPage() {
               Hãy lưu các công việc bạn quan tâm để dễ dàng theo dõi và ứng tuyển sau
             </p>
             <a
-              href="/viec-lam"
+              href="/jobpage"
               className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors"
             >
               <Search className="w-5 h-5" />
@@ -289,96 +291,104 @@ export default function SavedJobsPage() {
           </div>
         ) : (
           <>
-            {/* Search Bar */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm theo tên công việc hoặc công ty..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
+            {/* Header and Stats */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Công việc yêu thích</h2>
+              <p className="text-gray-600">
+                Tổng cộng {totalSaved} công việc đã lưu
+              </p>
             </div>
 
-            {/* Results Info and Clear All Button */}
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {filteredJobs.length} công việc
-                </h2>
-                <p className="text-gray-600 mt-1">
-                  {searchTerm && `Kết quả tìm kiếm cho "${searchTerm}"`}
-                </p>
+            {/* Clear All Button */}
+            {savedJobs.length > 0 && (
+              <div className="mb-6 flex justify-end">
+                <button
+                  onClick={handleClearAll}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Xóa tất cả</span>
+                </button>
               </div>
-              
-              <button
-                onClick={handleClearAll}
-                className="flex items-center gap-2 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium"
-              >
-                <Trash2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Xóa tất cả</span>
-              </button>
-            </div>
+            )}
 
             {/* Jobs Grid */}
-            {filteredJobs.length === 0 ? (
-              <div className="bg-white rounded-lg p-8 text-center">
-                <p className="text-gray-600">Không tìm thấy công việc phù hợp</p>
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
-                  {currentJobs.map((job) => (
-                    <Jobcard
-                      key={job.id}
-                      job={job}
-                      onApply={handleApplyJob}
-                      onSave={handleUnsaveJob}
-                      isSaved={true}
-                    />
-                  ))}
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center mb-8">
+              {savedJobs.map((job) => (
+                <Jobcard
+                  key={job.id}
+                  job={job}
+                  onClick={() => handleApplyJob(job.id)}
+                  onSave={handleUnsaveJob}
+                  isSaved={true}
+                />
+              ))}
+            </div>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-2 mt-8">
-                    {/* Page Numbers */}
-                    {[...Array(totalPages)].map((_, index) => {
-                      const pageNum = index + 1;
-                      
-                      // Show first page, last page, current page and adjacent pages
-                      if (
-                        pageNum === 1 ||
-                        pageNum === totalPages ||
-                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-                      ) {
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => setCurrentPage(pageNum)}
-                            className={`w-10 h-10 flex items-center justify-center rounded-lg font-medium transition-colors ${
-                              currentPage === pageNum
-                                ? "bg-emerald-600 text-white"
-                                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        );
-                      } else if (
-                        pageNum === currentPage - 2 ||
-                        pageNum === currentPage + 2
-                      ) {
-                        return <span key={pageNum} className="text-gray-500">...</span>;
-                      }
-                      return null;
-                    })}
-                  </div>
-                )}
-              </>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8">
+                {/* Previous Button */}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    currentPage === 1
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Trước
+                </button>
+
+                {/* Page Numbers */}
+                {[...Array(totalPages)].map((_, index) => {
+                  const pageNum = index + 1;
+
+                  if (
+                    pageNum === 1 ||
+                    pageNum === totalPages ||
+                    (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                  ) {
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`w-10 h-10 flex items-center justify-center rounded-lg font-medium transition-colors ${
+                          currentPage === pageNum
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  }
+
+                  if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                    return (
+                      <span key={pageNum} className="text-gray-500">
+                        ...
+                      </span>
+                    );
+                  }
+
+                  return null;
+                })}
+
+                {/* Next Button */}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    currentPage === totalPages
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Tiếp
+                </button>
+              </div>
             )}
           </>
         )}
