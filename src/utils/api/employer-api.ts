@@ -221,13 +221,14 @@ export const getPublicEmployerProfile = async (employerId: string) => {
       headers.Authorization = `Bearer ${token}`;
     }
     
-    const response = await axios.get(
-      `${API_BASE_URL}/employers/${employerId}/profile`,
-      { headers }
-    );
+    const url = `${API_BASE_URL}/employers/${employerId}/profile`;
+    console.log('Calling API:', url); // Debug log
+    
+    const response = await axios.get(url, { headers });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      console.error('API Error:', error.response?.status, error.response?.data);
       throw new Error(error.response?.data?.message || 'Failed to fetch employer profile');
     }
     throw error;
