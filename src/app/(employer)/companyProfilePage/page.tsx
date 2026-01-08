@@ -206,7 +206,10 @@ export default function CompanyProfilePage() {
               <Contact canEdit={canEdit} />
             </div>
             <div>
-              <JobListings employerId={profile?.id || employerId || ''} />
+              <JobListings 
+                employerId={profile?.id || employerId || ''} 
+                companySlug={profile?.companyName ? profile.companyName.toLowerCase().replace(/\s+/g, '-') : undefined}
+              />
             </div>
           </div>
 

@@ -5,9 +5,10 @@ import { getCompanyActiveJobs, JobFromAPI, ExperienceLevelReverseMap, Employment
 
 interface JobListingsProps {
   employerId: string;
+  companySlug?: string;
 }
 
-export default function JobListings({ employerId }: JobListingsProps) {
+export default function JobListings({ employerId, companySlug }: JobListingsProps) {
   const [jobs, setJobs] = useState<JobFromAPI[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,9 +67,10 @@ export default function JobListings({ employerId }: JobListingsProps) {
     <div className="bg-white rounded-xl p-8 mb-3 ml-3 shadow-sm">
       <div className="mb-6">
         <h2 className="text-xl font-bold">Các vị trí đang tuyển</h2>
+        <p className="text-sm text-gray-600 mt-1">{jobs.length} vị trí</p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {jobs.map((job) => {
           // Get first category name if exists
           const categoryName = job.jobCategories && job.jobCategories.length > 0 
@@ -78,7 +80,7 @@ export default function JobListings({ employerId }: JobListingsProps) {
           return (
             <Link
               key={job.id}
-              href={`/jobpage/${job.id}`}
+              href={`/jobpage/${job.id}?from=company&companyId=${employerId}${companySlug ? `&companySlug=${companySlug}` : ''}`}
               className="block p-4 border rounded-lg hover:border-teal-300 transition cursor-pointer"
             >
               <h3 className="font-semibold text-gray-900 text-sm mb-2">{job.title}</h3>
