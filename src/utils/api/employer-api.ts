@@ -268,6 +268,9 @@ export interface PublicCompaniesFilters {
   keyword?: string;
   city?: string;
   industry?: string;
+  category?: string;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
   page?: number;
   limit?: number;
 }
