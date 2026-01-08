@@ -8,8 +8,8 @@ interface CompanyCardProps {
 }
 
 export default function CompanyCard({ company }: CompanyCardProps) {
-  // Link to company profile with employerId parameter
-  const companyLink = `/companyProfilePage?id=${company.id}`;
+  // Link to public company profile page for candidates/guests
+  const companyLink = `/companypage/companyProfilePage?id=${company.id}`;
 
   // Logic xử lý hiển thị địa điểm
   const displayLocations = (): string => {

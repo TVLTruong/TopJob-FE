@@ -207,12 +207,23 @@ export const updateApplicationStatus = async (
 /**
  * Get public employer profile (for candidates to view)
  * GET /employers/:employerId/profile
+ * No auth required for public viewing
  */
 export const getPublicEmployerProfile = async (employerId: string) => {
   try {
+    // Optional auth - send token if available, but don't require it
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    
     const response = await axios.get(
       `${API_BASE_URL}/employers/${employerId}/profile`,
-      { headers: getAuthHeaders() }
+      { headers }
     );
     return response.data;
   } catch (error) {
