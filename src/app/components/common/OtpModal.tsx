@@ -12,6 +12,7 @@ type OtpModalProps = {
   resendLabel?: string
   submitLabel?: string
   secondsBeforeResend?: number
+  customContent?: React.ReactNode
 }
 
 export default function OtpModal({
@@ -23,7 +24,8 @@ export default function OtpModal({
   onResend,
   resendLabel = 'Gửi lại mã',
   submitLabel = 'Xác nhận',
-  secondsBeforeResend = 60
+  secondsBeforeResend = 60,
+  customContent
 }: OtpModalProps) {
   const [code, setCode] = useState('')
   const [error, setError] = useState<string>('')
@@ -128,6 +130,13 @@ export default function OtpModal({
             />
             <p className="mt-1 min-h-[20px] text-xs text-red-500">{error}</p>
           </div>
+
+          {/* Custom Content (e.g., password fields for forgot-password) */}
+          {customContent && (
+            <div className="border-t pt-4">
+              {customContent}
+            </div>
+          )}
 
           <div className="flex items-center justify-between">
             <button

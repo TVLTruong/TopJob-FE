@@ -132,6 +132,35 @@ export const AuthApi = {
     return AuthApi.resendOtp(email);
   },
 
+  /**
+   * Quên mật khẩu - Gửi OTP
+   */
+  forgotPassword: async (email: string) => {
+    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    
+    return handleResponse<{
+      message: string;
+      expiresAt?: Date;
+    }>(response);
+  },
+
+  /**
+   * Đặt lại mật khẩu
+   */
+  resetPassword: async (email: string, otpCode: string, newPassword: string, confirmNewPassword: string) => {
+    const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otpCode, newPassword, confirmNewPassword }),
+    });
+    
+    return handleResponse<{ message: string }>(response);
+  },
+
   // ============= AUTHENTICATED REQUESTS =============
   
   /**

@@ -27,6 +27,16 @@ export interface ChangePasswordData {
   otpCode: string;
 }
 
+export interface UpdateEmailData {
+  newEmail: string;
+  otpCode: string;
+}
+
+export interface DeleteAccountData {
+  otpCode: string;
+  reason?: string;
+}
+
 /**
  * Get current user information
  * GET /api/users/me
@@ -69,5 +79,41 @@ export const requestPasswordChangeOtp = async (): Promise<{ message: string; exp
  */
 export const changePasswordWithOtp = async (data: ChangePasswordData): Promise<{ message: string }> => {
   const response = await axiosClient.put('/users/me/password-with-otp', data);
+  return response.data;
+};
+
+/**
+ * Request OTP for email change
+ * POST /api/users/me/request-email-change-otp
+ */
+export const requestEmailChangeOtp = async (): Promise<{ message: string; expiresAt: string }> => {
+  const response = await axiosClient.post('/users/me/request-email-change-otp');
+  return response.data;
+};
+
+/**
+ * Update email with OTP
+ * PUT /api/users/me/email
+ */
+export const updateEmail = async (data: UpdateEmailData): Promise<{ message: string }> => {
+  const response = await axiosClient.put('/users/me/email', data);
+  return response.data;
+};
+
+/**
+ * Request OTP for account deletion
+ * POST /api/users/me/request-deletion-otp
+ */
+export const requestAccountDeletionOtp = async (): Promise<{ message: string; expiresAt: string }> => {
+  const response = await axiosClient.post('/users/me/request-deletion-otp');
+  return response.data;
+};
+
+/**
+ * Delete account with OTP
+ * POST /api/users/me/delete
+ */
+export const deleteAccount = async (data: DeleteAccountData): Promise<{ message: string }> => {
+  const response = await axiosClient.post('/users/me/delete', data);
   return response.data;
 };
