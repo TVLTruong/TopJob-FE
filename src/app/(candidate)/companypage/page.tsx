@@ -30,10 +30,9 @@ interface CategoryFilterProps {
   selected: string[];
   tempSelected: string[];
   onTempChange: (selected: string[]) => void;
-  onApply: () => void;
 }
 
-function CategoryFilter({ options, selected, tempSelected, onTempChange, onApply }: CategoryFilterProps) {
+function CategoryFilter({ options, selected, tempSelected, onTempChange }: CategoryFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleToggle = (option: string) => {
@@ -45,11 +44,6 @@ function CategoryFilter({ options, selected, tempSelected, onTempChange, onApply
 
   const handleClearAll = () => {
     onTempChange([]);
-  };
-
-  const handleApplyClick = () => {
-    onApply();
-    setIsOpen(false);
   };
 
   return (
@@ -105,20 +99,6 @@ function CategoryFilter({ options, selected, tempSelected, onTempChange, onApply
                 ))}
               </div>
             </div>
-            <div className="p-3 border-t border-gray-200 flex gap-2">
-              <button
-                onClick={() => setIsOpen(false)}
-                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleApplyClick}
-                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700"
-              >
-                Áp dụng
-              </button>
-            </div>
           </div>
         </>
       )}
@@ -134,9 +114,6 @@ export default function CompanyPage() {
   
   // Applied filters
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  
-  // Temporary filters (being edited)
-  const [tempCategories, setTempCategories] = useState<string[]>([]);
   
   // API state
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -218,8 +195,8 @@ export default function CompanyPage() {
     setCurrentPage(1);
   };
 
-  const handleApplyCategories = () => {
-    setSelectedCategories(tempCategories);
+  const handleCategoriesChange = (categories: string[]) => {
+    setSelectedCategories(categories);
     setCurrentPage(1);
   };
 
@@ -227,14 +204,12 @@ export default function CompanyPage() {
     setSearchTerm("");
     setLocationFilter(undefined);
     setSelectedCategories([]);
-    setTempCategories([]);
     setCurrentPage(1);
   };
 
   const handleRemoveCategory = (category: string) => {
     const newCategories = selectedCategories.filter(c => c !== category);
     setSelectedCategories(newCategories);
-    setTempCategories(newCategories);
     setCurrentPage(1);
   };
 
@@ -291,9 +266,8 @@ export default function CompanyPage() {
               <CategoryFilter 
                 options={categoryOptions}
                 selected={selectedCategories}
-                tempSelected={tempCategories}
-                onTempChange={setTempCategories}
-                onApply={handleApplyCategories}
+                tempSelected={selectedCategories}
+                onTempChange={handleCategoriesChange}
               />
 
               {/* Reset Filters */}

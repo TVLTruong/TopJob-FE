@@ -111,9 +111,9 @@ export default function CompanySearcher({ onSearch, initialSearchTerm = "" }: Co
               leaveFrom="opacity-100"
               leaveTo="opacity-0"
               afterLeave={() => setLocationQuery('')}
-              className="absolute left-0 right-0 md:w-full"
+              className="absolute left-0 right-0 md:w-full z-50"
             >
-              <Combobox.Options className="mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-20">
+              <Combobox.Options className="mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-50">
                 {filteredLocations.length === 0 && locationQuery !== '' ? (
                   <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
                     Không tìm thấy.
