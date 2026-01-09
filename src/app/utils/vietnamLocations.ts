@@ -25,12 +25,12 @@ export const vietnamCities = [
   { id: "tay_ninh", name: "Tây Ninh" },
   { id: "thai_nguyen", name: "Thái Nguyên" },
   { id: "thanh_hoa", name: "Thanh Hóa" },
-  { id: "can_tho", name: "TP. Cần Thơ" },
-  { id: "da_nang", name: "TP. Đà Nẵng" },
-  { id: "ha_noi", name: "TP. Hà Nội" },
-  { id: "hai_phong", name: "TP. Hải Phòng" },
-  { id: "ho_chi_minh", name: "TP. Hồ Chí Minh" },
-  { id: "hue", name: "TP. Huế" },
+  { id: "can_tho", name: "Thành phố Cần Thơ" },
+  { id: "da_nang", name: "Thành phố Đà Nẵng" },
+  { id: "ha_noi", name: "Thành phố Hà Nội" },
+  { id: "hai_phong", name: "Thành phố Hải Phòng" },
+  { id: "ho_chi_minh", name: "Thành phố Hồ Chí Minh" },
+  { id: "hue", name: "Thành phố Huế" },
   { id: "tuyen_quang", name: "Tuyên Quang" },
   { id: "vinh_long", name: "Vĩnh Long" }
 ];

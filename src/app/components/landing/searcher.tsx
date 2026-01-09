@@ -44,7 +44,7 @@ export default function HeroSearcher() {
       params.set('q', searchTerm.trim());
     }
     if (selectedLocation && selectedLocation.id !== 'all') {
-      params.set('location', selectedLocation.id);
+      params.set('location', selectedLocation.name);
     }
     
     // Navigate to jobpage with search params
