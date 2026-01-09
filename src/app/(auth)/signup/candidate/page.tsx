@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { AuthApi } from "@/utils/api/auth-api";
+import { AuthApi, OtpPurpose } from "@/utils/api/auth-api";
 import OtpModal from "@/app/components/common/OtpModal";
 
 export default function CandidateSignUpPage() {
@@ -26,7 +26,7 @@ export default function CandidateSignUpPage() {
 
   const handleVerifyOtp = async (code: string): Promise<boolean> => {
     try {
-      const response = await AuthApi.verifyOtp(email, code);
+      const response = await AuthApi.verifyOtp(email, code, OtpPurpose.EMAIL_VERIFICATION);
       console.log('Xác thực OTP thành công!', response);
       router.push('/login?verified=true');
       return true;
